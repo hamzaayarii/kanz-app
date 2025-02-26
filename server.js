@@ -13,7 +13,7 @@ mongoose.connect(dbConfig.mongodb.url, { useNewUrlParser: true, useUnifiedTopolo
     .catch((err) => console.error('Failed to connect to MongoDB:', err));
 
 // Middleware
-app.use(cors({ origin: 'http://localhost:3000', credentials: true }));
+app.use(cors({ origin: 'http://localhost:3000', method:'GET,POST', credentials: true }));
 app.use(express.json());  // To parse JSON request bodies
 
 // Routes

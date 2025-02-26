@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { create, list, updateUser, deleteUser, googleAuth, googleAuthRequest } = require('../controllers/userController');
+const { create, list, updateUser, deleteUser, googleAuth, googleAuthRequest, forgot_password, reset_password} = require('../controllers/userController');
 const User = require('../models/user');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -102,5 +102,9 @@ router.get('/users/me', authenticate, async (req, res) => {
 router.post("/googleAuthRequest", googleAuthRequest);
 
 router.get("/googleAuth", googleAuth);
+
+router.post("/forgot-password", forgot_password);
+
+router.post("/reset-password/:token", reset_password);
 
 module.exports = router;

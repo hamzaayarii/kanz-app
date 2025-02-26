@@ -30,6 +30,7 @@ const userSchema = new Schema({
         default: Date.now
     },
     token: String,
+    resetToken: String,
     verificationToken: String,
     verificationTokenExpiresAt: Date,
     updatedAt: Date

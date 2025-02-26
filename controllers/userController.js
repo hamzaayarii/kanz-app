@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import {OAuth2Client} from "google-auth-library";
 import generator from "generate-password";
-import axios from 'axios';
+import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -116,7 +116,7 @@ export const updateUser = async (req, res) => {
 
 /* Google sign-up and log in => */
 export const googleAuthRequest = async (req, res)=> {
-    res.header("Access-Control-Allow-Origin", 'http://localhost:5173');
+    res.header("Access-Control-Allow-Origin", 'http://localhost:3000');
     res.header("Access-Control-Allow-Credentials", 'true');
     res.header("Referrer-Policy","no-referrer-when-downgrade");
     const redirectURL = 'http://127.0.0.1:5000/api/users/googleAuth';
@@ -214,3 +214,73 @@ export const googleAuth = async (req, res)=> {
     res.redirect(303, 'http://localhost:5173/');
 }
 /* <= Google sign-up and log in */
+
+/* forgot-password => */
+const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+        user: process.env.EMAIL_USER, // Your email
+        pass: process.env.EMAIL_PASS, // Your email password
+    },
+});
+
+export const forgot_password = async (req, res) => {
+    const { email } = req.body;
+
+    try {
+        const user = await User.findOne({ email });
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        // Create a reset token (valid for 1 hour)
+        const resetToken = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: "1h" });
+
+        // Store the reset token in the database (optional)
+        user.resetToken = resetToken;
+        await user.save();
+
+        // Email content
+        const resetLink = `http://localhost:5000/api/users/reset-password/${resetToken}`;
+
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: user.email,
+            subject: "Password Reset Request",
+            html: `<p>Click <a href="${resetLink}">here</a> to reset your password. This link is valid for 1 hour.</p>`,
+        };
+
+        await transporter.sendMail(mailOptions);
+
+        res.json({ message: "Reset email sent!" });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Error processing request" });
+    }
+}
+
+export const reset_password = async (req, res) => {
+    const { token } = req.params;
+    const { newPassword } = req.body;
+
+    try {
+        // Verify the token
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const user = await User.findById(decoded.userId);
+
+        if (!user || user.resetToken !== token) {
+            return res.status(400).json({ message: "Invalid or expired token" });
+        }
+
+        // Hash new password
+        user.password = await bcrypt.hash(newPassword, 10);
+
+        // Clear reset token after password change
+        user.resetToken = undefined;
+        await user.save();
+
+        res.json({ message: "Password reset successfully!" });
+    } catch (error) {
+        console.error("Error in reset-password:", error);
+        res.status(400).json({ message: "Invalid or expired token" });
+    }
+}
+/* <= forgot-password */
