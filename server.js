@@ -3,6 +3,7 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const dbConfig = require('./config/db.json');  // MongoDB connection config
 const userRoutes = require('./routes/userRoutes');  // User routes
+const saleRoutes = require('./routes/saleRoutes');  // Sale routes
 const User = require('./models/User');  // Import the User model
 
 const app = express();
@@ -18,6 +19,7 @@ app.use(express.json());  // To parse JSON request bodies
 
 // Routes
 app.use('/api/users', userRoutes);
+app.use('/api/sales', saleRoutes);  // Add the sales routes
 
 // Fetch user data by ID (API route)
 app.get('/api/users/:id', async (req, res) => {
@@ -33,7 +35,6 @@ app.get('/api/users/:id', async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 });
-
 
 // Base route
 app.get('/', (req, res) => {
