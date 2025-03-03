@@ -1,13 +1,13 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
-import {OAuth2Client} from "google-auth-library";
+import { OAuth2Client } from "google-auth-library";
 import generator from "generate-password";
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 dotenv.config();
 
-const SECRET_KEY = process.env.SECRET_KEY || 'your_secret_key';
+const SECRET_KEY = process.env.JWT_SECRET || 'your_secret_key';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1h';
 
 // 📌 List all users
@@ -170,7 +170,7 @@ export const login = async (req, res) => {
 
         const token = jwt.sign(
             { id: user._id, email: user.email, role: user.role, isBanned: user.isBanned },
-            process.env.SECRET_KEY,  // Secret key loaded from environment variables
+            process.env.JWT_SECRET,  // Secret key loaded from environment variables
             { expiresIn: process.env.JWT_EXPIRES_IN || '1h' }  // Default expiration time
         );
 
@@ -219,7 +219,7 @@ export const googleAuthRequest = async (req, res) => {
         prompt: 'consent'
     });
 
-    res.json({url:authorizeUrl})
+    res.json({ url: authorizeUrl })
 
 }
 
@@ -230,11 +230,11 @@ async function getUserData(access_token) {
     //console.log('response',response);
     const data = await response.json();
 
-    console.log('data',data);
+    console.log('data', data);
     return data;
 }
 
-export const googleAuth = async (req, res)=> {
+export const googleAuth = async (req, res) => {
     const code = req.query.code;
 
     console.log(code);
@@ -245,12 +245,12 @@ export const googleAuth = async (req, res)=> {
             process.env.CLIENT_SECRET,
             redirectURL
         );
-        const r =  await oAuth2Client.getToken(code);
+        const r = await oAuth2Client.getToken(code);
         // Make sure to set the credentials on the OAuth2 client.
         await oAuth2Client.setCredentials(r.tokens);
         console.info('Tokens acquired.');
         const user_ = oAuth2Client.credentials;
-        console.log('credentials',user_);
+        console.log('credentials', user_);
         const user_data = await getUserData(user_.access_token);
         let { name, email, password } = user_data;
         let user = await User.findOne({ email });
