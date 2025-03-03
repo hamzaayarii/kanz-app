@@ -7,6 +7,9 @@ import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 dotenv.config();
 
+const SECRET_KEY = process.env.SECRET_KEY || 'your_secret_key';
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1h';
+
 // 📌 List all users
 export const list = async (req, res) => {
     try {
@@ -64,6 +67,7 @@ export const create = async (req, res) => {
 
         const savedUser = await newUser.save();
 
+        // 🔹 Send response (excluding password)
         return res.status(201).json({
             success: true,
             message: "User registered successfully!",
@@ -84,7 +88,7 @@ export const create = async (req, res) => {
     }
 };
 
-// Mettre à jour un utilisateur
+// 📌 Update user by ID
 export const updateUser = async (req, res) => {
     try {
         const userId = req.params.id;
@@ -270,23 +274,15 @@ export const googleAuth = async (req, res)=> {
                 verificationTokenExpiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
             });
             await user.save();
-            user = await User.findOne({ email });
         }
-
-
-        //generateTokenAndSetCookie(res, user._id);
-
-        user.lastLogin = new Date();
-        await user.save();
-
-        res.status(200).json({
-            success: true,
-            message: "Logged in successfully",
-            user: {
-                ...user._doc,
-                password: undefined,
-            },
-        });
+        user.token = jwt.sign({ id: user._id, email: user.email }, SECRET_KEY, { expiresIn: JWT_EXPIRES_IN });
+        res.send(`
+            <script>
+              window.opener.postMessage(${JSON.stringify(user)}, "http://localhost:3000");
+              window.close();
+            </script>
+        `);
+        //res.end("Login successful!!! You can close this window.");
     } catch (err) {
         console.log('Error logging in with OAuth2 user', err);
     }
