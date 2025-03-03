@@ -288,7 +288,7 @@ export const googleAuth = async (req, res) => {
     }
 
 
-    res.redirect(303, 'http://localhost:5173/');
+    // res.redirect(303, 'http://localhost:5173/');
 }
 /* <= Google sign-up and log in */
 
