@@ -41,7 +41,14 @@ const Register = () => {
 
         // Ensure data has a valid URL
         if (data.url) {
-          navigate(data.url);
+
+          //window.location.href = data.url;
+          window.open(data.url, "_blank", "width=500,height=600");
+          window.addEventListener("message", (event) => {
+            if (event.origin !== "http://127.0.0.1:5000") return; // Security check
+            localStorage.setItem("authToken", event.data.token);
+            navigate('/admin/index');
+          }, { once: true });
         } else {
           console.error('No URL returned from the backend');
         }
