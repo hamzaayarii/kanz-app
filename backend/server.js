@@ -6,7 +6,7 @@ const dbConfig = require('./config/db.json'); // MongoDB connection config
 const userRoutes = require('./routes/userRoutes'); // User routes
 const User = require('./models/User'); // Import the User model
 const authenticate = require('./middlewares/authMiddleware'); // Authentication middleware
-
+const saleRoutes = require('./routes/saleRoutes'); // Import the sales routes
 const app = express();
 
 // MongoDB connection
@@ -15,7 +15,7 @@ mongoose.connect(dbConfig.mongodb.url, { useNewUrlParser: true, useUnifiedTopolo
     .catch((err) => console.error('Failed to connect to MongoDB:', err));
 
 // Middleware
-app.use(cors({ origin: 'http://localhost:3000', method:'GET,POST', credentials: true }));
+app.use(cors({ origin: 'http://localhost:3000', method: 'GET,POST', credentials: true }));
 app.use(express.json());  // To parse JSON request bodies
 
 // Routes
