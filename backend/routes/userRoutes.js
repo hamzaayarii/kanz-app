@@ -7,13 +7,13 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
-// Variables d'environnement
+// Load environment variables
 const SECRET_KEY = process.env.SECRET_KEY || 'your_secret_key';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1h';
 
-// Middleware pour l'authentification
+// Authentication Middleware
 const authenticate = (req, res, next) => {
-    const token = req.headers.authorization?.split(' ')[1]; // Extraire le token du header Authorization
+    const token = req.headers.authorization?.split(' ')[1]; // Extract token from Authorization header
 
     if (!token) {
         return res.status(401).json({ message: 'Token is required' });

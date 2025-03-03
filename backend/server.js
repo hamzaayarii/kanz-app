@@ -15,14 +15,17 @@ mongoose.connect(dbConfig.mongodb.url, { useNewUrlParser: true, useUnifiedTopolo
     .catch((err) => console.error('Failed to connect to MongoDB:', err));
 
 // Middleware
-app.use(cors({ origin: 'http://localhost:3000', method: 'GET,POST', credentials: true }));
+app.use(cors({ origin: 'http://localhost:3000', method:'GET,POST', credentials: true }));
 app.use(express.json());  // To parse JSON request bodies
 
 // Routes
 app.use('/api/users', userRoutes);
+app.use('/api/sales', saleRoutes);  // Add the sales routes
+
 
 // Fetch user data by ID (API route)
 app.get('/api/users/:id', authenticate, async (req, res) => {
+
     const { id } = req.params;
     try {
         const user = await User.findById(id).select('-password');

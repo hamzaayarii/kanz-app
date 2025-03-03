@@ -1,26 +1,22 @@
-// src/controllers/userController.js
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
-import { OAuth2Client } from "google-auth-library";
+import {OAuth2Client} from "google-auth-library";
 import generator from "generate-password";
 import nodemailer from 'nodemailer';
-import axios from 'axios';
 import dotenv from 'dotenv';
 dotenv.config();
 
-// List all users
+// 📌 List all users
 export const list = async (req, res) => {
     try {
-        const users = await User.find().select('-password'); // Exclure les mots de passe
+        const users = await User.find().select('-password'); // Exclude passwords
         res.status(200).json({ success: true, users });
     } catch (err) {
         console.error("Error listing users:", err);
         res.status(500).json({ success: false, message: "Server error", error: err.message });
     }
 };
-
-// Supprimer un utilisateur
 export const deleteUser = async (req, res) => {
     const { id } = req.params;
 
@@ -36,22 +32,26 @@ export const deleteUser = async (req, res) => {
     }
 };
 
-// Créer un nouvel utilisateur
+// 📌 Create a new user
 export const create = async (req, res) => {
     try {
         const { fullName, email, password, phoneNumber, governorate, avatar, gender } = req.body;
 
+        // 🔹 Validate required fields
         if (!fullName || !email || !password) {
             return res.status(400).json({ success: false, message: "Full name, email, and password are required" });
         }
 
+        // 🔹 Check if user already exists
         const existingUser = await User.findOne({ email });
         if (existingUser) {
             return res.status(400).json({ success: false, message: "Email already registered" });
         }
 
+        // 🔹 Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
 
+        // 🔹 Create user object
         const newUser = new User({
             fullName,
             email,
@@ -90,6 +90,7 @@ export const updateUser = async (req, res) => {
         const userId = req.params.id;
         const updateData = req.body;
 
+        // Ensure the password is not being updated (or hash it if it's changed)
         if (updateData.password) {
             const hashedPassword = await bcrypt.hash(updateData.password, 10);
             updateData.password = hashedPassword;
@@ -104,6 +105,7 @@ export const updateUser = async (req, res) => {
             return res.status(404).json({ message: "User not found" });
         }
 
+        // Return updated user data
         res.status(200).json({ user: updatedUser });
     } catch (err) {
         console.error(err);
@@ -206,40 +208,73 @@ export const googleAuthRequest = async (req, res) => {
         redirectURL
     );
 
+    // Generate the url that will be used for the consent dialog.
     const authorizeUrl = oAuth2Client.generateAuthUrl({
         access_type: 'offline',
-        scope: 'https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email openid',
+        scope: 'https://www.googleapis.com/auth/userinfo.profile email openid ',
         prompt: 'consent'
     });
 
-    res.json({ url: authorizeUrl });
-};
+    res.json({url:authorizeUrl})
 
-export const googleAuth = async (req, res) => {
+}
+
+async function getUserData(access_token) {
+
+    const response = await fetch(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${access_token}`);
+
+    //console.log('response',response);
+    const data = await response.json();
+
+    console.log('data',data);
+    return data;
+}
+
+export const googleAuth = async (req, res)=> {
     const code = req.query.code;
+
+    console.log(code);
     try {
-        const redirectURL = "http://127.0.0.1:5000/api/users/googleAuth";
+        const redirectURL = "http://127.0.0.1:5000/api/users/googleAuth"
         const oAuth2Client = new OAuth2Client(
             process.env.CLIENT_ID,
             process.env.CLIENT_SECRET,
             redirectURL
         );
-        const r = await oAuth2Client.getToken(code);
+        const r =  await oAuth2Client.getToken(code);
+        // Make sure to set the credentials on the OAuth2 client.
         await oAuth2Client.setCredentials(r.tokens);
-
-        const userData = await getUserData(oAuth2Client.credentials.access_token);
-        let { name, email, password } = userData;
-
+        console.info('Tokens acquired.');
+        const user_ = oAuth2Client.credentials;
+        console.log('credentials',user_);
+        const user_data = await getUserData(user_.access_token);
+        let { name, email, password } = user_data;
         let user = await User.findOne({ email });
         if (!user) {
-            password = generator.generate({ length: 12, numbers: true, symbols: true, uppercase: true, lowercase: true, strict: true });
+            password = generator.generate({
+                length: 12,
+                numbers: true,
+                symbols: true,
+                uppercase: true,
+                lowercase: true,
+                strict: true, // Ensures at least one of each type
+            });
             const hashedPassword = await bcrypt.hash(password, 10);
             const verificationToken = Math.floor(100000 + Math.random() * 900000).toString();
 
-            user = new User({ email, password: hashedPassword, fullName: name, verificationToken, verificationTokenExpiresAt: Date.now() + 24 * 60 * 60 * 1000 });
+            user = new User({
+                email,
+                password: hashedPassword,
+                fullName: name,
+                verificationToken,
+                verificationTokenExpiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
+            });
             await user.save();
             user = await User.findOne({ email });
         }
+
+
+        //generateTokenAndSetCookie(res, user._id);
 
         user.lastLogin = new Date();
         await user.save();
@@ -247,18 +282,27 @@ export const googleAuth = async (req, res) => {
         res.status(200).json({
             success: true,
             message: "Logged in successfully",
-            user: { ...user._doc, password: undefined }
+            user: {
+                ...user._doc,
+                password: undefined,
+            },
         });
     } catch (err) {
-        console.error('Error logging in with OAuth2 user', err);
-        res.status(500).json({ success: false, message: "Server error", error: err.message });
+        console.log('Error logging in with OAuth2 user', err);
     }
-};
 
-// Gestion du mot de passe oublié
+
+    res.redirect(303, 'http://localhost:5173/');
+}
+/* <= Google sign-up and log in */
+
+/* forgot-password => */
 const transporter = nodemailer.createTransport({
     service: "gmail",
-    auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
+    auth: {
+        user: process.env.EMAIL_USER, // Your email
+        pass: process.env.EMAIL_PASS, // Your email password
+    },
 });
 
 export const forgot_password = async (req, res) => {
@@ -268,64 +312,56 @@ export const forgot_password = async (req, res) => {
         const user = await User.findOne({ email });
         if (!user) return res.status(404).json({ message: "User not found" });
 
+        // Create a reset token (valid for 1 hour)
         const resetToken = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: "1h" });
 
+        // Store the reset token in the database (optional)
         user.resetToken = resetToken;
         await user.save();
 
+        // Email content
         const resetLink = `http://localhost:5000/api/users/reset-password/${resetToken}`;
 
         const mailOptions = {
             from: process.env.EMAIL_USER,
             to: user.email,
             subject: "Password Reset Request",
-            html: `Click <a href="${resetLink}">here</a> to reset your password. This link is valid for 1 hour.`
+            html: `<p>Click <a href="${resetLink}">here</a> to reset your password. This link is valid for 1 hour.</p>`,
         };
 
-        transporter.sendMail(mailOptions, (err, info) => {
-            if (err) {
-                console.error(err);
-                return res.status(500).json({ message: "Email could not be sent", error: err.message });
-            }
-            res.status(200).json({ message: "Password reset link sent to email" });
-        });
+        await transporter.sendMail(mailOptions);
 
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ success: false, message: "Server error", error: err.message });
+        res.json({ message: "Reset email sent!" });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Error processing request" });
     }
-};
+}
 
-// Réinitialisation du mot de passe
 export const reset_password = async (req, res) => {
     const { token } = req.params;
-    const { password } = req.body;
+    const { newPassword } = req.body;
 
     try {
+        // Verify the token
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const user = await User.findOne({ _id: decoded.userId, resetToken: token });
-        if (!user) return res.status(404).json({ message: "Invalid or expired token" });
+        const user = await User.findById(decoded.userId);
 
-        user.password = await bcrypt.hash(password, 10);
+        if (!user || user.resetToken !== token) {
+            return res.status(400).json({ message: "Invalid or expired token" });
+        }
+
+        // Hash new password
+        user.password = await bcrypt.hash(newPassword, 10);
+
+        // Clear reset token after password change
         user.resetToken = undefined;
         await user.save();
 
-        res.status(200).json({ message: "Password reset successfully" });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ success: false, message: "Server error", error: err.message });
-    }
-};
-
-// Fonction pour récupérer les données de l'utilisateur via Google
-const getUserData = async (accessToken) => {
-    try {
-        const response = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
-            headers: { Authorization: `Bearer ${accessToken}` }
-        });
-        return response.data;
+        res.json({ message: "Password reset successfully!" });
     } catch (error) {
-        console.error('Error fetching user data from Google:', error);
-        throw error;
+        console.error("Error in reset-password:", error);
+        res.status(400).json({ message: "Invalid or expired token" });
     }
-};
+}
+/* <= forgot-password */
