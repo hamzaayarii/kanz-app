@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Sale = require('../models/Sale');
+const mongoose = require('mongoose');
 
 // Add a new sale
 router.post('/', async (req, res) => {

@@ -36,6 +36,7 @@ app.get('/api/users/:id', authenticate, async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 });
+
 app.use('/api/sales', saleRoutes);  // Sales routes
 app.use('/api/taxReports', taxReportsRoutes);  // Tax Reports routes
 // Base route

@@ -6,12 +6,13 @@ const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
-
+const mongoose = require('mongoose');
 // Load environment variables
 const SECRET_KEY = process.env.SECRET_KEY || 'your_secret_key';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1h';
 
 // Authentication Middleware
+// Middleware pour l'authentification
 const authenticate = (req, res, next) => {
     const token = req.headers.authorization?.split(' ')[1]; // Extraire le token du header Authorization
 

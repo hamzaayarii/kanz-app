@@ -6,6 +6,7 @@ import generator from "generate-password";
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 dotenv.config();
+import axios from 'axios';
 
 const SECRET_KEY = process.env.JWT_SECRET || 'your_secret_key';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1h';
@@ -89,34 +90,48 @@ export const create = async (req, res) => {
 };
 
 // Mettre à jour un utilisateur
-// 📌 Update user by ID
 export const updateUser = async (req, res) => {
     try {
         const userId = req.params.id;
         const updateData = req.body;
 
-        // Ensure the password is not being updated (or hash it if it's changed)
+        // Validate required fields
+        if (!userId) {
+            return res.status(400).json({ message: "User ID is required" });
+        }
+
+        // Hash password if provided
         if (updateData.password) {
             const hashedPassword = await bcrypt.hash(updateData.password, 10);
             updateData.password = hashedPassword;
         }
 
-        const updatedUser = await User.findByIdAndUpdate(userId, updateData, {
-            new: true,
-            runValidators: true,
-        });
+        // Update user in the database
+        const updatedUser = await User.findByIdAndUpdate(
+            userId,
+            updateData,
+            { new: true, runValidators: true }
+        );
 
         if (!updatedUser) {
             return res.status(404).json({ message: "User not found" });
         }
 
-        // Return updated user data
-        res.status(200).json({ user: updatedUser });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: "Server error" });
+        // Exclude sensitive fields from the response
+        const sanitizedUser = updatedUser.toObject();
+        delete sanitizedUser.password;
+
+        res.status(200).json({ user: sanitizedUser });
+    } catch (error) {
+        console.error("Error updating user:", error);
+        if (error.name === "ValidationError") {
+            return res.status(400).json({ message: "Invalid input", errors: error.errors });
+        }
+        return res.status(500).json({ message: "Server error", error: error.message });
     }
 };
+
+
 
 // Mettre à jour le statut de ban d'un utilisateur
 export const toggleBan = async (req, res) => {

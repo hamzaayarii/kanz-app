@@ -85,24 +85,46 @@ const Profile = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Ensure user._id is available
-    if (!user._id) {
-      alert("User ID is missing!");
-      return;
-    }
-
     try {
       setLoading(true);
 
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        alert("User not authenticated. Please log in again.");
+        return;
+      }
+
+      const decoded = jwtDecode(token);
+      const currentTime = Math.floor(Date.now() / 1000); // Current time in seconds
+      if (decoded.exp < currentTime) {
+        alert("Your session has expired. Please log in again.");
+        return;
+      }
+
+      // Ensure user._id is available
+      if (!user._id) {
+        alert("User ID is missing!");
+        return;
+      }
+
       // Send the updated user data to the backend API URL
-      const response = await axios.put(`http://localhost:5000/api/users/${user._id}`, user);
+      const response = await axios.put(`http://localhost:5000/api/users/${user._id}`, user, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
 
       if (response.status === 200) {
         alert("Profile updated successfully!");
       }
     } catch (err) {
       console.error("Error updating profile:", err);
-      setError(err.message || "Failed to update profile. Please try again.");
+      if (err.response && err.response.status === 401) {
+        alert("Unauthorized access. Please log in again.");
+      } else {
+        setError(err.message || "Failed to update profile. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
