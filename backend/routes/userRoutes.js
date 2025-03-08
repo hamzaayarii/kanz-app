@@ -88,7 +88,7 @@ router.get("/googleAuth", googleAuth);
 router.post("/forgot-password", forgot_password);
 
 // 📌 Réinitialisation du mot de passe
-router.post("/reset-password/:token", reset_password);
+router.post("/reset-password", reset_password);
 
 // 📌 Bannir un utilisateur (admin uniquement)
 router.post('/:id/ban', authenticate, authorizeAdmin, async (req, res) => {

@@ -120,6 +120,9 @@ const Login = () => {
                   <div className="text-center">
                     <Link to="/auth/register">Don't have an account? Register</Link>
                   </div>
+                  <div className="text-center">
+                    <Link to="/auth/password-reset">Forget the password? Click here</Link>
+                  </div>
                 </Form>
               </CardBody>
             </Card>

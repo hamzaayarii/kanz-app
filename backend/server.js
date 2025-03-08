@@ -7,6 +7,8 @@ const userRoutes = require('./routes/userRoutes'); // User routes
 const User = require('./models/User'); // Import the User model
 const authenticate = require('./middlewares/authMiddleware'); // Authentication middleware
 const saleRoutes = require('./routes/saleRoutes'); // Import the sales routes
+const purchaseRoutes = require('./routes/purchaseRoutes');
+const expenseRoutes = require('./routes/expenseRoutes');
 const app = express();
 
 // MongoDB connection
@@ -21,6 +23,8 @@ app.use(express.json());  // To parse JSON request bodies
 // Routes
 app.use('/api/users', userRoutes);
 app.use('/api/sales', saleRoutes);  // Add the sales routes
+app.use('/api/purchases', purchaseRoutes);
+app.use('/api/expenses', expenseRoutes);
 
 
 // Fetch user data by ID (API route)

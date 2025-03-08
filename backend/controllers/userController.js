@@ -316,7 +316,7 @@ export const forgot_password = async (req, res) => {
         await user.save();
 
         // Email content
-        const resetLink = `http://localhost:5000/api/users/reset-password/${resetToken}`;
+        const resetLink = `http://localhost:3000/auth/new-password/${resetToken}`;
 
         const mailOptions = {
             from: process.env.EMAIL_USER,
@@ -335,8 +335,7 @@ export const forgot_password = async (req, res) => {
 }
 
 export const reset_password = async (req, res) => {
-    const { token } = req.params;
-    const { newPassword } = req.body;
+    const { newPassword, token } = req.body;
 
     try {
         // Verify the token
