@@ -7,7 +7,11 @@ import Login from 'views/examples/Login.js';
 import Tables from 'views/examples/Tables.js';
 import Icons from 'views/examples/Icons.js';
 import AuthRoute from 'components/AuthRoute.js';
-import UserList from './views/examples/UserList.js'; // Corrected import path
+import UserList from './views/examples/UserList.js';
+import PasswordReset from './views/examples/PasswordReset.js';
+import NewPassword from './views/examples/NewPassword.js';
+import Purchases from './views/examples/Purchases.js';
+import Expenses from './views/examples/Expenses.js'; // Corrected import path
 
 var routes = [
   {
@@ -52,6 +56,31 @@ var routes = [
         <Sales /> {/* Updated component */}
       </AuthRoute>
     ),
+
+    layout: '/admin',
+  },
+  {
+    path: '/purchases', // Updated path
+    name: 'Purchases', // Updated name
+    icon: 'ni ni-cart text-orange', // Updated icon
+    component: (
+        <AuthRoute>
+          <Purchases /> {/* Updated component */}
+        </AuthRoute>
+    ),
+
+    layout: '/admin',
+  },
+  {
+    path: '/expenses', // Updated path
+    name: 'Expenses', // Updated name
+    icon: 'ni ni-cart text-orange', // Updated icon
+    component: (
+        <AuthRoute>
+          <Expenses /> {/* Updated component */}
+        </AuthRoute>
+    ),
+
     layout: '/admin',
   },
   {
@@ -90,6 +119,20 @@ var routes = [
     component: <Register />,
     layout: '/auth',
   },
+  {
+    path: '/password-reset',
+    name: 'PasswordReset',
+    icon: 'ni ni-circle-08 text-pink',
+    component: <PasswordReset />,
+    layout: '/auth',
+  },
+  {
+    path: '/new-password/:token',
+    name: 'PasswordReset',
+    icon: 'ni ni-circle-08 text-pink',
+    component: <NewPassword />,
+    layout: '/auth',
+  }
 ];
 
 export default routes;
