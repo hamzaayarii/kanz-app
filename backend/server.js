@@ -1,10 +1,11 @@
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
-const jwt = require('jsonwebtoken');
 const dbConfig = require('./config/db.json'); // MongoDB connection config
 const userRoutes = require('./routes/userRoutes'); // User routes
+const productRoutes = require('./routes/productRoutes'); // Product routes
 const User = require('./models/User'); // Import the User model
+const Product = require('./models/Product'); // Import the Product model
 const authenticate = require('./middlewares/authMiddleware'); // Authentication middleware
 const taxReportsRoutes = require('./routes/taxReportsRoutes');
 const app = express();
@@ -20,6 +21,9 @@ app.use(express.json());  // To parse JSON request bodies
 
 // Routes
 app.use('/api/users', userRoutes);
+
+// Product routes (added)
+app.use('/api/products', productRoutes);  // Products routes
 
 // Fetch user data by ID (API route)
 app.get('/api/users/:id', authenticate, async (req, res) => {
@@ -37,6 +41,7 @@ app.get('/api/users/:id', authenticate, async (req, res) => {
 });
 
 app.use('/api/taxReports', taxReportsRoutes);  // Tax Reports routes
+
 // Base route
 app.get('/', (req, res) => {
     res.send('Welcome to AccountingManagementApp');
