@@ -6,7 +6,6 @@ const dbConfig = require('./config/db.json'); // MongoDB connection config
 const userRoutes = require('./routes/userRoutes'); // User routes
 const User = require('./models/User'); // Import the User model
 const authenticate = require('./middlewares/authMiddleware'); // Authentication middleware
-const saleRoutes = require('./routes/saleRoutes'); // Sales routes
 const taxReportsRoutes = require('./routes/taxReportsRoutes');
 const app = express();
 
@@ -37,7 +36,6 @@ app.get('/api/users/:id', authenticate, async (req, res) => {
     }
 });
 
-app.use('/api/sales', saleRoutes);  // Sales routes
 app.use('/api/taxReports', taxReportsRoutes);  // Tax Reports routes
 // Base route
 app.get('/', (req, res) => {

@@ -1,7 +1,6 @@
 import React from 'react';
 import Index from 'views/Index.js';
 import Profile from 'views/examples/Profile.js';
-import Sales from 'views/examples/Sales.js'; // Corrected import path
 import Register from 'views/examples/Register.js';
 import Login from 'views/examples/Login.js';
 import Tables from 'views/examples/Tables.js';
@@ -41,17 +40,6 @@ var routes = [
     component: (
         <AuthRoute>
           <Icons />
-        </AuthRoute>
-    ),
-    layout: '/admin',
-  },
-  {
-    path: '/sales', // Updated path
-    name: 'Sales', // Updated name
-    icon: 'ni ni-cart text-orange', // Updated icon
-    component: (
-        <AuthRoute>
-          <Sales /> {/* Updated component */}
         </AuthRoute>
     ),
     layout: '/admin',
