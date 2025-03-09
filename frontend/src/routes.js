@@ -9,6 +9,7 @@ import AuthRoute from 'components/AuthRoute.js';
 import UserList from './views/examples/UserList.js'; // Corrected import path
 import TaxReportForm from './views/examples/TaxReportForm';  // Add import for TaxReportForm
 import TaxReportsList from './views/examples/TaxReportsList'; // Add import for TaxReportsList
+import Items from './views/examples/Items.js'; // Add import for Items
 
 var routes = [
   {
@@ -18,6 +19,17 @@ var routes = [
     component: (
         <AuthRoute>
           <Index />
+        </AuthRoute>
+    ),
+    layout: '/admin',
+  },
+  {
+    path: '/items',
+    name: 'Items',
+    icon: 'ni ni-box-2 text-orange',
+    component: (
+        <AuthRoute>
+          <Items />
         </AuthRoute>
     ),
     layout: '/admin',
