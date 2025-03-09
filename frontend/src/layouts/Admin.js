@@ -38,7 +38,7 @@ const Admin = (props) => {
     <>
       <Sidebar {...props} routes={routes} />
       <div className="main-content" ref={mainContent}>
-        <AdminNavbar {...props} brandText="Default Brand Text" />
+        <AdminNavbar {...props} brandText="" />
         <Routes>
           {getRoutes(routes)}
           <Route path="*" element={<Navigate to="/auth/login" replace />} />
