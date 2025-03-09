@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const dbConfig = require('./config/db.json'); // MongoDB connection config
+const jwt = require('jsonwebtoken');
 const userRoutes = require('./routes/userRoutes'); // User routes
 const productRoutes = require('./routes/productRoutes'); // Product routes
 const User = require('./models/User'); // Import the User model
