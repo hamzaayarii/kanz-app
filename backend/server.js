@@ -5,6 +5,7 @@ const dbConfig = require('./config/db.json'); // MongoDB connection config
 const jwt = require('jsonwebtoken');
 const userRoutes = require('./routes/userRoutes'); // User routes
 const productRoutes = require('./routes/productRoutes'); // Product routes
+const salesReceiptsRoutes = require('./routes/salesReceipts'); // Sales Receipts routes
 const User = require('./models/User'); // Import the User model
 const Product = require('./models/Product'); // Import the Product model
 const authenticate = require('./middlewares/authMiddleware'); // Authentication middleware
@@ -21,10 +22,9 @@ app.use(cors({ origin: 'http://localhost:3000', method: 'GET,POST', credentials:
 app.use(express.json());  // To parse JSON request bodies
 
 // Routes
-app.use('/api/users', userRoutes);
-
-// Product routes (added)
+app.use('/api/users', userRoutes);  // User routes
 app.use('/api/products', productRoutes);  // Products routes
+app.use('/api/salesReceipts', salesReceiptsRoutes);  // Sales Receipts routes
 
 // Fetch user data by ID (API route)
 app.get('/api/users/:id', authenticate, async (req, res) => {
