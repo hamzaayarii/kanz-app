@@ -10,70 +10,85 @@ const CreateInvoice = () => {
         dueDate: '',
         items: [{ itemDetails: '', quantity: 1, rate: 0, tax: 0, amount: 0 }],
         subTotal: 0,
-        discount: 0,
+        discount: 0, // Remise en pourcentage
         shippingCharges: 0,
-        adjustment: 0,
         total: 0,
         customerNotes: ''
     });
 
+    // Calcul du montant d'un article (quantité * taux + taxe en %)
     const calculateAmount = (item) => {
         const qty = parseFloat(item.quantity) || 0;
         const rate = parseFloat(item.rate) || 0;
-        const tax = parseFloat(item.tax) || 0;
-        return qty >= 0 && rate >= 0 ? (qty * rate) + tax : 0;
+        const taxPercentage = parseFloat(item.tax) || 0;
+        const baseAmount = qty * rate;
+        const taxAmount = (baseAmount * taxPercentage) / 100;
+        return baseAmount + taxAmount;
     };
 
-    const calculateTotals = (items) => {
+    // Calcul des totaux (sous-total, remise en %, frais de livraison)
+    const calculateTotals = (items, discount, shippingCharges) => {
         const subTotal = items.reduce((sum, item) => sum + calculateAmount(item), 0);
-        const total = subTotal -
-            Math.max(0, parseFloat(invoice.discount) || 0) +
-            Math.max(0, parseFloat(invoice.shippingCharges) || 0) +
-            parseFloat(invoice.adjustment || 0);
+        const discountAmount = (subTotal * (parseFloat(discount) || 0)) / 100;
+        const total = subTotal - discountAmount + Math.max(0, parseFloat(shippingCharges) || 0);
         return { subTotal, total: Math.max(0, total) };
     };
 
+    // Gestion des changements dans les champs principaux
     const handleChange = (e) => {
         const { name, value } = e.target;
-        const parsedValue = ['discount', 'shippingCharges', 'adjustment'].includes(name)
-            ? parseFloat(value) || 0
+        const parsedValue = ['discount', 'shippingCharges'].includes(name)
+            ? (value === '' ? 0 : Math.max(0, parseFloat(value))) // Valeur positive ou 0
             : value;
-        const newInvoice = { ...invoice, [name]: parsedValue };
-        const totals = calculateTotals(newInvoice.items);
-        setInvoice({ ...newInvoice, ...totals });
+
+        setInvoice((prevInvoice) => {
+            const newInvoice = { ...prevInvoice, [name]: parsedValue };
+            const totals = calculateTotals(newInvoice.items, newInvoice.discount, newInvoice.shippingCharges);
+            return { ...newInvoice, ...totals };
+        });
     };
 
+    // Gestion des changements dans les articles
     const handleItemChange = (index, e) => {
         const { name, value } = e.target;
-        const parsedValue = name === 'quantity' || name === 'rate' || name === 'tax'
-            ? Math.max(0, parseFloat(value) || 0)
+        const parsedValue = ['quantity', 'rate', 'tax'].includes(name)
+            ? (value === '' ? 0 : Math.max(0, parseFloat(value))) // Valeur positive ou 0
             : value;
-        const updatedItems = invoice.items.map((item, i) => {
-            if (i === index) {
-                const newItem = { ...item, [name]: parsedValue };
-                return { ...newItem, amount: calculateAmount(newItem) };
-            }
-            return item;
+
+        setInvoice((prevInvoice) => {
+            const updatedItems = prevInvoice.items.map((item, i) => {
+                if (i === index) {
+                    const newItem = { ...item, [name]: parsedValue };
+                    return { ...newItem, amount: calculateAmount(newItem) };
+                }
+                return item;
+            });
+            const totals = calculateTotals(updatedItems, prevInvoice.discount, prevInvoice.shippingCharges);
+            return { ...prevInvoice, items: updatedItems, ...totals };
         });
-        const totals = calculateTotals(updatedItems);
-        setInvoice({ ...invoice, items: updatedItems, ...totals });
     };
 
+    // Ajouter un nouvel article
     const addItem = () => {
-        setInvoice({
-            ...invoice,
-            items: [...invoice.items, { itemDetails: '', quantity: 1, rate: 0, tax: 0, amount: 0 }]
+        setInvoice((prevInvoice) => {
+            const updatedItems = [...prevInvoice.items, { itemDetails: '', quantity: 1, rate: 0, tax: 0, amount: 0 }];
+            const totals = calculateTotals(updatedItems, prevInvoice.discount, prevInvoice.shippingCharges);
+            return { ...prevInvoice, items: updatedItems, ...totals };
         });
     };
 
+    // Supprimer un article
     const removeItem = (index) => {
         if (invoice.items.length > 1) {
-            const updatedItems = invoice.items.filter((_, i) => i !== index);
-            const totals = calculateTotals(updatedItems);
-            setInvoice({ ...invoice, items: updatedItems, ...totals });
+            setInvoice((prevInvoice) => {
+                const updatedItems = prevInvoice.items.filter((_, i) => i !== index);
+                const totals = calculateTotals(updatedItems, prevInvoice.discount, prevInvoice.shippingCharges);
+                return { ...prevInvoice, items: updatedItems, ...totals };
+            });
         }
     };
 
+    // Soumission du formulaire
     const handleSubmit = async (e) => {
         e.preventDefault();
         const { customerName, invoiceNumber, invoiceDate, dueDate, items } = invoice;
@@ -91,8 +106,9 @@ const CreateInvoice = () => {
             return;
         }
 
+        const invoiceToSubmit = { ...invoice, adjustment: 0 };
         try {
-            await axios.post('http://localhost:5000/api/invoices', invoice);
+            await axios.post('http://localhost:5000/api/invoices', invoiceToSubmit);
             alert('Facture créée avec succès');
             setInvoice({
                 customerName: '',
@@ -104,7 +120,6 @@ const CreateInvoice = () => {
                 subTotal: 0,
                 discount: 0,
                 shippingCharges: 0,
-                adjustment: 0,
                 total: 0,
                 customerNotes: ''
             });
