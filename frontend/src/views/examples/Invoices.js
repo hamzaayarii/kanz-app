@@ -26,7 +26,7 @@ const Invoices = () => {
         formData.append("file", file);
 
         try {
-            const response = await axios.post("http://localhost:5000/api/invoices", formData, {
+            const response = await axios.post("http://localhost:5000/api/invoices1", formData, {
                 headers: { "Content-Type": "multipart/form-data" },
             });
             setUploadedInvoices([...uploadedInvoices, response.data]);
