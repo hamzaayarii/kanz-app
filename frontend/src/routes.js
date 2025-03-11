@@ -14,6 +14,7 @@ import UserList from './views/examples/UserList.js'; // Corrected import path
 import TaxReportForm from './views/examples/TaxReportForm';  // Add import for TaxReportForm
 import TaxReportsList from './views/examples/TaxReportsList'; // Add import for TaxReportsList
 import Items from './views/examples/Items.js'; // Add import for Items
+import SalesReceipts from './views/examples/SalesReceipts'; // Add import for SalesReceipts
 
 var routes = [
   {
@@ -38,6 +39,17 @@ var routes = [
     ),
     layout: '/admin',
   },
+  {
+    path: '/sales-receipts',
+    name: 'Sales Receipts',
+    icon: 'ni ni-credit-card text-blue',
+    component: (
+      <AuthRoute>
+        <SalesReceipts />
+      </AuthRoute>
+    ),
+    layout: '/admin',
+  },  
   {
     path: '/users',
     name: 'Users List',
