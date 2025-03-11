@@ -1,10 +1,5 @@
 # Node.js dependencies
 node_modules/
-<<<<<<< HEAD
-.env
-package-lock.json
-=======
->>>>>>> Alii
 
 # React build files
 /build/

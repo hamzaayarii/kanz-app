@@ -85,24 +85,46 @@ const Profile = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Ensure user._id is available
-    if (!user._id) {
-      alert("User ID is missing!");
-      return;
-    }
-
     try {
       setLoading(true);
 
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        alert("User not authenticated. Please log in again.");
+        return;
+      }
+
+      const decoded = jwtDecode(token);
+      const currentTime = Math.floor(Date.now() / 1000); // Current time in seconds
+      if (decoded.exp < currentTime) {
+        alert("Your session has expired. Please log in again.");
+        return;
+      }
+
+      // Ensure user._id is available
+      if (!user._id) {
+        alert("User ID is missing!");
+        return;
+      }
+
       // Send the updated user data to the backend API URL
-      const response = await axios.put(`http://localhost:5000/api/users/${user._id}`, user);
+      const response = await axios.put(`http://localhost:5000/api/users/${user._id}`, user, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
 
       if (response.status === 200) {
         alert("Profile updated successfully!");
       }
     } catch (err) {
       console.error("Error updating profile:", err);
-      setError(err.message || "Failed to update profile. Please try again.");
+      if (err.response && err.response.status === 401) {
+        alert("Unauthorized access. Please log in again.");
+      } else {
+        setError(err.message || "Failed to update profile. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -115,125 +137,125 @@ const Profile = () => {
   if (error) return <div className="text-center">{error}</div>;
 
   return (
-    <>
-      <AdminNavbar profilePic={user.avatar} userName={user.fullName} />
-      <UserHeader userName={user.fullName} profilePicture={user.avatar} />
-      <Container className="mt--7" fluid>
-        <Row>
-          <Col className="order-xl-1" xl="8">
-            <Card className="bg-secondary shadow">
-              <CardHeader className="bg-white border-0">
-                <Row className="align-items-center">
-                  <Col xs="8">
-                    <h3 className="mb-0">My Account</h3>
-                  </Col>
-                  <Col className="text-right" xs="4">
-                    <Button color="primary" onClick={handleSubmit} size="sm">
-                      Save Changes
-                    </Button>
-                  </Col>
-                </Row>
-              </CardHeader>
-              <CardBody>
-                <Form onSubmit={handleSubmit}>
-                  <h6 className="heading-small text-muted mb-4">User Information</h6>
-                  <div className="pl-lg-4">
-                    <Row>
-                      <Col lg="6">
-                        <FormGroup>
-                          <label className="form-control-label">Full Name</label>
-                          <Input
-                            type="text"
-                            name="fullName"
-                            value={user.fullName}
-                            onChange={handleChange}
-                            placeholder="Full Name"
-                            required
-                          />
-                        </FormGroup>
-                      </Col>
-                      <Col lg="6">
-                        <FormGroup>
-                          <label className="form-control-label">Email</label>
-                          <Input
-                            type="email"
-                            name="email"
-                            value={user.email}
-                            onChange={handleChange}
-                            placeholder="Email"
-                            required
-                          />
-                        </FormGroup>
-                      </Col>
-                    </Row>
-                    <Row>
-                      <Col lg="6">
-                        <FormGroup>
-                          <label className="form-control-label">Phone Number</label>
-                          <Input
-                            type="text"
-                            name="phoneNumber"
-                            value={user.phoneNumber}
-                            onChange={handleChange}
-                            placeholder="Phone Number"
-                          />
-                        </FormGroup>
-                      </Col>
-                      <Col lg="6">
-                        <FormGroup>
-                          <label className="form-control-label">Governorate</label>
-                          <Input
-                            type="text"
-                            name="governorate"
-                            value={user.governorate}
-                            onChange={handleChange}
-                            placeholder="Governorate"
-                          />
-                        </FormGroup>
-                      </Col>
-                    </Row>
-                    <Row>
-                      <Col lg="6">
-                        <FormGroup>
-                          <label className="form-control-label">Gender</label>
-                          <Input
-                            type="select"
-                            name="gender"
-                            value={user.gender}
-                            onChange={handleChange}
-                          >
-                            <option value="">Select Gender</option>
-                            <option value="Male">Male</option>
-                            <option value="Female">Female</option>
-                          </Input>
-                        </FormGroup>
-                      </Col>
-                    </Row>
+      <>
+        <AdminNavbar profilePic={user.avatar} userName={user.fullName} />
+        <UserHeader userName={user.fullName} profilePicture={user.avatar} />
+        <Container className="mt--7" fluid>
+          <Row>
+            <Col className="order-xl-1" xl="8">
+              <Card className="bg-secondary shadow">
+                <CardHeader className="bg-white border-0">
+                  <Row className="align-items-center">
+                    <Col xs="8">
+                      <h3 className="mb-0">My Account</h3>
+                    </Col>
+                    <Col className="text-right" xs="4">
+                      <Button color="primary" onClick={handleSubmit} size="sm">
+                        Save Changes
+                      </Button>
+                    </Col>
+                  </Row>
+                </CardHeader>
+                <CardBody>
+                  <Form onSubmit={handleSubmit}>
+                    <h6 className="heading-small text-muted mb-4">User Information</h6>
+                    <div className="pl-lg-4">
+                      <Row>
+                        <Col lg="6">
+                          <FormGroup>
+                            <label className="form-control-label">Full Name</label>
+                            <Input
+                                type="text"
+                                name="fullName"
+                                value={user.fullName}
+                                onChange={handleChange}
+                                placeholder="Full Name"
+                                required
+                            />
+                          </FormGroup>
+                        </Col>
+                        <Col lg="6">
+                          <FormGroup>
+                            <label className="form-control-label">Email</label>
+                            <Input
+                                type="email"
+                                name="email"
+                                value={user.email}
+                                onChange={handleChange}
+                                placeholder="Email"
+                                required
+                            />
+                          </FormGroup>
+                        </Col>
+                      </Row>
+                      <Row>
+                        <Col lg="6">
+                          <FormGroup>
+                            <label className="form-control-label">Phone Number</label>
+                            <Input
+                                type="text"
+                                name="phoneNumber"
+                                value={user.phoneNumber}
+                                onChange={handleChange}
+                                placeholder="Phone Number"
+                            />
+                          </FormGroup>
+                        </Col>
+                        <Col lg="6">
+                          <FormGroup>
+                            <label className="form-control-label">Governorate</label>
+                            <Input
+                                type="text"
+                                name="governorate"
+                                value={user.governorate}
+                                onChange={handleChange}
+                                placeholder="Governorate"
+                            />
+                          </FormGroup>
+                        </Col>
+                      </Row>
+                      <Row>
+                        <Col lg="6">
+                          <FormGroup>
+                            <label className="form-control-label">Gender</label>
+                            <Input
+                                type="select"
+                                name="gender"
+                                value={user.gender}
+                                onChange={handleChange}
+                            >
+                              <option value="">Select Gender</option>
+                              <option value="Male">Male</option>
+                              <option value="Female">Female</option>
+                            </Input>
+                          </FormGroup>
+                        </Col>
+                      </Row>
 
-                    {/* Profile Picture Upload */}
-                    <Row>
-                      <Col lg="6">
-                        <FormGroup>
-                          <label className="form-control-label">Profile Picture</label>
-                          <Input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleProfilePicChange}
-                          />
-                          {user.avatar && (
-                            <img src={user.avatar} alt="Profile" width="100px" />
-                          )}
-                        </FormGroup>
-                      </Col>
-                    </Row>
-                  </div>
-                </Form>
-              </CardBody>
-            </Card>
-          </Col>
-        </Row>
-      </Container>
-    </>
+                      {/* Profile Picture Upload */}
+                      <Row>
+                        <Col lg="6">
+                          <FormGroup>
+                            <label className="form-control-label">Profile Picture</label>
+                            <Input
+                                type="file"
+                                accept="image/*"
+                                onChange={handleProfilePicChange}
+                            />
+                            {user.avatar && (
+                                <img src={user.avatar} alt="Profile" width="100px" />
+                            )}
+                          </FormGroup>
+                        </Col>
+                      </Row>
+                    </div>
+                  </Form>
+                </CardBody>
+              </Card>
+            </Col>
+          </Row>
+        </Container>
+      </>
   );
 };
 
