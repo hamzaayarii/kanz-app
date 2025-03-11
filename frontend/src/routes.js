@@ -15,7 +15,8 @@ import TaxReportForm from './views/examples/TaxReportForm';  // Add import for T
 import TaxReportsList from './views/examples/TaxReportsList'; // Add import for TaxReportsList
 import Items from './views/examples/Items.js'; // Add import for Items
 import SalesReceipts from './views/examples/SalesReceipts'; // Add import for SalesReceipts
-
+import CreateInvoice from './views/examples/CreateInvoice';
+import InvoiceList from './views/examples/InvoiceList';
 var routes = [
   {
     path: '/index',
@@ -35,6 +36,29 @@ var routes = [
     component: (
         <AuthRoute>
           <Items />
+        </AuthRoute>
+    ),
+    layout: '/admin',
+  },
+    {
+    path: '/create-invoice',
+    name: 'Create Invoice',
+    icon: 'ni ni-paper-diploma text-blue',
+    component: (
+        <AuthRoute>
+          <CreateInvoice />
+        </AuthRoute>
+    ),
+    layout: '/admin',
+  },
+  //  Nouvelle route pour la liste des factures
+  {
+    path: '/invoices',
+    name: 'Invoices List',
+    icon: 'ni ni-bullet-list-67 text-green',
+    component: (
+        <AuthRoute>
+          <InvoiceList />
         </AuthRoute>
     ),
     layout: '/admin',
