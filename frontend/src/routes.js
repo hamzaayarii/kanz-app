@@ -13,9 +13,12 @@ import Expenses from './views/examples/Expenses.js'; // Corrected import path
 import UserList from './views/examples/UserList.js'; // Corrected import path
 import TaxReportForm from './views/examples/TaxReportForm';  // Add import for TaxReportForm
 import TaxReportsList from './views/examples/TaxReportsList'; // Add import for TaxReportsList
-import Items from './views/examples/Items.js';
 import Invoices from "./views/examples/Invoices.js"; // Add import for Items
 
+import Items from './views/examples/Items.js'; // Add import for Items
+import SalesReceipts from './views/examples/SalesReceipts'; // Add import for SalesReceipts
+import CreateInvoice from './views/examples/CreateInvoice';
+import InvoiceList from './views/examples/InvoiceList';
 var routes = [
   {
     path: '/index',
@@ -39,6 +42,40 @@ var routes = [
     ),
     layout: '/admin',
   },
+    {
+    path: '/create-invoice',
+    name: 'Create Invoice',
+    icon: 'ni ni-paper-diploma text-blue',
+    component: (
+        <AuthRoute>
+          <CreateInvoice />
+        </AuthRoute>
+    ),
+    layout: '/admin',
+  },
+  //  Nouvelle route pour la liste des factures
+  {
+    path: '/invoices',
+    name: 'Invoices List',
+    icon: 'ni ni-bullet-list-67 text-green',
+    component: (
+        <AuthRoute>
+          <InvoiceList />
+        </AuthRoute>
+    ),
+    layout: '/admin',
+  },
+  {
+    path: '/sales-receipts',
+    name: 'Sales Receipts',
+    icon: 'ni ni-credit-card text-blue',
+    component: (
+      <AuthRoute>
+        <SalesReceipts />
+      </AuthRoute>
+    ),
+    layout: '/admin',
+  },  
   {
     path: '/users',
     name: 'Users List',
@@ -74,7 +111,7 @@ var routes = [
     layout: '/admin',
   },
   {
-    path: '/invoices', // Updated path
+    path: '/invoices1', // Updated path
     name: 'Invoices', // Updated name
     icon: 'ni ni-cart text-orange', // Updated icon
     component: (
