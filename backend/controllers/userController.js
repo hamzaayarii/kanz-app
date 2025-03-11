@@ -5,6 +5,7 @@ import { OAuth2Client } from "google-auth-library";
 import generator from "generate-password";
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
+import cookie from 'cookie-parser';
 dotenv.config();
 
 const SECRET_KEY = process.env.JWT_SECRET || 'your_secret_key';
@@ -175,6 +176,14 @@ export const login = async (req, res) => {
         );
 
         console.log('Token generated:', token);
+
+        // 🔹 Store token in a **secure** HTTP-only cookie
+        res.cookie('token', token, {
+            httpOnly: true, // Prevents access via JavaScript (for security)
+            secure: process.env.NODE_ENV === 'production', // Only use `secure` in production (HTTPS)
+            sameSite: 'strict', // Helps prevent CSRF attacks
+            maxAge: 60 * 60 * 1000 // 1 hour expiration
+        });
 
         res.status(200).json({
             success: true,

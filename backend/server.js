@@ -8,6 +8,9 @@ const User = require('./models/User'); // Import the User model
 const authenticate = require('./middlewares/authMiddleware'); // Authentication middleware
 const saleRoutes = require('./routes/saleRoutes'); // Import the sales routes
 const app = express();
+const businessRoutes = require('./routes/businessRoutes');
+const cookieParser = require('cookie-parser');
+
 
 // MongoDB connection
 mongoose.connect(dbConfig.mongodb.url, { useNewUrlParser: true, useUnifiedTopology: true })
@@ -18,10 +21,11 @@ mongoose.connect(dbConfig.mongodb.url, { useNewUrlParser: true, useUnifiedTopolo
 app.use(cors({ origin: 'http://localhost:3000', method: 'GET,POST', credentials: true }));
 app.use(express.json());  // To parse JSON request bodies
 
+app.use(cookieParser());
 // Routes
 app.use('/api/users', userRoutes);
 app.use('/api/sales', saleRoutes);  // Add the sales routes
-
+app.use('/api/business', businessRoutes); /// api/business/add
 
 // Fetch user data by ID (API route)
 app.get('/api/users/:id', authenticate, async (req, res) => {

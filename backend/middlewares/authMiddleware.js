@@ -1,9 +1,14 @@
-// authMiddleware.js
 const jwt = require('jsonwebtoken');
-const SECRET_KEY = process.env.SECRET_KEY || 'your_secret_key';
+const SECRET_KEY = process.env.JWT_SECRET || 'your_secret_key';
 
 const authenticate = (req, res, next) => {
-    const token = req.headers.authorization?.split(' ')[1]; // Extract token from Authorization header
+    // First try to get token from Authorization header
+    let token = req.headers.authorization?.split(' ')[1];
+
+    // If not in header, try to get from cookies
+    if (!token && req.cookies) {
+        token = req.cookies.token;
+    }
 
     if (!token) {
         return res.status(401).json({ message: 'Token is required' });
