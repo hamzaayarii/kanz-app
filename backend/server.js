@@ -6,9 +6,12 @@ const dbConfig = require('./config/db.json'); // MongoDB connection config
 const userRoutes = require('./routes/userRoutes'); // User routes
 const User = require('./models/User'); // Import the User model
 const authenticate = require('./middlewares/authMiddleware'); // Authentication middleware
-const saleRoutes = require('./routes/saleRoutes'); // Import the sales routes
 const purchaseRoutes = require('./routes/purchaseRoutes');
 const expenseRoutes = require('./routes/expenseRoutes');
+const productRoutes = require('./routes/productRoutes'); // Product routes
+const salesReceiptsRoutes = require('./routes/salesReceipts'); // Sales Receipts routes
+const Product = require('./models/Product'); // Import the Product model
+const taxReportsRoutes = require('./routes/taxReportsRoutes');
 const app = express();
 
 // MongoDB connection
@@ -21,15 +24,14 @@ app.use(cors({ origin: 'http://localhost:3000', method: 'GET,POST', credentials:
 app.use(express.json());  // To parse JSON request bodies
 
 // Routes
-app.use('/api/users', userRoutes);
-app.use('/api/sales', saleRoutes);  // Add the sales routes
+app.use('/api/users', userRoutes);  // User routes
+app.use('/api/products', productRoutes);  // Products routes
+app.use('/api/salesReceipts', salesReceiptsRoutes);  // Sales Receipts routes
 app.use('/api/purchases', purchaseRoutes);
 app.use('/api/expenses', expenseRoutes);
 
-
 // Fetch user data by ID (API route)
 app.get('/api/users/:id', authenticate, async (req, res) => {
-
     const { id } = req.params;
     try {
         const user = await User.findById(id).select('-password');
@@ -42,6 +44,8 @@ app.get('/api/users/:id', authenticate, async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 });
+
+app.use('/api/taxReports', taxReportsRoutes);  // Tax Reports routes
 
 // Base route
 app.get('/', (req, res) => {

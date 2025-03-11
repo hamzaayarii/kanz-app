@@ -1,17 +1,19 @@
 import React from 'react';
 import Index from 'views/Index.js';
 import Profile from 'views/examples/Profile.js';
-import Sales from 'views/examples/Sales.js'; // Corrected import path
 import Register from 'views/examples/Register.js';
 import Login from 'views/examples/Login.js';
 import Tables from 'views/examples/Tables.js';
 import Icons from 'views/examples/Icons.js';
 import AuthRoute from 'components/AuthRoute.js';
-import UserList from './views/examples/UserList.js';
 import PasswordReset from './views/examples/PasswordReset.js';
 import NewPassword from './views/examples/NewPassword.js';
 import Purchases from './views/examples/Purchases.js';
 import Expenses from './views/examples/Expenses.js'; // Corrected import path
+import UserList from './views/examples/UserList.js'; // Corrected import path
+import TaxReportForm from './views/examples/TaxReportForm';  // Add import for TaxReportForm
+import TaxReportsList from './views/examples/TaxReportsList'; // Add import for TaxReportsList
+import Items from './views/examples/Items.js'; // Add import for Items
 
 var routes = [
   {
@@ -21,6 +23,17 @@ var routes = [
     component: (
         <AuthRoute>
           <Index />
+        </AuthRoute>
+    ),
+    layout: '/admin',
+  },
+  {
+    path: '/items',
+    name: 'Items',
+    icon: 'ni ni-box-2 text-orange',
+    component: (
+        <AuthRoute>
+          <Items />
         </AuthRoute>
     ),
     layout: '/admin',
@@ -45,18 +58,6 @@ var routes = [
           <Icons />
         </AuthRoute>
     ),
-    layout: '/admin',
-  },
-  {
-    path: '/sales', // Updated path
-    name: 'Sales', // Updated name
-    icon: 'ni ni-cart text-orange', // Updated icon
-    component: (
-      <AuthRoute>
-        <Sales /> {/* Updated component */}
-      </AuthRoute>
-    ),
-
     layout: '/admin',
   },
   {
@@ -101,6 +102,28 @@ var routes = [
     component: (
         <AuthRoute>
           <Tables />
+        </AuthRoute>
+    ),
+    layout: '/admin',
+  },
+  {
+    path: '/tax-report',
+    name: 'Generate Tax Report',
+    icon: 'ni ni-file-03 text-green',
+    component: (
+        <AuthRoute>
+          <TaxReportForm />
+        </AuthRoute>
+    ),
+    layout: '/admin',
+  },
+  {
+    path: '/tax-reports',
+    name: 'Tax Reports List',
+    icon: 'ni ni-collection text-purple',
+    component: (
+        <AuthRoute>
+          <TaxReportsList />
         </AuthRoute>
     ),
     layout: '/admin',
