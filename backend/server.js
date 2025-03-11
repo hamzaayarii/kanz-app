@@ -7,11 +7,12 @@ const userRoutes = require('./routes/userRoutes'); // User routes
 const User = require('./models/User'); // Import the User model
 const authenticate = require('./middlewares/authMiddleware'); // Authentication middleware
 const purchaseRoutes = require('./routes/purchaseRoutes');
-const expenseRoutes = require('./routes/expenseRoutes');
 const productRoutes = require('./routes/productRoutes'); // Product routes
 const salesReceiptsRoutes = require('./routes/salesReceipts'); // Sales Receipts routes
+const invoiceRoutes = require('./routes/invoiceRoutes');
 const Product = require('./models/Product'); // Import the Product model
 const taxReportsRoutes = require('./routes/taxReportsRoutes');
+const expenseRoutes = require('./routes/expenseRoutes');
 const app = express();
 
 // MongoDB connection
@@ -28,7 +29,10 @@ app.use('/api/users', userRoutes);  // User routes
 app.use('/api/products', productRoutes);  // Products routes
 app.use('/api/salesReceipts', salesReceiptsRoutes);  // Sales Receipts routes
 app.use('/api/purchases', purchaseRoutes);
+app.use('/api/invoices', invoiceRoutes);
+app.use('/uploads', express.static('uploads'));
 app.use('/api/expenses', expenseRoutes);
+
 
 // Fetch user data by ID (API route)
 app.get('/api/users/:id', authenticate, async (req, res) => {

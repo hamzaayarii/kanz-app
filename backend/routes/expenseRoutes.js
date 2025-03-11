@@ -1,98 +1,64 @@
 const express = require('express');
-const mongoose = require('mongoose');
-const multer = require('multer');
-const { GridFsStorage } = require('multer-gridfs-storage');
-const Grid = require('gridfs-stream');
-
 const router = express.Router();
+const Expense = require('../models/Expense');
 
-// MongoDB Connection
-const conn = mongoose.createConnection('mongodb://localhost:27017/invoiceDB', {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-});
-
-let gfs;
-let bucket;
-
-// Ensure connection is open before accessing GridFS
-conn.once('open', () => {
-    console.log('MongoDB connection established');
-    gfs = Grid(conn.db, mongoose.mongo);
-    gfs.collection('invoices');  // Collection name in MongoDB
-    bucket = new mongoose.mongo.GridFSBucket(conn.db, {
-        bucketName: 'invoices'
-    });
-});
-
-// Custom multer storage for GridFS
-const storage = new GridFsStorage({
-    url: 'mongodb://localhost:27017/invoiceDB',
-    file: (req, file) => {
-        console.log('Processing file:', file); // Log to ensure the file object is correct
-
-        return {
-            filename: Date.now() + '-' + file.originalname,
-            bucketName: 'invoices',
-        };
-    },
-});
-
-// Multer setup
-const upload = multer({ storage });
-
-// Upload Invoice
-router.post('/', upload.single('file'), async (req, res) => {
-    if (!req.file) {
-        return res.status(400).json({ error: 'File is required' });
-    }
-
-    console.log('File uploaded:', req.file); // Log the uploaded file to confirm details
-
+// Create an expense
+router.post('/', async (req, res) => {
     try {
-        const file = await gfs.files.findOne({ _id: req.file.id });
-        if (!file) {
-            return res.status(404).json({ message: 'File not found in the database' });
-        }
-
-        res.status(201).json({ fileId: file._id, filename: file.filename });
-    } catch (err) {
-        console.error('Error retrieving file metadata:', err);
+        const expense = new Expense(req.body);
+        await expense.save();
+        res.status(201).json(expense);
+    } catch (error) {
+        console.error(error);
         res.status(500).json({ message: 'Server error' });
     }
 });
 
-// Get All Invoices
+// Get all expenses
 router.get('/', async (req, res) => {
     try {
-        const files = await gfs.files.find().toArray();
-        if (!files || files.length === 0) {
-            return res.status(404).json({ message: 'No files found' });
-        }
-        res.json(files);
-    } catch (err) {
-        console.error(err);
+        const expenses = await Expense.find();
+        res.json(expenses);
+    } catch (error) {
+        console.error(error);
         res.status(500).json({ message: 'Server error' });
     }
 });
 
-// Get Single Invoice File
+// Get single expense
 router.get('/:id', async (req, res) => {
     try {
-        const file = await gfs.files.findOne({ _id: new mongoose.Types.ObjectId(req.params.id) });
-        if (!file) {
-            return res.status(404).json({ message: 'File not found' });
-        }
-        const readStream = gfs.createReadStream(file.filename);
-        readStream.pipe(res);
-    } catch (err) {
-        console.error(err);
+        const expense = await Expense.findById(req.params.id);
+        if (!expense) return res.status(404).json({ message: 'Expense not found' });
+        res.json(expense);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// Update an expense
+router.put('/:id', async (req, res) => {
+    try {
+        const expense = await Expense.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        if (!expense) return res.status(404).json({ message: 'Expense not found' });
+        res.json(expense);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// Delete an expense
+router.delete('/:id', async (req, res) => {
+    try {
+        const expense = await Expense.findByIdAndDelete(req.params.id);
+        if (!expense) return res.status(404).json({ message: 'Expense not found' });
+        res.json({ message: 'Expense deleted successfully' });
+    } catch (error) {
+        console.error(error);
         res.status(500).json({ message: 'Server error' });
     }
 });
 
 module.exports = router;
-
-
-
-

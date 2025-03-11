@@ -13,7 +13,8 @@ import Expenses from './views/examples/Expenses.js'; // Corrected import path
 import UserList from './views/examples/UserList.js'; // Corrected import path
 import TaxReportForm from './views/examples/TaxReportForm';  // Add import for TaxReportForm
 import TaxReportsList from './views/examples/TaxReportsList'; // Add import for TaxReportsList
-import Items from './views/examples/Items.js'; // Add import for Items
+import Items from './views/examples/Items.js';
+import Invoices from "./views/examples/Invoices.js"; // Add import for Items
 
 var routes = [
   {
@@ -67,6 +68,18 @@ var routes = [
     component: (
         <AuthRoute>
           <Purchases /> {/* Updated component */}
+        </AuthRoute>
+    ),
+
+    layout: '/admin',
+  },
+  {
+    path: '/invoices', // Updated path
+    name: 'Invoices', // Updated name
+    icon: 'ni ni-cart text-orange', // Updated icon
+    component: (
+        <AuthRoute>
+          <Invoices /> {/* Updated component */}
         </AuthRoute>
     ),
 

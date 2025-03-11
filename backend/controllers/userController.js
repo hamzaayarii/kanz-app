@@ -325,7 +325,7 @@ export const forgot_password = async (req, res) => {
         if (!user) return res.status(404).json({ message: "User not found" });
 
         // Create a reset token (valid for 1 hour)
-        const resetToken = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: "1h" });
+        const resetToken = jwt.sign({ userId: user._id }, process.env.SECRET_KEY, { expiresIn: "1h" });
 
         // Store the reset token in the database (optional)
         user.resetToken = resetToken;
@@ -355,7 +355,7 @@ export const reset_password = async (req, res) => {
 
     try {
         // Verify the token
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const decoded = jwt.verify(token, process.env.SECRET_KEY);
         const user = await User.findById(decoded.userId);
 
         if (!user || user.resetToken !== token) {
