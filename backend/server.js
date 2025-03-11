@@ -12,6 +12,8 @@ const productRoutes = require('./routes/productRoutes'); // Product routes
 const salesReceiptsRoutes = require('./routes/salesReceipts'); // Sales Receipts routes
 const Product = require('./models/Product'); // Import the Product model
 const taxReportsRoutes = require('./routes/taxReportsRoutes');
+const invoiceRoutes = require('./routes/invoiceRoutes');
+
 const app = express();
 
 // MongoDB connection
@@ -20,7 +22,7 @@ mongoose.connect(dbConfig.mongodb.url, { useNewUrlParser: true, useUnifiedTopolo
     .catch((err) => console.error('Failed to connect to MongoDB:', err));
 
 // Middleware
-app.use(cors({ origin: 'http://localhost:3000', method: 'GET,POST', credentials: true }));
+app.use(cors({ origin: 'http://localhost:3000', methods: 'GET,POST,PUT,DELETE', credentials: true }));
 app.use(express.json());  // To parse JSON request bodies
 
 // Routes
@@ -29,6 +31,7 @@ app.use('/api/products', productRoutes);  // Products routes
 app.use('/api/salesReceipts', salesReceiptsRoutes);  // Sales Receipts routes
 app.use('/api/purchases', purchaseRoutes);
 app.use('/api/expenses', expenseRoutes);
+app.use('/api/invoices', invoiceRoutes);
 
 // Fetch user data by ID (API route)
 app.get('/api/users/:id', authenticate, async (req, res) => {
