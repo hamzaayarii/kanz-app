@@ -8,6 +8,7 @@ import Tables from 'views/examples/Tables.js';
 import Icons from 'views/examples/Icons.js';
 import AuthRoute from 'components/AuthRoute.js';
 import UserList from './views/examples/UserList.js'; // Corrected import path
+import BusinessForm from './components/BusinessForm.jsx';
 
 var routes = [
   {
@@ -15,9 +16,19 @@ var routes = [
     name: 'Dashboard',
     icon: 'ni ni-tv-2 text-primary',
     component: (
-        <AuthRoute>
-          <Index />
-        </AuthRoute>
+      <AuthRoute>
+        <Index />
+      </AuthRoute>
+    ),
+    layout: '/admin',
+  },
+  {
+    path: '/business-registration',
+    name: 'Business Registration',
+    component: (
+      <AuthRoute>
+        <BusinessForm /> {/* Updated component */}
+      </AuthRoute>
     ),
     layout: '/admin',
   },
@@ -26,20 +37,21 @@ var routes = [
     name: 'Users List',
     icon: 'ni ni-bullet-list-67 text-red',
     component: (
-        <AuthRoute>
-          <UserList />
-        </AuthRoute>
+      <AuthRoute>
+        <UserList />
+      </AuthRoute>
     ),
     layout: '/admin',
   },
+ 
   {
     path: '/icons',
     name: 'Icons',
     icon: 'ni ni-planet text-blue',
     component: (
-        <AuthRoute>
-          <Icons />
-        </AuthRoute>
+      <AuthRoute>
+        <Icons />
+      </AuthRoute>
     ),
     layout: '/admin',
   },
@@ -59,9 +71,9 @@ var routes = [
     name: 'User Profile',
     icon: 'ni ni-single-02 text-yellow',
     component: (
-        <AuthRoute>
-          <Profile />
-        </AuthRoute>
+      <AuthRoute>
+        <Profile />
+      </AuthRoute>
     ),
     layout: '/admin',
   },
@@ -70,9 +82,9 @@ var routes = [
     name: 'Tables',
     icon: 'ni ni-bullet-list-67 text-red',
     component: (
-        <AuthRoute>
-          <Tables />
-        </AuthRoute>
+      <AuthRoute>
+        <Tables />
+      </AuthRoute>
     ),
     layout: '/admin',
   },
