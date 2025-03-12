@@ -39,11 +39,19 @@ export const deleteUser = async (req, res) => {
 // 📌 Create a new user
 export const create = async (req, res) => {
     try {
-        const { fullName, email, password, phoneNumber, governorate, avatar, gender } = req.body;
+        const { fullName, email, password, phoneNumber, governorate, avatar, gender, role } = req.body;
 
         // 🔹 Validate required fields
         if (!fullName || !email || !password) {
             return res.status(400).json({ success: false, message: "Full name, email, and password are required" });
+        }
+
+        // 🔹 Validate role if provided
+        if (role && !['accountant', 'business_owner'].includes(role)) {
+            return res.status(400).json({
+                success: false,
+                message: "Role must be either 'accountant' or 'business_owner'"
+            });
         }
 
         // 🔹 Check if user already exists
@@ -63,7 +71,8 @@ export const create = async (req, res) => {
             phoneNumber,
             governorate,
             avatar,
-            gender
+            gender,
+            role: role || 'business_owner'
         });
 
         const savedUser = await newUser.save();
@@ -80,6 +89,7 @@ export const create = async (req, res) => {
                 governorate: savedUser.governorate,
                 avatar: savedUser.avatar,
                 gender: savedUser.gender,
+                role: savedUser.role,
                 createdAt: savedUser.createdAt
             }
         });
@@ -170,7 +180,12 @@ export const login = async (req, res) => {
         console.log('Password matches');
 
         const token = jwt.sign(
-            { id: user._id, email: user.email, role: user.role, isBanned: user.isBanned },
+            {
+                id: user._id,
+                email: user.email,
+                role: user.role,
+                isBanned: user.isBanned
+            },
             process.env.JWT_SECRET,  // Secret key loaded from environment variables
             { expiresIn: process.env.JWT_EXPIRES_IN || '1h' }  // Default expiration time
         );
