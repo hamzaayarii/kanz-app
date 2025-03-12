@@ -43,6 +43,7 @@ app.get('/api/users/:id', authenticate, async (req, res) => {
     }
 });
 
+
 // Base route
 app.get('/', (req, res) => {
     res.send('Welcome to AccountingManagementApp');
