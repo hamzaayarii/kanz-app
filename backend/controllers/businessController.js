@@ -1,4 +1,5 @@
 const Business = require('../models/Business');
+const User = require('../models/User.js');
 
 const addBusiness = async (req, res) => {
     try {
@@ -69,4 +70,39 @@ const checkUserBusiness = async (req, res) => {
     }
 };
 
-module.exports = { addBusiness, getUserBusinesses, checkUserBusiness };
+
+// Updated getAccountant controller function
+const getAccountant = async (req, res) => {
+    try {
+        // Fix: Set default role to "accountant" if not provided
+        const role = req.query.role || "accountant";
+
+        if (role !== "accountant") {
+            return res.status(400).json({ message: "Invalid role requested." });
+        }
+
+        const accountants = await User.find({ role: "accountant" });
+        res.json(accountants);
+    } catch (error) {
+        res.status(500).json({ message: "Server error", error });
+    }
+};
+
+const assignAccountant = async (req, res) => {
+    try {
+        const { accountantId } = req.body;
+        const businessId = req.user.businessId; // Assuming user is authenticated
+
+        if (!accountantId) {
+            return res.status(400).json({ message: "Accountant ID is required." });
+        }
+
+        // Update business with assigned accountant
+        await Business.findByIdAndUpdate(businessId, { accountant: accountantId });
+
+        res.json({ message: "Accountant assigned successfully." });
+    } catch (error) {
+        res.status(500).json({ message: "Error assigning accountant", error });
+    }
+};
+module.exports = { assignAccountant, getAccountant, addBusiness, getUserBusinesses, checkUserBusiness };

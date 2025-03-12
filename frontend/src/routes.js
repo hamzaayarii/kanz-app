@@ -9,9 +9,10 @@ import Icons from 'views/examples/Icons.js';
 import AuthRoute from 'components/AuthRoute.js';
 import UserList from './views/examples/UserList.js'; // Corrected import path
 
-import BusinessRegistration from './components/BusinessForm.jsx';
+
 import BusinessRegistrationPage from './views/buisness/BusinessRegistrationPage.js';
 import BusinessManagement from './views/buisness/BusinessManagement.js';
+import AssignAccountant from './views/accountant/AssignAccountant.js';
 
 var routes = [
   {
@@ -112,6 +113,17 @@ var routes = [
     name: 'Business Registration',
     component: <BusinessRegistrationPage />,
     layout: '/standalone',
+  },
+  {
+    path: '/assign-accountant',
+    name: 'Assign Accountant',
+    icon: 'ni ni-single-02 text-green', // Choose an appropriate icon
+    component: (
+      <AuthRoute>
+        <AssignAccountant />
+      </AuthRoute>
+    ),
+    layout: '/admin',
   },
 
 ];
