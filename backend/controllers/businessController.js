@@ -105,4 +105,35 @@ const assignAccountant = async (req, res) => {
         res.status(500).json({ message: "Error assigning accountant", error });
     }
 };
-module.exports = { assignAccountant, getAccountant, addBusiness, getUserBusinesses, checkUserBusiness };
+
+const deleteBusiness = async (req, res) => {
+    try {
+        const { businessId } = req.params;
+
+        const deletedBusiness = await Business.findByIdAndDelete(businessId);
+        if (!deletedBusiness) {
+            return res.status(404).json({ message: "Business not found." });
+        }
+
+        res.json({ message: "Business deleted successfully." });
+    } catch (error) {
+        res.status(500).json({ message: "Error deleting business", error });
+    }
+};
+const updateBusiness = async (req, res) => {
+    try {
+        const { businessId } = req.params;
+        const updates = req.body;
+
+        const updatedBusiness = await Business.findByIdAndUpdate(businessId, updates, { new: true });
+        if (!updatedBusiness) {
+            return res.status(404).json({ message: "Business not found." });
+        }
+
+        res.json({ message: "Business updated successfully.", business: updatedBusiness });
+    } catch (error) {
+        res.status(500).json({ message: "Error updating business", error });
+    }
+};
+
+module.exports = { deleteBusiness, updateBusiness, assignAccountant, getAccountant, addBusiness, getUserBusinesses, checkUserBusiness };

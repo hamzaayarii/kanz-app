@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { assignAccountant, getAccountant, addBusiness, getUserBusinesses, checkUserBusiness } = require('../controllers/businessController');
+const { updateBusiness, deleteBusiness, assignAccountant, getAccountant, addBusiness, getUserBusinesses, checkUserBusiness } = require('../controllers/businessController');
 const { authenticate, authorizeBusinessOwner, authorizeAccountant } = require('../middlewares/authMiddleware');
 const Business = require('../models/Business');
 
@@ -18,6 +18,8 @@ router.get('/list-accountant', getAccountant);
 
 
 router.post('/assign-accountant', assignAccountant);
+router.put('/updatebusiness/:businessId', authenticate, updateBusiness);
+router.delete('/deletebusiness/:businessId', authenticate, deleteBusiness);
 
 
 module.exports = router;
