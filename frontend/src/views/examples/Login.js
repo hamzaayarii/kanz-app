@@ -40,7 +40,24 @@ const Login = () => {
       if (response.data.success) {
         localStorage.setItem('authToken', response.data.token); // Store the token in localStorage
         localStorage.setItem('user', JSON.stringify(response.data.user)); // Store user data in localStorage
-        navigate('/admin/index'); // Redirect to dashboard
+        // Check if the user has a business
+        try {
+          const businessResponse = await axios.get('http://localhost:5000/api/business/check', {
+            headers: {
+              Authorization: `Bearer ${response.data.token}`
+            }
+          });
+
+          if (businessResponse.data.hasBusiness) {
+            navigate('/admin/index'); // Redirect to dashboard if they have a business
+          } else {
+            navigate('/standalone/business-registration'); // Redirect to business registration
+          }
+        } catch (error) {
+          console.error('Error checking business:', error);
+          // Default to business registration on error
+          navigate('/standalone/business-registration');
+        }
       } else {
         alert('Login error: ' + response.data.message);
       }
@@ -53,79 +70,78 @@ const Login = () => {
       }
     }
   };
-
   return (
-      <Container className="mt-5">
-        <Row className="justify-content-center">
-          <Col lg="5">
-            <Card>
-              <CardBody>
-                <div className="text-center mb-4">
-                  <h2>Login</h2>
-                  <p>Please enter your email and password to login.</p>
+    <Container className="mt-5">
+      <Row className="justify-content-center">
+        <Col lg="5">
+          <Card>
+            <CardBody>
+              <div className="text-center mb-4">
+                <h2>Login</h2>
+                <p>Please enter your email and password to login.</p>
+              </div>
+              <Form role="form" onSubmit={handleSubmit}>
+                <FormGroup className="mb-3">
+                  <InputGroup className="input-group-alternative">
+                    <InputGroupAddon addonType="prepend">
+                      <InputGroupText>
+                        <i className="ni ni-email-83" />
+                      </InputGroupText>
+                    </InputGroupAddon>
+                    <Input
+                      placeholder="Email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        setErrors({ ...errors, email: validateEmail(e.target.value) });
+                      }}
+                      invalid={!!errors.email}
+                    />
+                    <FormFeedback>{errors.email}</FormFeedback>
+                  </InputGroup>
+                </FormGroup>
+
+                <FormGroup>
+                  <InputGroup className="input-group-alternative">
+                    <InputGroupAddon addonType="prepend">
+                      <InputGroupText>
+                        <i className="ni ni-lock-circle-open" />
+                      </InputGroupText>
+                    </InputGroupAddon>
+                    <Input
+                      placeholder="Password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        setErrors({ ...errors, password: validatePassword(e.target.value) });
+                      }}
+                      invalid={!!errors.password}
+                    />
+                    <FormFeedback>{errors.password}</FormFeedback>
+                  </InputGroup>
+                </FormGroup>
+
+                <div className="text-center">
+                  <Button
+                    className="my-4"
+                    color="primary"
+                    type="submit"
+                    disabled={!!errors.email || !!errors.password || !email || !password}
+                  >
+                    Login
+                  </Button>
                 </div>
-                <Form role="form" onSubmit={handleSubmit}>
-                  <FormGroup className="mb-3">
-                    <InputGroup className="input-group-alternative">
-                      <InputGroupAddon addonType="prepend">
-                        <InputGroupText>
-                          <i className="ni ni-email-83" />
-                        </InputGroupText>
-                      </InputGroupAddon>
-                      <Input
-                          placeholder="Email"
-                          type="email"
-                          value={email}
-                          onChange={(e) => {
-                            setEmail(e.target.value);
-                            setErrors({ ...errors, email: validateEmail(e.target.value) });
-                          }}
-                          invalid={!!errors.email}
-                      />
-                      <FormFeedback>{errors.email}</FormFeedback>
-                    </InputGroup>
-                  </FormGroup>
-
-                  <FormGroup>
-                    <InputGroup className="input-group-alternative">
-                      <InputGroupAddon addonType="prepend">
-                        <InputGroupText>
-                          <i className="ni ni-lock-circle-open" />
-                        </InputGroupText>
-                      </InputGroupAddon>
-                      <Input
-                          placeholder="Password"
-                          type="password"
-                          value={password}
-                          onChange={(e) => {
-                            setPassword(e.target.value);
-                            setErrors({ ...errors, password: validatePassword(e.target.value) });
-                          }}
-                          invalid={!!errors.password}
-                      />
-                      <FormFeedback>{errors.password}</FormFeedback>
-                    </InputGroup>
-                  </FormGroup>
-
-                  <div className="text-center">
-                    <Button
-                        className="my-4"
-                        color="primary"
-                        type="submit"
-                        disabled={!!errors.email || !!errors.password || !email || !password}
-                    >
-                      Login
-                    </Button>
-                  </div>
-                  <div className="text-center">
-                    <Link to="/auth/register">Don't have an account? Register</Link>
-                  </div>
-                </Form>
-              </CardBody>
-            </Card>
-          </Col>
-        </Row>
-      </Container>
+                <div className="text-center">
+                  <Link to="/auth/register">Don't have an account? Register</Link>
+                </div>
+              </Form>
+            </CardBody>
+          </Card>
+        </Col>
+      </Row>
+    </Container>
   );
 };
 

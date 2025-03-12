@@ -8,7 +8,9 @@ import Tables from 'views/examples/Tables.js';
 import Icons from 'views/examples/Icons.js';
 import AuthRoute from 'components/AuthRoute.js';
 import UserList from './views/examples/UserList.js'; // Corrected import path
-import BusinessForm from './components/BusinessForm.jsx';
+
+import BusinessRegistration from './components/BusinessForm.jsx';
+import BusinessRegistrationPage from './views/buisness/BusinessRegistrationPage.js';
 
 var routes = [
   {
@@ -27,10 +29,12 @@ var routes = [
     name: 'Business Registration',
     component: (
       <AuthRoute>
-        <BusinessForm /> {/* Updated component */}
+        <BusinessRegistration />
       </AuthRoute>
     ),
     layout: '/admin',
+    // Optional: Hide from sidebar
+    invisible: true,
   },
   {
     path: '/users',
@@ -43,7 +47,7 @@ var routes = [
     ),
     layout: '/admin',
   },
- 
+
   {
     path: '/icons',
     name: 'Icons',
@@ -102,6 +106,14 @@ var routes = [
     component: <Register />,
     layout: '/auth',
   },
+  // Standalone routes
+  {
+    path: '/business-registration',
+    name: 'Business Registration',
+    component: <BusinessRegistrationPage />,
+    layout: '/standalone',
+  },
+
 ];
 
 export default routes;

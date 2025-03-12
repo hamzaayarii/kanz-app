@@ -53,5 +53,19 @@ const getUserBusinesses = async (req, res) => {
         });
     }
 };
+const checkUserBusiness = async (req, res) => {
+    try {
+        const businesses = await Business.find({ owner: req.user.id });
 
-module.exports = { addBusiness, getUserBusinesses };
+        res.json({
+            hasBusiness: businesses.length > 0
+        });
+    } catch (error) {
+        console.error('Error checking user business:', error);
+        res.status(500).json({
+            message: 'Server error'
+        });
+    }
+};
+
+module.exports = { addBusiness, getUserBusinesses, checkUserBusiness };
