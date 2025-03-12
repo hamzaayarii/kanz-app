@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Button, Card, CardBody, FormGroup, Form,
-  Input, InputGroupAddon, InputGroupText, InputGroup, Col
+  Input, InputGroupAddon, InputGroupText, InputGroup, Col, Label
 } from "reactstrap";
 
 
@@ -18,45 +18,46 @@ const Register = () => {
     governorate: "",
     avatar: "",
     gender: "Male",
+    role: "business_owner"
   });
 
   // Error state
   const [error, setError] = useState(null);
   const auth = async () => {
-      try {
-        const response =await fetch('http://localhost:5000/api/users/googleAuthRequest', {
-          method: 'POST',  // Or 'GET' depending on the request type
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({anything: "taktak"}), // Only for POST or PUT requests
-        })
+    try {
+      const response = await fetch('http://localhost:5000/api/users/googleAuthRequest', {
+        method: 'POST',  // Or 'GET' depending on the request type
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ anything: "taktak" }), // Only for POST or PUT requests
+      })
 
-        if (!response.ok) {
-          throw new Error('Failed to fetch data from the backend');
-        }
-
-        const data = await response.json();
-        console.log(data);
-
-        // Ensure data has a valid URL
-        if (data.url) {
-
-          //window.location.href = data.url;
-          window.open(data.url, "_blank", "width=500,height=600");
-          window.addEventListener("message", (event) => {
-            if (event.origin !== "http://127.0.0.1:5000") return; // Security check
-            localStorage.setItem("authToken", event.data.token);
-            navigate('/admin/index');
-          }, { once: true });
-        } else {
-          console.error('No URL returned from the backend');
-        }
-      } catch (error) {
-        console.error('Error:', error);
+      if (!response.ok) {
+        throw new Error('Failed to fetch data from the backend');
       }
 
+      const data = await response.json();
+      console.log(data);
+
+      // Ensure data has a valid URL
+      if (data.url) {
+
+        //window.location.href = data.url;
+        window.open(data.url, "_blank", "width=500,height=600");
+        window.addEventListener("message", (event) => {
+          if (event.origin !== "http://127.0.0.1:5000") return; // Security check
+          localStorage.setItem("authToken", event.data.token);
+          navigate('/admin/index');
+        }, { once: true });
+      } else {
+        console.error('No URL returned from the backend');
+      }
+    } catch (error) {
+      console.error('Error:', error);
     }
+
+  }
 
 
   // Handle form field changes
@@ -159,6 +160,34 @@ const Register = () => {
                   required
                 />
               </InputGroup>
+            </FormGroup>
+
+
+            {/* Role Selection (Radio Buttons) */}
+            <FormGroup>
+              <Label className="form-control-label">Select Role:</Label>
+              <div>
+                <FormGroup check inline>
+                  <Input
+                    type="radio"
+                    name="role"
+                    value="accountant"
+                    checked={formData.role === "accountant"}
+                    onChange={handleChange}
+                  />
+                  <Label check>Accountant</Label>
+                </FormGroup>
+                <FormGroup check inline>
+                  <Input
+                    type="radio"
+                    name="role"
+                    value="business_owner"
+                    checked={formData.role === "business_owner"}
+                    onChange={handleChange}
+                  />
+                  <Label check>Business Owner</Label>
+                </FormGroup>
+              </div>
             </FormGroup>
 
             {/* Error Message */}
