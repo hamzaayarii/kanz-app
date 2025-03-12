@@ -58,7 +58,8 @@ const checkUserBusiness = async (req, res) => {
         const businesses = await Business.find({ owner: req.user.id });
 
         res.json({
-            hasBusiness: businesses.length > 0
+            hasBusiness: businesses.length > 0,
+            businesses // Send back the list of businesses
         });
     } catch (error) {
         console.error('Error checking user business:', error);

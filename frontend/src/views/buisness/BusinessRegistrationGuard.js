@@ -4,7 +4,7 @@ import axios from 'axios';
 
 const BusinessRegistrationGuard = ({ children }) => {
     const [loading, setLoading] = useState(true);
-    const [hasBusiness, setHasBusiness] = useState(false);
+    const [businesses, setBusinesses] = useState([]);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
 
     useEffect(() => {
@@ -24,20 +24,11 @@ const BusinessRegistrationGuard = ({ children }) => {
                     headers: { Authorization: `Bearer ${token}` }
                 });
 
-                setHasBusiness(response.data.hasBusiness);
+                setBusinesses(response.data.businesses);
                 setLoading(false);
             } catch (error) {
                 console.error('Error checking business:', error);
-                // If there's an error, we'll assume they need to register to be safe
-                setHasBusiness(false);
                 setLoading(false);
-
-                // If unauthorized, clear token and redirect to login
-                if (error.response?.status === 401) {
-                    localStorage.removeItem('authToken');
-                    localStorage.removeItem('user');
-                    setIsAuthenticated(false);
-                }
             }
         };
 
@@ -45,21 +36,13 @@ const BusinessRegistrationGuard = ({ children }) => {
     }, []);
 
     if (loading) {
-        // Return a simple loading indicator
-        return <div className="text-center pt-5">Loading...</div>;
+        return <div>Loading...</div>;
     }
 
     if (!isAuthenticated) {
-        // Redirect to login if not authenticated
-        return <Navigate to="/auth/login" replace />;
+        return <Navigate to="/auth/login" />;
     }
 
-    if (!hasBusiness) {
-        // Redirect to business registration if they don't have a business
-        return <Navigate to="/standalone/business-registration" replace />;
-    }
-
-    // If authenticated and has a business, render the dashboard
     return children;
 };
 

@@ -24,46 +24,32 @@ const BusinessRegistrationPage = () => {
         taxNumber: '',
         phone: ''
     });
+
+
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
-    const [user, setUser] = useState(null);
-
+    const [businesses, setBusinesses] = useState([]);
     // Check if user is authenticated and redirect if they already have a business
     useEffect(() => {
-        const checkAuth = async () => {
+        const fetchBusinesses = async () => {
             const token = localStorage.getItem('authToken');
             if (!token) {
-                console.error("Auth token missing. Redirecting to login.");
                 navigate('/auth/login');
                 return;
             }
 
             try {
-                // Get user info
-                const userData = JSON.parse(localStorage.getItem('user'));
-                setUser(userData);
-
-                // Check if user already has a business
-                const businessResponse = await axios.get('http://localhost:5000/api/business/check', {
+                const response = await axios.get('http://localhost:5000/api/business/check', {
                     headers: { Authorization: `Bearer ${token}` }
                 });
 
-                if (businessResponse.data.hasBusiness) {
-                    // User already has a business, redirect to dashboard
-                    navigate('/admin/index');
-                }
+                setBusinesses(response.data.businesses);
             } catch (error) {
-                console.error('Error during auth check:', error);
-                // On error, it's safer to redirect to login
-                if (error.response?.status === 401) {
-                    localStorage.removeItem('authToken');
-                    localStorage.removeItem('user');
-                    navigate('/auth/login');
-                }
+                console.error('Error fetching businesses:', error);
             }
         };
 
-        checkAuth();
+        fetchBusinesses();
     }, [navigate]);
 
     const validateForm = () => {
@@ -106,7 +92,7 @@ const BusinessRegistrationPage = () => {
             setLoading(false);
 
             if (response.data.success) {
-                // Registration successful, redirect to dashboard
+                // After registering a new business, refresh the list and go to dashboard
                 navigate('/admin/index');
             } else {
                 setErrors({ general: response.data.message || 'Failed to register business' });
@@ -119,10 +105,6 @@ const BusinessRegistrationPage = () => {
             });
         }
     };
-
-    if (!user) {
-        return <div className="text-center mt-5">Loading...</div>;
-    }
 
     return (
         <div className="main-content">
@@ -138,7 +120,9 @@ const BusinessRegistrationPage = () => {
                             </Col>
                         </Row>
                     </div>
+
                 </Container>
+
                 <div className="separator separator-bottom separator-skew zindex-100">
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -159,8 +143,15 @@ const BusinessRegistrationPage = () => {
                 <Row className="justify-content-center">
                     <Col lg="6" md="8">
                         <Card className="bg-secondary shadow border-0">
-                            <CardHeader className="bg-transparent">
-                                <div className="text-center">
+                            <CardHeader className="bg-transparent d-flex justify-content-start align-items-center">
+                                <Button
+                                    color="primary"
+                                    onClick={() => window.location.href = "/admin/index"}
+                                    className="btn-sm"
+                                >
+                                    <i className="fas fa-arrow-left me-2"></i> Back to Dashboard
+                                </Button>
+                                <div className="text-center flex-grow-1">
                                     <h3>Business Registration</h3>
                                 </div>
                             </CardHeader>

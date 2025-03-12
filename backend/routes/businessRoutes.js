@@ -10,7 +10,7 @@ router.use(authenticate);
 // Business routes
 router.post('/register', authorizeBusinessOwner, addBusiness); // Only business owners can add businesses
 
-router.get('/buisnessowner', authorizeBusinessOwner, getUserBusinesses); // Only business owners can get user businesses
+router.get('/buisnessowner', authorizeBusinessOwner, getUserBusinesses); // Only business owners can list his businesses
 
 router.get('/check', checkUserBusiness);
 

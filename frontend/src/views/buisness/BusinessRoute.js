@@ -1,11 +1,11 @@
-// src/components/BusinessRoute.js
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import axios from 'axios';
 
 const BusinessRoute = ({ children }) => {
     const [loading, setLoading] = useState(true);
-    const [hasBusiness, setHasBusiness] = useState(false);
+    const [businesses, setBusinesses] = useState([]);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
 
     useEffect(() => {
         const checkBusiness = async () => {
@@ -16,14 +16,12 @@ const BusinessRoute = ({ children }) => {
                     return;
                 }
 
-                const response = await axios.get('http://your-api-url/api/business/check', {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
+                setIsAuthenticated(true);
+                const response = await axios.get('http://localhost:5000/api/business/check', {
+                    headers: { Authorization: `Bearer ${token}` }
                 });
 
-                // Assuming your API returns data with a hasBusiness property or similar
-                setHasBusiness(response.data.hasBusiness);
+                setBusinesses(response.data.businesses);
                 setLoading(false);
             } catch (error) {
                 console.error('Error checking business:', error);
@@ -35,18 +33,11 @@ const BusinessRoute = ({ children }) => {
     }, []);
 
     if (loading) {
-        return <div>Loading...</div>; // Or use a proper loading component
+        return <div>Loading...</div>; // Use a proper loading component
     }
-
-    // If authenticated but no business, redirect to business registration
-    const isAuthenticated = !!localStorage.getItem('authToken');
 
     if (!isAuthenticated) {
         return <Navigate to="/auth/login" />;
-    }
-
-    if (!hasBusiness) {
-        return <Navigate to="/admin/business-registration" />;
     }
 
     return children;
