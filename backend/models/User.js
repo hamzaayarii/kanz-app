@@ -40,8 +40,9 @@ const userSchema = new Schema({
     },
     role: {
         type: String,
-        enum: ['admin', 'user'],
-        default: 'user' // Rôle de l'utilisateur : admin ou user
+        enum: ['admin', 'accountant', 'business_owner'],
+        default: 'business_owner',
+        required: true
     }
 });
 

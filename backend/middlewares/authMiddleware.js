@@ -22,5 +22,24 @@ const authenticate = (req, res, next) => {
         return res.status(403).json({ message: 'Invalid or expired token' });
     }
 };
+// Middleware to authorize accountants
+const authorizeAccountant = (req, res, next) => {
+    if (req.user.role !== 'accountant' && req.user.role !== 'admin') {
+        return res.status(403).json({ message: 'Access denied, accountant privileges required' });
+    }
+    next();
+};
 
-module.exports = authenticate;
+// Middleware to authorize business owners
+const authorizeBusinessOwner = (req, res, next) => {
+    if (req.user.role !== 'business_owner' && req.user.role !== 'admin') {
+        return res.status(403).json({ message: 'Access denied, business owner privileges required' });
+    }
+    next();
+};
+
+module.exports = {
+    authenticate,
+    authorizeAccountant,
+    authorizeBusinessOwner
+};
