@@ -11,6 +11,7 @@ import UserList from './views/examples/UserList.js'; // Corrected import path
 
 import BusinessRegistration from './components/BusinessForm.jsx';
 import BusinessRegistrationPage from './views/buisness/BusinessRegistrationPage.js';
+import BusinessManagement from './views/buisness/BusinessManagement.js';
 
 var routes = [
   {
@@ -25,16 +26,15 @@ var routes = [
     layout: '/admin',
   },
   {
-    path: '/business-registration',
-    name: 'Business Registration',
+    path: '/business-management', // Add this route
+    name: 'Business Management',
+    icon: 'ni ni-building text-primary',
     component: (
       <AuthRoute>
-        <BusinessRegistration />
+        <BusinessManagement />
       </AuthRoute>
     ),
     layout: '/admin',
-    // Optional: Hide from sidebar
-    invisible: true,
   },
   {
     path: '/users',
