@@ -1,13 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const { addBusiness, getUserBusinesses } = require('../controllers/businessController');
-const authMiddleware = require('../middlewares/authMiddleware'); // Assuming you have this middleware
+const { authenticate, authorizeBusinessOwner, authorizeAccountant } = require('../middlewares/authMiddleware');
 
-// Apply auth middleware to all business routes
-router.use(authMiddleware);
+// Apply authentication middleware to all business routes
+router.use(authenticate);
 
 // Business routes
-router.post('/', addBusiness);
-router.get('/user', getUserBusinesses);
+router.post('/', authorizeBusinessOwner, addBusiness); // Only business owners can add businesses
+router.get('/user', authorizeAccountant, getUserBusinesses); // Only accountants can get user businesses
 
 module.exports = router;
