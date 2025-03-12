@@ -80,7 +80,7 @@ const BusinessManagement = () => {
 
         try {
             const token = localStorage.getItem('authToken');
-            const response = await fetch(`http://localhost:5000/api/business/${businessToDelete._id}`, {
+            const response = await fetch(`http://localhost:5000/api/business/deletebusiness/${businessToDelete._id}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`
