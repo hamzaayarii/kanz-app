@@ -1,55 +1,36 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
 const InvoiceList = () => {
     const [invoices, setInvoices] = useState([]);
 
-    // Memoize fetchInvoices to avoid redefinition on every render
-    const fetchInvoices = useCallback(async () => {
+    useEffect(() => {
+        fetchInvoices();
+    }, []);
+
+    const fetchInvoices = async () => {
         try {
-            const token = localStorage.getItem('token');
-            const response = await axios.get('http://localhost:5000/api/invoices', {
-                headers: {
-                    Authorization: `Bearer ${token}`, // Corrected here
-                },
-            });
+            const response = await axios.get('http://localhost:5000/api/invoices');
             setInvoices(response.data);
         } catch (error) {
-            console.error('Erreur lors du chargement des factures:', error);
-            alert('Impossible de charger les factures. Veuillez réessayer.');
+            console.error('Erreur lors du chargement des factures', error);
         }
-    }, []); // Empty dependency array since token is fetched inside the function
-
-    useEffect(() => {
-        const token = localStorage.getItem('token');
-        if (!token) {
-            alert('Veuillez vous connecter pour accéder à cette page.');
-            window.location.href = '/login';
-        } else {
-            fetchInvoices();
-        }
-    }, [fetchInvoices]); // Add fetchInvoices as a dependency
+    };
 
     const deleteInvoice = async (id) => {
-        if (window.confirm('Voulez-vous vraiment supprimer cette facture ?')) {
+        if (window.confirm("Voulez-vous vraiment supprimer cette facture ?")) {
             try {
-                const token = localStorage.getItem('token');
-                await axios.delete(`http://localhost:5000/api/invoices/${id}`, { // Corrected here
-                    headers: {
-                        Authorization: `Bearer ${token}`, // Corrected here
-                    },
-                });
+                await axios.delete(`http://localhost:5000/api/invoices/${id}`);
                 alert('Facture supprimée avec succès');
-                fetchInvoices(); // Refresh the list after deletion
+                fetchInvoices();
             } catch (error) {
-                console.error('Erreur lors de la suppression:', error);
-                alert('Erreur lors de la suppression de la facture.');
+                console.error('Erreur lors de la suppression', error);
             }
         }
     };
 
     const downloadPDF = (id) => {
-        window.open(`http://localhost:5000/api/invoices/${id}/pdf`, "_blank"); // Corrected here
+        window.open(`http://localhost:5000/api/invoices/${id}/pdf`, "_blank");
     };
 
     return (
@@ -113,9 +94,8 @@ const InvoiceList = () => {
                                     transition: 'all 0.3s ease',
                                     borderLeft: '5px solid #4facfe'
                                 }}
-                                     onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-5px)'}
-                                     onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}>
-
+                                onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-5px)'}
+                                onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}>
                                     <div style={{ marginBottom: '15px' }}>
                                         <p style={{
                                             fontSize: '18px',
