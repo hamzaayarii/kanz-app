@@ -1,13 +1,28 @@
 import React from 'react';
 import Index from 'views/Index.js';
 import Profile from 'views/examples/Profile.js';
-import Sales from 'views/examples/Sales.js'; // Corrected import path
 import Register from 'views/examples/Register.js';
 import Login from 'views/examples/Login.js';
 import Tables from 'views/examples/Tables.js';
 import Icons from 'views/examples/Icons.js';
 import AuthRoute from 'components/AuthRoute.js';
+import PasswordReset from './views/examples/PasswordReset.js';
+import NewPassword from './views/examples/NewPassword.js';
+import Purchases from './views/examples/Purchases.js';
+import Expenses from './views/examples/Expenses.js'; // Corrected import path
 import UserList from './views/examples/UserList.js'; // Corrected import path
+import TaxReportForm from './views/examples/TaxReportForm';  // Add import for TaxReportForm
+import TaxReportsList from './views/examples/TaxReportsList'; // Add import for TaxReportsList
+import Invoices from "./views/examples/Invoices.js"; // Add import for Items
+
+import Items from './views/examples/Items.js'; // Add import for Items
+import SalesReceipts from './views/examples/SalesReceipts'; // Add import for SalesReceipts
+import CreateInvoice from './views/examples/CreateInvoice';
+import InvoiceList from './views/examples/InvoiceList';
+
+import BusinessRegistrationPage from './views/buisness/BusinessRegistrationPage.js';
+import BusinessManagement from './views/buisness/BusinessManagement.js';
+import AssignAccountant from './views/accountant/AssignAccountant.js';
 
 var routes = [
   {
@@ -15,9 +30,65 @@ var routes = [
     name: 'Dashboard',
     icon: 'ni ni-tv-2 text-primary',
     component: (
-        <AuthRoute>
-          <Index />
-        </AuthRoute>
+      <AuthRoute>
+        <Index />
+      </AuthRoute>
+    ),
+    layout: '/admin',
+  },
+  {
+    path: '/business-management', // Add this route
+    name: 'Business Management',
+    icon: 'ni ni-building text-primary',
+    component: (
+      <AuthRoute>
+        <BusinessManagement />
+      </AuthRoute>
+    ),
+    layout: '/admin',
+  },
+  {
+    path: '/items',
+    name: 'Items',
+    icon: 'ni ni-box-2 text-orange',
+    component: (
+      <AuthRoute>
+        <Items />
+      </AuthRoute>
+    ),
+    layout: '/admin',
+  },
+  {
+    path: '/create-invoice',
+    name: 'Create Invoice',
+    icon: 'ni ni-paper-diploma text-blue',
+    component: (
+      <AuthRoute>
+        <CreateInvoice />
+      </AuthRoute>
+    ),
+    layout: '/admin',
+  },
+  //  Nouvelle route pour la liste des factures
+  {
+    path: '/invoices',
+    name: 'Invoices List',
+    icon: 'ni ni-bullet-list-67 text-green',
+    component: (
+      <AuthRoute>
+        <InvoiceList />
+      </AuthRoute>
+    ),
+    layout: '/admin',
+  },
+  {
+    path: '/sales-receipts',
+    name: 'Sales Receipts',
+    icon: 'ni ni-credit-card text-blue',
+    component: (
+      <AuthRoute>
+        <SalesReceipts />
+      </AuthRoute>
     ),
     layout: '/admin',
   },
@@ -26,32 +97,58 @@ var routes = [
     name: 'Users List',
     icon: 'ni ni-bullet-list-67 text-red',
     component: (
-        <AuthRoute>
-          <UserList />
-        </AuthRoute>
+      <AuthRoute>
+        <UserList />
+      </AuthRoute>
     ),
     layout: '/admin',
   },
+
   {
     path: '/icons',
     name: 'Icons',
     icon: 'ni ni-planet text-blue',
     component: (
-        <AuthRoute>
-          <Icons />
-        </AuthRoute>
+      <AuthRoute>
+        <Icons />
+      </AuthRoute>
     ),
     layout: '/admin',
   },
   {
-    path: '/sales', // Updated path
-    name: 'Sales', // Updated name
+    path: '/purchases', // Updated path
+    name: 'Purchases', // Updated name
     icon: 'ni ni-cart text-orange', // Updated icon
     component: (
       <AuthRoute>
-        <Sales /> {/* Updated component */}
+        <Purchases /> {/* Updated component */}
       </AuthRoute>
     ),
+
+    layout: '/admin',
+  },
+  {
+    path: '/invoices1', // Updated path
+    name: 'Invoices', // Updated name
+    icon: 'ni ni-cart text-orange', // Updated icon
+    component: (
+      <AuthRoute>
+        <Invoices /> {/* Updated component */}
+      </AuthRoute>
+    ),
+
+    layout: '/admin',
+  },
+  {
+    path: '/expenses', // Updated path
+    name: 'Expenses', // Updated name
+    icon: 'ni ni-cart text-orange', // Updated icon
+    component: (
+      <AuthRoute>
+        <Expenses /> {/* Updated component */}
+      </AuthRoute>
+    ),
+
     layout: '/admin',
   },
   {
@@ -59,9 +156,9 @@ var routes = [
     name: 'User Profile',
     icon: 'ni ni-single-02 text-yellow',
     component: (
-        <AuthRoute>
-          <Profile />
-        </AuthRoute>
+      <AuthRoute>
+        <Profile />
+      </AuthRoute>
     ),
     layout: '/admin',
   },
@@ -70,9 +167,31 @@ var routes = [
     name: 'Tables',
     icon: 'ni ni-bullet-list-67 text-red',
     component: (
-        <AuthRoute>
-          <Tables />
-        </AuthRoute>
+      <AuthRoute>
+        <Tables />
+      </AuthRoute>
+    ),
+    layout: '/admin',
+  },
+  {
+    path: '/tax-report',
+    name: 'Generate Tax Report',
+    icon: 'ni ni-file-03 text-green',
+    component: (
+      <AuthRoute>
+        <TaxReportForm />
+      </AuthRoute>
+    ),
+    layout: '/admin',
+  },
+  {
+    path: '/tax-reports',
+    name: 'Tax Reports List',
+    icon: 'ni ni-collection text-purple',
+    component: (
+      <AuthRoute>
+        <TaxReportsList />
+      </AuthRoute>
     ),
     layout: '/admin',
   },
@@ -90,6 +209,39 @@ var routes = [
     component: <Register />,
     layout: '/auth',
   },
+  {
+    path: '/password-reset',
+    name: 'PasswordReset',
+    icon: 'ni ni-circle-08 text-pink',
+    component: <PasswordReset />,
+    layout: '/auth',
+  },
+  {
+    path: '/new-password/:token',
+    name: 'PasswordReset',
+    icon: 'ni ni-circle-08 text-pink',
+    component: <NewPassword />,
+    layout: '/auth',
+  },
+  // Standalone routes
+  {
+    path: '/business-registration',
+    name: 'Business Registration',
+    component: <BusinessRegistrationPage />,
+    layout: '/standalone',
+  },
+  {
+    path: '/assign-accountant',
+    name: 'Assign Accountant',
+    icon: 'ni ni-single-02 text-green', // Choose an appropriate icon
+    component: (
+      <AuthRoute>
+        <AssignAccountant />
+      </AuthRoute>
+    ),
+    layout: '/admin',
+  },
+
 ];
 
 export default routes;
