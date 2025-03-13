@@ -1,8 +1,14 @@
 const jwt = require('jsonwebtoken');
-const SECRET_KEY = process.env.SECRET_KEY || 'your_secret_key';
+const SECRET_KEY = process.env.JWT_SECRET || 'your_secret_key';
 
 const authenticate = (req, res, next) => {
-    const token = req.headers.authorization?.split(' ')[1]; // Extraire le token du header Authorization
+    // First try to get token from Authorization header
+    let token = req.headers.authorization?.split(' ')[1];
+
+    // If not in header, try to get from cookies
+    if (!token && req.cookies) {
+        token = req.cookies.token;
+    }
 
     if (!token) {
         return res.status(401).json({ message: 'Token is required' });
@@ -16,5 +22,24 @@ const authenticate = (req, res, next) => {
         next();
     });
 };
+// Middleware to authorize accountants
+const authorizeAccountant = (req, res, next) => {
+    if (req.user.role !== 'accountant' && req.user.role !== 'admin') {
+        return res.status(403).json({ message: 'Access denied, accountant privileges required' });
+    }
+    next();
+};
 
-module.exports = authenticate;
+// Middleware to authorize business owners
+const authorizeBusinessOwner = (req, res, next) => {
+    if (req.user.role !== 'business_owner' && req.user.role !== 'admin') {
+        return res.status(403).json({ message: 'Access denied, business owner privileges required' });
+    }
+    next();
+};
+
+module.exports = {
+    authenticate,
+    authorizeAccountant,
+    authorizeBusinessOwner
+};

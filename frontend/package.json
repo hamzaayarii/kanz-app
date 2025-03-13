@@ -52,6 +52,7 @@
     "bootstrap": "4.6.2",
     "chart.js": "2.9.4",
     "classnames": "2.3.2",
+    "formik": "^2.4.6",
     "framer-motion": "^12.4.4",
     "jwt-decode": "^4.0.0",
     "lucide-react": "^0.475.0",
@@ -65,8 +66,10 @@
     "react-dom": "18.2.0",
     "react-router-dom": "6.21.1",
     "react-scripts": "^5.0.1",
+    "react-toastify": "^11.0.5",
     "reactstrap": "8.10.0",
-    "sass": "1.69.5"
+    "sass": "1.69.5",
+    "yup": "^1.6.1"
   },
   "devDependencies": {
     "cross-env": "^7.0.3",
