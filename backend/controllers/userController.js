@@ -5,10 +5,12 @@ import { OAuth2Client } from "google-auth-library";
 import generator from "generate-password";
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
+import cookie from 'cookie-parser';
 dotenv.config();
 import axios from 'axios';
 
-const SECRET_KEY = process.env.JWT_SECRET || 'your_secret_key';
+
+const SECRET_KEY = process.env.SECRET_KEY || 'your_secret_key';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1h';
 
 // 📌 List all users
@@ -39,11 +41,19 @@ export const deleteUser = async (req, res) => {
 // 📌 Create a new user
 export const create = async (req, res) => {
     try {
-        const { fullName, email, password, phoneNumber, governorate, avatar, gender } = req.body;
+        const { fullName, email, password, phoneNumber, governorate, avatar, gender, role } = req.body;
 
         // 🔹 Validate required fields
         if (!fullName || !email || !password) {
             return res.status(400).json({ success: false, message: "Full name, email, and password are required" });
+        }
+
+        // 🔹 Validate role if provided
+        if (role && !['accountant', 'business_owner'].includes(role)) {
+            return res.status(400).json({
+                success: false,
+                message: "Role must be either 'accountant' or 'business_owner'"
+            });
         }
 
         // 🔹 Check if user already exists
@@ -63,7 +73,8 @@ export const create = async (req, res) => {
             phoneNumber,
             governorate,
             avatar,
-            gender
+            gender,
+            role: role || 'business_owner'
         });
 
         const savedUser = await newUser.save();
@@ -80,6 +91,7 @@ export const create = async (req, res) => {
                 governorate: savedUser.governorate,
                 avatar: savedUser.avatar,
                 gender: savedUser.gender,
+                role: savedUser.role,
                 createdAt: savedUser.createdAt
             }
         });
@@ -185,12 +197,25 @@ export const login = async (req, res) => {
         console.log('Password matches');
 
         const token = jwt.sign(
-            { id: user._id, email: user.email, role: user.role, isBanned: user.isBanned },
+            {
+                id: user._id,
+                email: user.email,
+                role: user.role,
+                isBanned: user.isBanned
+            },
             process.env.SECRET_KEY,  // Secret key loaded from environment variables
             { expiresIn: process.env.JWT_EXPIRES_IN || '1h' }  // Default expiration time
         );
 
         console.log('Token generated:', token);
+
+        // 🔹 Store token in a **secure** HTTP-only cookie
+        res.cookie('token', token, {
+            httpOnly: true, // Prevents access via JavaScript (for security)
+            secure: process.env.NODE_ENV === 'production', // Only use `secure` in production (HTTPS)
+            sameSite: 'strict', // Helps prevent CSRF attacks
+            maxAge: 60 * 60 * 1000 // 1 hour expiration
+        });
 
         res.status(200).json({
             success: true,
