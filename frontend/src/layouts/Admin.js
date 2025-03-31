@@ -36,7 +36,15 @@ const Admin = (props) => {
 
   return (
     <>
-      <Sidebar {...props} routes={routes} />
+      <Sidebar
+        {...props}
+        routes={routes}
+        logo={{
+          innerLink: "/admin/index",
+          imgSrc: require("../assets/img/brand/kanz.png"),
+          imgAlt: "Kanz Logo"
+        }}
+      />
       <div className="main-content" ref={mainContent}>
         <AdminNavbar {...props} brandText="" />
         <Routes>

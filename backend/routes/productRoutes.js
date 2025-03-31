@@ -14,12 +14,63 @@ router.post('/', async (req, res) => {
     }
 });
 
-// Récupérer tous les produits
+// Récupérer tous les produits avec pagination, tri et filtrage
 router.get('/', async (req, res) => {
     try {
-        const products = await Product.find();
-        res.status(200).json(products);
+        const {
+            page = 1,
+            limit = 10,
+            search = '',
+            sortField = 'name',
+            sortDirection = 'asc',
+            filterType = 'all'
+        } = req.query;
+
+        // Construire la requête
+        let query = {};
+        
+        // Ajouter filtre de recherche
+        if (search) {
+            query.$or = [
+                { name: { $regex: search, $options: 'i' } },
+                { 'salesInfo.description': { $regex: search, $options: 'i' } },
+                { 'purchaseInfo.description': { $regex: search, $options: 'i' } }
+            ];
+        }
+
+        // Ajouter filtre de type
+        if (filterType !== 'all') {
+            query.type = filterType;
+        }
+
+        // Construire objet de tri
+        const sort = {};
+        sort[sortField] = sortDirection === 'asc' ? 1 : -1;
+
+        // Calculer skip
+        const skip = (page - 1) * limit;
+
+        // Obtenir le nombre total pour la pagination
+        const total = await Product.countDocuments(query);
+
+        // Obtenir les produits avec pagination, tri et filtrage
+        const products = await Product.find(query)
+            .sort(sort)
+            .skip(skip)
+            .limit(parseInt(limit));
+
+        // Calculer le nombre total de pages
+        const totalPages = Math.ceil(total / limit);
+
+        res.status(200).json({
+            products,
+            total,
+            totalPages,
+            currentPage: parseInt(page),
+            limit: parseInt(limit)
+        });
     } catch (error) {
+        console.error('Erreur lors de la récupération des produits:', error);
         res.status(500).json({ message: error.message });
     }
 });
