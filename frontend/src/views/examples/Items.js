@@ -37,13 +37,30 @@ import {
 } from 'reactstrap';
 import { FaSearch, FaPlus, FaEdit, FaTrash, FaFilter, FaSort } from 'react-icons/fa';
 
+const TVA_RATES = {
+    'TVA19': 19,
+    'TVA13': 13,
+    'TVA7': 7,
+    'Exonéré': 0
+};
+
 const Items = () => {
     const [item, setItem] = useState({
         type: 'Goods',
         name: '',
         unit: '',
-        salesInfo: { sellingPrice: '', description: '', tax: '' },
-        purchaseInfo: { costPrice: '', description: '', tax: '' }
+        salesInfo: { 
+            sellingPrice: '', 
+            description: '', 
+            taxCategory: 'TVA19',
+            tax: TVA_RATES['TVA19']
+        },
+        purchaseInfo: { 
+            costPrice: '', 
+            description: '', 
+            taxCategory: 'TVA19',
+            tax: TVA_RATES['TVA19']
+        }
     });
     const [message, setMessage] = useState({ text: '', type: 'info', show: false });
     const [itemsList, setItemsList] = useState([]);
@@ -135,21 +152,78 @@ const Items = () => {
         }
     };
 
+    const handleTaxCategoryChange = (e, type) => {
+        const { value } = e.target;
+        const newTax = TVA_RATES[value];
+        
+        setItem(prevState => ({
+            ...prevState,
+            [type]: {
+                ...prevState[type],
+                taxCategory: value,
+                tax: newTax
+            }
+        }));
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
             setIsLoading(true);
+
+            // Validate required fields
+            if (!item.name || !item.unit) {
+                showNotification('Name and Unit are required fields', 'warning');
+                return;
+            }
+
+            // Validate prices
+            if (!item.salesInfo.sellingPrice || !item.purchaseInfo.costPrice) {
+                showNotification('Selling price and Cost price are required', 'warning');
+                return;
+            }
+
+            // Format the data
+            const productData = {
+                type: item.type,
+                name: item.name.trim(),
+                unit: item.unit.trim(),
+                salesInfo: {
+                    sellingPrice: parseFloat(item.salesInfo.sellingPrice),
+                    description: item.salesInfo.description?.trim() || '',
+                    taxCategory: item.salesInfo.taxCategory || 'TVA19',
+                    tax: TVA_RATES[item.salesInfo.taxCategory || 'TVA19']
+                },
+                purchaseInfo: {
+                    costPrice: parseFloat(item.purchaseInfo.costPrice),
+                    description: item.purchaseInfo.description?.trim() || '',
+                    taxCategory: item.purchaseInfo.taxCategory || 'TVA19',
+                    tax: TVA_RATES[item.purchaseInfo.taxCategory || 'TVA19']
+                }
+            };
+
+            console.log('Sending product data:', productData);
+
             if (isEditMode) {
-                await axios.put(`http://localhost:5000/api/products/${currentItemId}`, item);
+                const response = await axios.put(`http://localhost:5000/api/products/${currentItemId}`, productData);
+                console.log('Server response:', response.data);
                 showNotification('Item updated successfully!', 'success');
             } else {
-                await axios.post('http://localhost:5000/api/products', item);
+                const response = await axios.post('http://localhost:5000/api/products', productData);
+                console.log('Server response:', response.data);
                 showNotification('Item added successfully!', 'success');
             }
             resetForm();
             fetchItems();
         } catch (error) {
-            showNotification('Failed to add/update item: ' + error.message, 'danger');
+            console.error('Error submitting product:', error.response?.data || error);
+            if (error.response?.data?.details) {
+                const errorDetails = error.response.data.details.join('\n');
+                showNotification(`Validation Errors:\n${errorDetails}`, 'danger');
+            } else {
+                const errorMessage = error.response?.data?.message || error.response?.data?.error || error.message;
+                showNotification(`Failed to ${isEditMode ? 'update' : 'add'} item: ${errorMessage}`, 'danger');
+            }
         } finally {
             setIsLoading(false);
         }
@@ -160,8 +234,8 @@ const Items = () => {
                 type: 'Goods',
                 name: '',
                 unit: '',
-                salesInfo: { sellingPrice: '', description: '', tax: '' },
-                purchaseInfo: { costPrice: '', description: '', tax: '' }
+                salesInfo: { sellingPrice: '', description: '', tax: TVA_RATES['TVA19'] },
+                purchaseInfo: { costPrice: '', description: '', tax: TVA_RATES['TVA19'] }
             });
         setIsEditMode(false);
         setCurrentItemId(null);
@@ -405,8 +479,8 @@ const Items = () => {
                                                         </td>
                                                         <td>{item.name}</td>
                                                         <td>{item.unit}</td>
-                                                        <td>${item.salesInfo.sellingPrice}</td>
-                                                        <td>${item.purchaseInfo.costPrice}</td>
+                                                        <td>{item.salesInfo.sellingPrice} TND</td>
+                                                        <td>{item.purchaseInfo.costPrice} TND</td>
                                                         <td>
                                                             <Button
                                                                 color="warning"
@@ -485,7 +559,7 @@ const Items = () => {
                                                     <Label>Selling Price</Label>
                                                     <InputGroup>
                                                         <InputGroupAddon addonType="prepend">
-                                                            <InputGroupText>$</InputGroupText>
+                                                            <InputGroupText>TND</InputGroupText>
                                                         </InputGroupAddon>
                                                         <Input
                                                             type="number"
@@ -501,21 +575,19 @@ const Items = () => {
                                             </Col>
                                             <Col md={4}>
                                                 <FormGroup>
-                                                    <Label>Tax (%)</Label>
-                                                    <InputGroup>
-                                                        <Input
-                                                            type="number"
-                                                            name="salesInfo.tax"
-                                                            value={item.salesInfo.tax}
-                                                            onChange={handleChange}
-                                                            min="0"
-                                                            max="100"
-                                                            step="0.01"
-                                                        />
-                                                        <InputGroupAddon addonType="append">
-                                                            <InputGroupText>%</InputGroupText>
-                                                        </InputGroupAddon>
-                                                    </InputGroup>
+                                                    <Label>Tax Category</Label>
+                                                    <Input
+                                                        type="select"
+                                                        name="salesInfo.taxCategory"
+                                                        value={item.salesInfo.taxCategory}
+                                                        onChange={(e) => handleTaxCategoryChange(e, 'salesInfo')}
+                                                    >
+                                                        {Object.keys(TVA_RATES).map(category => (
+                                                            <option key={category} value={category}>
+                                                                {category} ({TVA_RATES[category]}%)
+                                                            </option>
+                                                        ))}
+                                                    </Input>
                                                 </FormGroup>
                                             </Col>
                                         </Row>
@@ -538,7 +610,7 @@ const Items = () => {
                                                     <Label>Cost Price</Label>
                                                     <InputGroup>
                                                         <InputGroupAddon addonType="prepend">
-                                                            <InputGroupText>$</InputGroupText>
+                                                            <InputGroupText>TND</InputGroupText>
                                                         </InputGroupAddon>
                                                         <Input
                                                             type="number"
@@ -554,21 +626,19 @@ const Items = () => {
                                             </Col>
                                             <Col md={4}>
                                                 <FormGroup>
-                                                    <Label>Tax (%)</Label>
-                                                    <InputGroup>
-                                                        <Input
-                                                            type="number"
-                                                            name="purchaseInfo.tax"
-                                                            value={item.purchaseInfo.tax}
-                                                            onChange={handleChange}
-                                                            min="0"
-                                                            max="100"
-                                                            step="0.01"
-                                                        />
-                                                        <InputGroupAddon addonType="append">
-                                                            <InputGroupText>%</InputGroupText>
-                                                        </InputGroupAddon>
-                                                    </InputGroup>
+                                                    <Label>Tax Category</Label>
+                                                    <Input
+                                                        type="select"
+                                                        name="purchaseInfo.taxCategory"
+                                                        value={item.purchaseInfo.taxCategory}
+                                                        onChange={(e) => handleTaxCategoryChange(e, 'purchaseInfo')}
+                                                    >
+                                                        {Object.keys(TVA_RATES).map(category => (
+                                                            <option key={category} value={category}>
+                                                                {category} ({TVA_RATES[category]}%)
+                                                            </option>
+                                                        ))}
+                                                    </Input>
                                                 </FormGroup>
                                             </Col>
                                         </Row>

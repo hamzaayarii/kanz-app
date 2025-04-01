@@ -6,11 +6,66 @@ const router = express.Router();
 // Ajouter un produit
 router.post('/', async (req, res) => {
     try {
-        const newProduct = new Product(req.body);
+        console.log('Received product data:', req.body);
+        
+        // Validate required fields
+        const requiredFields = ['type', 'name', 'unit'];
+        const missingFields = requiredFields.filter(field => !req.body[field]);
+        
+        if (missingFields.length > 0) {
+            return res.status(400).json({ 
+                message: `Missing required fields: ${missingFields.join(', ')}` 
+            });
+        }
+
+        // Validate salesInfo
+        if (!req.body.salesInfo || typeof req.body.salesInfo.sellingPrice === 'undefined') {
+            return res.status(400).json({ 
+                message: 'Sales information is required with selling price' 
+            });
+        }
+
+        // Validate purchaseInfo
+        if (!req.body.purchaseInfo || typeof req.body.purchaseInfo.costPrice === 'undefined') {
+            return res.status(400).json({ 
+                message: 'Purchase information is required with cost price' 
+            });
+        }
+
+        // Create and save the product
+        const newProduct = new Product({
+            type: req.body.type,
+            name: req.body.name,
+            unit: req.body.unit,
+            salesInfo: {
+                sellingPrice: req.body.salesInfo.sellingPrice,
+                description: req.body.salesInfo.description || '',
+                taxCategory: req.body.salesInfo.taxCategory || 'TVA19',
+                tax: req.body.salesInfo.tax
+            },
+            purchaseInfo: {
+                costPrice: req.body.purchaseInfo.costPrice,
+                description: req.body.purchaseInfo.description || '',
+                taxCategory: req.body.purchaseInfo.taxCategory || 'TVA19',
+                tax: req.body.purchaseInfo.tax
+            }
+        });
+
         const savedProduct = await newProduct.save();
+        console.log('Saved product:', savedProduct);
         res.status(201).json(savedProduct);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error('Error creating product:', error);
+        if (error.name === 'ValidationError') {
+            return res.status(400).json({ 
+                message: 'Validation Error', 
+                details: Object.values(error.errors).map(err => err.message)
+            });
+        }
+        res.status(500).json({ 
+            message: 'Internal Server Error',
+            error: error.message 
+        });
     }
 });
 
