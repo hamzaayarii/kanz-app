@@ -37,7 +37,7 @@ var routes = [
     layout: '/admin',
   },
   {
-    path: '/business-management', // Add this route
+    path: '/business-management',
     name: 'Business Management',
     icon: 'ni ni-building text-primary',
     component: (
@@ -59,6 +59,17 @@ var routes = [
     layout: '/admin',
   },
   {
+    path: '/sales-receipts',
+    name: 'Sales Receipts',
+    icon: 'ni ni-credit-card text-blue',
+    component: (
+      <AuthRoute>
+        <SalesReceipts />
+      </AuthRoute>
+    ),
+    layout: '/admin',
+  },
+  {
     path: '/create-invoice',
     name: 'Create Invoice',
     icon: 'ni ni-paper-diploma text-blue',
@@ -69,7 +80,6 @@ var routes = [
     ),
     layout: '/admin',
   },
-  //  Nouvelle route pour la liste des factures
   {
     path: '/invoices',
     name: 'Invoices List',
@@ -77,17 +87,6 @@ var routes = [
     component: (
       <AuthRoute>
         <InvoiceList />
-      </AuthRoute>
-    ),
-    layout: '/admin',
-  },
-  {
-    path: '/sales-receipts',
-    name: 'Sales Receipts',
-    icon: 'ni ni-credit-card text-blue',
-    component: (
-      <AuthRoute>
-        <SalesReceipts />
       </AuthRoute>
     ),
     layout: '/admin',

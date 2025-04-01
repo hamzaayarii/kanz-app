@@ -25,6 +25,13 @@ import {
 import { FaPlus, FaEdit, FaTrash } from 'react-icons/fa';
 import classnames from 'classnames';
 
+const TVA_RATES = {
+    'TVA19': 19,
+    'TVA13': 13,
+    'TVA7': 7,
+    'Exonéré': 0
+};
+
 const SalesReceipts = () => {
   const [activeTab, setActiveTab] = useState('1');
   const [notification, setNotification] = useState({ show: false, message: '', type: 'success' });
@@ -49,6 +56,13 @@ const SalesReceipts = () => {
 
   const [receipts, setReceipts] = useState([]);
   const [editingReceipt, setEditingReceipt] = useState(null);
+
+  const [taxSummary, setTaxSummary] = useState({
+    TVA19: 0,
+    TVA13: 0,
+    TVA7: 0,
+    'Exonéré': 0
+  });
 
   // Show notification helper
   const showNotification = (message, type = 'success') => {
@@ -101,6 +115,17 @@ const SalesReceipts = () => {
     }));
   };
 
+  const calculateItemAmount = (quantity, rate, taxCategory) => {
+    const subtotal = quantity * rate;
+    const taxRate = TVA_RATES[taxCategory];
+    const taxAmount = (subtotal * taxRate) / 100;
+    return {
+      subtotal,
+      taxAmount,
+      total: subtotal + taxAmount
+    };
+  };
+
   const handleItemSelect = (e) => {
     const { value } = e.target;
     const selectedProduct = products.find((product) => product._id === value);
@@ -110,7 +135,8 @@ const SalesReceipts = () => {
         id: value,
         name: selectedProduct.name,
         price: selectedProduct.salesInfo.sellingPrice,
-        tax: selectedProduct.salesInfo.tax || 0
+        taxCategory: selectedProduct.salesInfo.taxCategory,
+        tax: selectedProduct.salesInfo.tax
       });
     }
   };
@@ -124,13 +150,22 @@ const SalesReceipts = () => {
     const selectedProduct = products.find((product) => product._id === selectedItem.id);
     if (!selectedProduct) return;
 
+    const { subtotal, taxAmount, total } = calculateItemAmount(
+      parseFloat(selectedItem.quantity),
+      selectedItem.price,
+      selectedItem.taxCategory
+    );
+
     const newItem = {
       product: selectedItem.id,
       name: selectedProduct.name,
       quantity: parseFloat(selectedItem.quantity),
       rate: selectedItem.price,
+      taxCategory: selectedItem.taxCategory,
       tax: selectedItem.tax,
-      amount: selectedItem.quantity * selectedItem.price * (1 + selectedItem.tax / 100)
+      subtotal: subtotal,
+      taxAmount: taxAmount,
+      amount: total
     };
 
     setReceiptData(prev => ({
@@ -138,12 +173,19 @@ const SalesReceipts = () => {
       items: [...prev.items, newItem]
     }));
 
+    // Update tax summary
+    const newTaxSummary = { ...taxSummary };
+    newTaxSummary[selectedItem.taxCategory] += taxAmount;
+    setTaxSummary(newTaxSummary);
+
+    // Reset selected item
     setSelectedItem({
       id: '',
       name: '',
       quantity: 1,
       price: 0,
-      tax: 0
+      taxCategory: 'TVA19',
+      tax: TVA_RATES['TVA19']
     });
 
     showNotification('Item added successfully');
@@ -269,6 +311,30 @@ const SalesReceipts = () => {
     });
     setEditingReceipt(null);
   };
+
+  const renderTaxSummary = () => (
+    <div className="mt-3">
+      <h4>TVA Summary</h4>
+      <Table>
+        <thead>
+          <tr>
+            <th>Category</th>
+            <th>Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          {Object.entries(taxSummary)
+            .filter(([_, amount]) => amount > 0)
+            .map(([category, amount]) => (
+              <tr key={category}>
+                <td>{category}</td>
+                <td>{amount.toFixed(2)} TND</td>
+              </tr>
+            ))}
+        </tbody>
+      </Table>
+    </div>
+  );
 
   if (isLoading) {
     return (
@@ -547,6 +613,8 @@ const SalesReceipts = () => {
                         </CardBody>
                       </Card>
                     )}
+
+                    {receiptData.items.length > 0 && renderTaxSummary()}
 
                     <Card className="mt-4">
                       <CardBody>
