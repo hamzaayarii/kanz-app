@@ -1,22 +1,66 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useForm, useFieldArray } from 'react-hook-form';
+import { Alert } from 'reactstrap';
+import styles from '../../assets/css/CreateInvoice.module.css';
 
 const CreateInvoice = () => {
-    const [invoice, setInvoice] = useState({
-        customerName: '',
-        invoiceNumber: '',
-        orderNumber: '',
-        invoiceDate: new Date().toISOString().split('T')[0],
-        dueDate: '',
-        items: [{ itemDetails: '', quantity: 1, rate: 0, tax: 0, amount: 0 }],
-        subTotal: 0,
-        discount: 0, // Remise en pourcentage
-        shippingCharges: 0,
-        total: 0,
-        customerNotes: ''
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
+    const [businesses, setBusinesses] = useState([]);
+    const [selectedBusiness, setSelectedBusiness] = useState(null);
+
+    const { register, control, handleSubmit, watch, setValue, formState: { errors } } = useForm({
+        defaultValues: {
+            businessId: '',
+            customerName: '',
+            invoiceNumber: '',
+            orderNumber: '',
+            invoiceDate: new Date().toISOString().split('T')[0],
+            dueDate: '',
+            items: [{ itemDetails: '', quantity: 1, rate: 0, tax: 0 }],
+            discount: 0,
+            shippingCharges: 0,
+            customerNotes: ''
+        },
+        mode: 'onChange'
     });
 
-    // Calcul du montant d'un article (quantité * taux + taxe en %)
+    const { fields, append, remove } = useFieldArray({
+        control,
+        name: 'items'
+    });
+
+    const watchItems = watch('items');
+    const watchDiscount = watch('discount');
+    const watchShippingCharges = watch('shippingCharges');
+    const watchBusinessId = watch('businessId');
+
+    useEffect(() => {
+        const fetchBusinesses = async () => {
+            try {
+                const token = localStorage.getItem('authToken');
+                if (!token) throw new Error('Vous devez être connecté pour récupérer les sociétés');
+
+                const response = await axios.get('http://localhost:5000/api/business/buisnessowner', {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+
+                setBusinesses(response.data.businesses || []);
+            } catch (err) {
+                setError(err.response?.data?.message || 'Erreur lors de la récupération des sociétés');
+            }
+        };
+
+        fetchBusinesses();
+    }, []);
+
+    useEffect(() => {
+        const business = businesses.find(b => b._id === watchBusinessId);
+        setSelectedBusiness(business || null);
+    }, [watchBusinessId, businesses]);
+
     const calculateAmount = (item) => {
         const qty = parseFloat(item.quantity) || 0;
         const rate = parseFloat(item.rate) || 0;
@@ -26,508 +70,302 @@ const CreateInvoice = () => {
         return baseAmount + taxAmount;
     };
 
-    // Calcul des totaux (sous-total, remise en %, frais de livraison)
-    const calculateTotals = (items, discount, shippingCharges) => {
-        const subTotal = items.reduce((sum, item) => sum + calculateAmount(item), 0);
-        const discountAmount = (subTotal * (parseFloat(discount) || 0)) / 100;
-        const total = subTotal - discountAmount + Math.max(0, parseFloat(shippingCharges) || 0);
-        return { subTotal, total: Math.max(0, total) };
+    const calculateTotals = () => {
+        const subTotal = watchItems.reduce((sum, item) => sum + calculateAmount(item), 0);
+        const discountAmount = (subTotal * (parseFloat(watchDiscount) || 0)) / 100;
+        const total = subTotal - discountAmount + Math.max(0, parseFloat(watchShippingCharges) || 0);
+        return { subTotal: subTotal.toFixed(2), total: Math.max(0, total).toFixed(2) };
     };
 
-    // Gestion des changements dans les champs principaux
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        const parsedValue = ['discount', 'shippingCharges'].includes(name)
-            ? (value === '' ? 0 : Math.max(0, parseFloat(value))) // Valeur positive ou 0
-            : value;
+    const { subTotal, total } = calculateTotals();
 
-        setInvoice((prevInvoice) => {
-            const newInvoice = { ...prevInvoice, [name]: parsedValue };
-            const totals = calculateTotals(newInvoice.items, newInvoice.discount, newInvoice.shippingCharges);
-            return { ...newInvoice, ...totals };
-        });
-    };
+    const onSubmit = async (data) => {
+        setError('');
+        setSuccess('');
+        setLoading(true);
 
-    // Gestion des changements dans les articles
-    const handleItemChange = (index, e) => {
-        const { name, value } = e.target;
-        const parsedValue = ['quantity', 'rate', 'tax'].includes(name)
-            ? (value === '' ? 0 : Math.max(0, parseFloat(value))) // Valeur positive ou 0
-            : value;
-
-        setInvoice((prevInvoice) => {
-            const updatedItems = prevInvoice.items.map((item, i) => {
-                if (i === index) {
-                    const newItem = { ...item, [name]: parsedValue };
-                    return { ...newItem, amount: calculateAmount(newItem) };
-                }
-                return item;
-            });
-            const totals = calculateTotals(updatedItems, prevInvoice.discount, prevInvoice.shippingCharges);
-            return { ...prevInvoice, items: updatedItems, ...totals };
-        });
-    };
-
-    // Ajouter un nouvel article
-    const addItem = () => {
-        setInvoice((prevInvoice) => {
-            const updatedItems = [...prevInvoice.items, { itemDetails: '', quantity: 1, rate: 0, tax: 0, amount: 0 }];
-            const totals = calculateTotals(updatedItems, prevInvoice.discount, prevInvoice.shippingCharges);
-            return { ...prevInvoice, items: updatedItems, ...totals };
-        });
-    };
-
-    // Supprimer un article
-    const removeItem = (index) => {
-        if (invoice.items.length > 1) {
-            setInvoice((prevInvoice) => {
-                const updatedItems = prevInvoice.items.filter((_, i) => i !== index);
-                const totals = calculateTotals(updatedItems, prevInvoice.discount, prevInvoice.shippingCharges);
-                return { ...prevInvoice, items: updatedItems, ...totals };
-            });
-        }
-    };
-
-    // Soumission du formulaire
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        const { customerName, invoiceNumber, invoiceDate, dueDate, items } = invoice;
-
-        if (!customerName || !invoiceNumber || !invoiceDate || !dueDate) {
-            alert('Veuillez remplir tous les champs requis');
-            return;
-        }
-        if (new Date(dueDate) < new Date(invoiceDate)) {
-            alert('La date d\'échéance doit être postérieure à la date de facture');
-            return;
-        }
-        if (items.some(item => !item.itemDetails)) {
-            alert('Tous les articles doivent avoir une description');
-            return;
-        }
-
-        const invoiceToSubmit = { ...invoice, adjustment: 0 };
         try {
-            await axios.post('http://localhost:5000/api/invoices', invoiceToSubmit);
-            alert('Facture créée avec succès');
-            setInvoice({
-                customerName: '',
-                invoiceNumber: '',
-                orderNumber: '',
-                invoiceDate: new Date().toISOString().split('T')[0],
-                dueDate: '',
-                items: [{ itemDetails: '', quantity: 1, rate: 0, tax: 0, amount: 0 }],
-                subTotal: 0,
-                discount: 0,
-                shippingCharges: 0,
-                total: 0,
-                customerNotes: ''
-            });
-        } catch (error) {
-            console.error('Erreur lors de la création de la facture', error);
-            alert('Erreur lors de la création de la facture');
+            const token = localStorage.getItem('authToken');
+            if (!token) throw new Error('Vous devez être connecté pour créer une facture');
+
+            const invoiceData = { ...data, subTotal, total };
+            const response = await axios.post(
+                'http://localhost:5000/api/invoices',
+                invoiceData,
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            setSuccess('Facture créée avec succès');
+            setValue('businessId', '');
+            setValue('customerName', '');
+            setValue('invoiceNumber', '');
+            setValue('orderNumber', '');
+            setValue('invoiceDate', new Date().toISOString().split('T')[0]);
+            setValue('dueDate', '');
+            setValue('items', [{ itemDetails: '', quantity: 1, rate: 0, tax: 0 }]);
+            setValue('discount', 0);
+            setValue('shippingCharges', 0);
+            setValue('customerNotes', '');
+        } catch (err) {
+            setError(err.response?.data?.message || err.message || 'Erreur lors de la création de la facture');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Handle file import
+    const handleImport = async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        try {
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const data = JSON.parse(e.target.result);
+                if (!data || typeof data !== 'object') {
+                    setError('Fichier JSON invalide');
+                    return;
+                }
+
+                // Populate form with imported data
+                setValue('businessId', data.businessId || '');
+                setValue('customerName', data.customerName || '');
+                setValue('invoiceNumber', data.invoiceNumber || '');
+                setValue('orderNumber', data.orderNumber || '');
+                setValue('invoiceDate', data.invoiceDate || new Date().toISOString().split('T')[0]);
+                setValue('dueDate', data.dueDate || '');
+                setValue('items', data.items || [{ itemDetails: '', quantity: 1, rate: 0, tax: 0 }]);
+                setValue('discount', data.discount || 0);
+                setValue('shippingCharges', data.shippingCharges || 0);
+                setValue('customerNotes', data.customerNotes || '');
+
+                setSuccess('Données importées avec succès');
+            };
+            reader.readAsText(file);
+        } catch (err) {
+            setError('Erreur lors de l\'importation des données');
         }
     };
 
     return (
-        <div style={{
-            minHeight: '100vh',
-            background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
-            padding: '40px 20px',
-            fontFamily: "'Arial', sans-serif"
-        }}>
-            <div style={{
-                maxWidth: '1200px',
-                margin: '0 auto',
-                backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                borderRadius: '20px',
-                boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1)',
-                overflow: 'hidden',
-                position: 'relative'
-            }}>
-                <div style={{
-                    background: 'linear-gradient(to right, #4facfe, #00f2fe)',
-                    padding: '30px',
-                    color: 'white',
-                    borderRadius: '20px 20px 0 0'
-                }}>
-                    <h2 style={{
-                        fontSize: '36px',
-                        fontWeight: 'bold',
-                        margin: '0',
-                        textShadow: '2px 2px 4px rgba(0,0,0,0.2)'
-                    }}>Création de Facture</h2>
-                    <p style={{ margin: '10px 0 0', fontSize: '18px' }}>Gérez vos factures avec style</p>
+        <div className={styles.container}>
+            <div className={styles.formWrapper}>
+                <div className={styles.header}>
+                    <h2>Création de Facture</h2>
+                    <p>Gérez vos factures avec style</p>
                 </div>
+                <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
+                    {error && <Alert color="danger">{error}</Alert>}
+                    {success && <Alert color="success">{success}</Alert>}
 
-                <form onSubmit={handleSubmit} style={{ padding: '40px' }}>
-                    <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-                        gap: '20px',
-                        marginBottom: '40px'
-                    }}>
+                    {/* Import Button */}
+                    <div className={styles.field}>
+                        <label className={styles.label}>Importer une facture (JSON)</label>
+                        <input
+                            type="file"
+                            accept="application/json"
+                            onChange={handleImport}
+                            disabled={loading}
+                            className={styles.input}
+                        />
+                    </div>
+
+                    <div className={styles.inputGrid}>
+                        <div className={styles.field}>
+                            <label className={styles.label}>Société</label>
+                            <select
+                                {...register('businessId', { required: 'Veuillez sélectionner une société' })}
+                                disabled={loading || businesses.length === 0}
+                                className={styles.input}
+                            >
+                                <option value="">Sélectionner une société</option>
+                                {businesses.map(business => (
+                                    <option key={business._id} value={business._id}>
+                                        {business.name}
+                                    </option>
+                                ))}
+                            </select>
+                            {errors.businessId && <span className={styles.error}>{errors.businessId.message}</span>}
+                        </div>
+
+                        {selectedBusiness && (
+                            <div className={styles.field}>
+                                <label className={styles.label}>Détails de la société</label>
+                                <div className={styles.businessDetails}>
+                                    <p><strong>Nom:</strong> {selectedBusiness.name}</p>
+                                    <p><strong>Adresse:</strong> {selectedBusiness.address}</p>
+                                    <p><strong>N° Taxe:</strong> {selectedBusiness.taxNumber}</p>
+                                </div>
+                            </div>
+                        )}
+
                         {[
-                            { name: 'customerName', placeholder: 'Nom du client', label: 'Nom du client', type: 'text' },
-                            { name: 'invoiceNumber', placeholder: 'N° Facture', label: 'Numéro de facture', type: 'text' },
-                            { name: 'orderNumber', placeholder: 'N° Commande', label: 'Numéro de commande', type: 'text' },
-                            { name: 'invoiceDate', placeholder: 'Date Facture', label: 'Date de facture', type: 'date' },
-                            { name: 'dueDate', placeholder: 'Date Échéance', label: 'Date d\'échéance', type: 'date' }
+                            {
+                                name: 'customerName',
+                                label: 'Nom du client',
+                                required: 'Ce champ est requis',
+                                validate: (value) => value.length <= 100 || 'Maximum 100 caractères'
+                            },
+                            {
+                                name: 'invoiceNumber',
+                                label: 'Numéro de facture',
+                                required: 'Ce champ est requis',
+                                validate: (value) => /^[A-Za-z0-9-]+$/.test(value) || 'Doit être alphanumérique avec des tirets uniquement'
+                            },
+                            { name: 'orderNumber', label: 'Numéro de commande' },
+                            { name: 'invoiceDate', label: 'Date de facture', type: 'date', required: 'Ce champ est requis' },
+                            {
+                                name: 'dueDate',
+                                label: 'Date d\'échéance',
+                                type: 'date',
+                                required: 'Ce champ est requis',
+                                validate: (value) => new Date(value) >= new Date(watch('invoiceDate')) || 'Doit être postérieure à la date de facture'
+                            }
                         ].map(field => (
-                            <div key={field.name} style={{ position: 'relative' }}>
-                                <label style={{
-                                    display: 'block',
-                                    marginBottom: '5px',
-                                    fontSize: '14px',
-                                    color: '#555',
-                                    fontWeight: '500'
-                                }}>{field.label}</label>
+                            <div key={field.name} className={styles.field}>
+                                <label className={styles.label}>{field.label}</label>
                                 <input
-                                    type={field.type}
-                                    name={field.name}
-                                    value={invoice[field.name]}
-                                    onChange={handleChange}
-                                    required={field.type !== 'text' || field.name === 'customerName' || field.name === 'invoiceNumber'}
-                                    placeholder={field.placeholder}
-                                    style={{
-                                        width: '100%',
-                                        padding: '12px 16px',
-                                        border: '2px solid #ddd',
-                                        borderRadius: '8px',
-                                        fontSize: '16px',
-                                        transition: 'all 0.3s ease',
-                                        backgroundColor: 'white'
-                                    }}
-                                    onFocus={(e) => e.target.style.borderColor = '#4facfe'}
-                                    onBlur={(e) => e.target.style.borderColor = '#ddd'}
+                                    type={field.type || 'text'}
+                                    {...register(field.name, {
+                                        required: field.required,
+                                        validate: field.validate
+                                    })}
+                                    disabled={loading}
+                                    className={styles.input}
                                 />
+                                {errors[field.name] && <span className={styles.error}>{errors[field.name].message}</span>}
                             </div>
                         ))}
                     </div>
 
-                    <div style={{
-                        backgroundColor: 'rgba(245, 247, 250, 0.8)',
-                        padding: '20px',
-                        borderRadius: '12px',
-                        marginBottom: '30px'
-                    }}>
-                        <h3 style={{
-                            fontSize: '24px',
-                            color: '#333',
-                            marginBottom: '20px',
-                            fontWeight: '600'
-                        }}>Articles</h3>
-
-                        {invoice.items.map((item, index) => (
-                            <div key={index} style={{
-                                display: 'grid',
-                                gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 80px',
-                                gap: '15px',
-                                marginBottom: '15px',
-                                padding: '15px',
-                                backgroundColor: 'white',
-                                borderRadius: '10px',
-                                boxShadow: '0 2px 5px rgba(0,0,0,0.05)',
-                                transition: 'transform 0.2s ease'
-                            }}
-                                 onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-                                 onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}>
+                    <div className={styles.itemsSection}>
+                        <h3>Articles</h3>
+                        {fields.map((item, index) => (
+                            <div key={item.id} className={styles.itemRow}>
                                 <div>
-                                    <label style={{ display: 'block', fontSize: '12px', color: '#555', marginBottom: '5px' }}>Détails</label>
+                                    <label className={styles.label}>Détails</label>
                                     <input
-                                        type="text"
-                                        name="itemDetails"
-                                        placeholder="Détails de l'article"
-                                        value={item.itemDetails}
-                                        onChange={(e) => handleItemChange(index, e)}
-                                        required
-                                        style={{
-                                            border: '2px solid #eee',
-                                            padding: '10px',
-                                            borderRadius: '6px',
-                                            fontSize: '14px',
-                                            width: '100%'
-                                        }}
+                                        {...register(`items.${index}.itemDetails`, {
+                                            required: 'Requis',
+                                            maxLength: { value: 200, message: 'Maximum 200 caractères' }
+                                        })}
+                                        disabled={loading}
+                                        className={styles.itemInput}
                                     />
+                                    {errors.items?.[index]?.itemDetails && <span className={styles.error}>{errors.items[index].itemDetails.message}</span>}
                                 </div>
                                 <div>
-                                    <label style={{ display: 'block', fontSize: '12px', color: '#555', marginBottom: '5px' }}>Quantité</label>
+                                    <label className={styles.label}>Quantité</label>
                                     <input
                                         type="number"
-                                        name="quantity"
-                                        value={item.quantity}
-                                        onChange={(e) => handleItemChange(index, e)}
-                                        min="1"
-                                        required
-                                        style={{
-                                            border: '2px solid #eee',
-                                            padding: '10px',
-                                            borderRadius: '6px',
-                                            fontSize: '14px',
-                                            width: '100%'
-                                        }}
+                                        {...register(`items.${index}.quantity`, { required: 'Requis', min: { value: 1, message: 'Minimum 1' } })}
+                                        disabled={loading}
+                                        className={styles.itemInput}
                                     />
+                                    {errors.items?.[index]?.quantity && <span className={styles.error}>{errors.items[index].quantity.message}</span>}
                                 </div>
                                 <div>
-                                    <label style={{ display: 'block', fontSize: '12px', color: '#555', marginBottom: '5px' }}>Prix unitaire</label>
+                                    <label className={styles.label}>Prix unitaire</label>
                                     <input
                                         type="number"
-                                        name="rate"
-                                        value={item.rate}
-                                        onChange={(e) => handleItemChange(index, e)}
-                                        min="0"
                                         step="0.01"
-                                        required
-                                        style={{
-                                            border: '2px solid #eee',
-                                            padding: '10px',
-                                            borderRadius: '6px',
-                                            fontSize: '14px',
-                                            width: '100%'
-                                        }}
+                                        {...register(`items.${index}.rate`, { required: 'Requis', min: { value: 0, message: 'Minimum 0' } })}
+                                        disabled={loading}
+                                        className={styles.itemInput}
                                     />
+                                    {errors.items?.[index]?.rate && <span className={styles.error}>{errors.items[index].rate.message}</span>}
                                 </div>
                                 <div>
-                                    <label style={{ display: 'block', fontSize: '12px', color: '#555', marginBottom: '5px' }}>Taxe</label>
+                                    <label className={styles.label}>Taxe (%)</label>
                                     <input
                                         type="number"
-                                        name="tax"
-                                        placeholder="Taxe"
-                                        value={item.tax}
-                                        onChange={(e) => handleItemChange(index, e)}
-                                        min="0"
                                         step="0.01"
-                                        style={{
-                                            border: '2px solid #eee',
-                                            padding: '10px',
-                                            borderRadius: '6px',
-                                            fontSize: '14px',
-                                            width: '100%'
-                                        }}
+                                        {...register(`items.${index}.tax`, { min: { value: 0, message: 'Minimum 0' } })}
+                                        disabled={loading}
+                                        className={styles.itemInput}
                                     />
+                                    {errors.items?.[index]?.tax && <span className={styles.error}>{errors.items[index].tax.message}</span>}
                                 </div>
                                 <div>
-                                    <label style={{ display: 'block', fontSize: '12px', color: '#555', marginBottom: '5px' }}>Montant</label>
+                                    <label className={styles.label}>Montant</label>
                                     <input
                                         type="number"
-                                        name="amount"
-                                        value={item.amount.toFixed(2)}
+                                        value={calculateAmount(watchItems[index]).toFixed(2)}
                                         disabled
-                                        style={{
-                                            border: '2px solid #eee',
-                                            padding: '10px',
-                                            borderRadius: '6px',
-                                            fontSize: '14px',
-                                            backgroundColor: '#f8f9fa',
-                                            color: '#666',
-                                            width: '100%'
-                                        }}
+                                        className={`${styles.itemInput} ${styles.amountInput}`}
                                     />
                                 </div>
                                 <button
                                     type="button"
-                                    onClick={() => removeItem(index)}
-                                    disabled={invoice.items.length === 1}
-                                    style={{
-                                        background: invoice.items.length === 1
-                                            ? '#ccc'
-                                            : 'linear-gradient(to right, #ff6b6b, #ff8787)',
-                                        color: 'white',
-                                        border: 'none',
-                                        borderRadius: '6px',
-                                        padding: '10px',
-                                        cursor: invoice.items.length === 1 ? 'not-allowed' : 'pointer',
-                                        fontSize: '14px',
-                                        transition: 'all 0.3s ease',
-                                        height: 'fit-content',
-                                        alignSelf: 'end'
-                                    }}
-                                    onMouseEnter={(e) => invoice.items.length > 1 && (e.target.style.transform = 'scale(1.1)')}
-                                    onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
+                                    onClick={() => remove(index)}
+                                    disabled={fields.length === 1 || loading}
+                                    className={styles.removeButton}
                                 >
                                     Supprimer
                                 </button>
                             </div>
                         ))}
-
                         <button
                             type="button"
-                            onClick={addItem}
-                            style={{
-                                background: 'linear-gradient(to right, #4facfe, #00f2fe)',
-                                color: 'white',
-                                padding: '12px 24px',
-                                borderRadius: '25px',
-                                border: 'none',
-                                fontSize: '16px',
-                                cursor: 'pointer',
-                                transition: 'all 0.3s ease',
-                                boxShadow: '0 4px 15px rgba(79, 172, 254, 0.4)'
-                            }}
-                            onMouseEnter={(e) => e.target.style.transform = 'scale(1.05)'}
-                            onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
+                            onClick={() => append({ itemDetails: '', quantity: 1, rate: 0, tax: 0 })}
+                            disabled={loading}
+                            className={styles.addButton}
                         >
                             + Ajouter un article
                         </button>
 
-                        {/* Section des totaux */}
-                        <div style={{
-                            marginTop: '30px',
-                            padding: '20px',
-                            backgroundColor: 'white',
-                            borderRadius: '10px',
-                            boxShadow: '0 2px 5px rgba(0,0,0,0.05)'
-                        }}>
-                            <h4 style={{
-                                fontSize: '20px',
-                                color: '#333',
-                                marginBottom: '20px',
-                                fontWeight: '600'
-                            }}>Totaux</h4>
-                            <div style={{
-                                display: 'grid',
-                                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                                gap: '15px'
-                            }}>
-                                <div>
-                                    <label style={{ display: 'block', fontSize: '14px', color: '#555', marginBottom: '5px' }}>Sous-total</label>
-                                    <input
-                                        type="number"
-                                        value={invoice.subTotal.toFixed(2)}
-                                        disabled
-                                        style={{
-                                            border: '2px solid #eee',
-                                            padding: '10px',
-                                            borderRadius: '6px',
-                                            fontSize: '14px',
-                                            backgroundColor: '#f8f9fa',
-                                            color: '#666',
-                                            width: '100%'
-                                        }}
-                                    />
+                        <div className={styles.totalsSection}>
+                            <h4>Totaux</h4>
+                            <div className={styles.totalsGrid}>
+                                <div className={styles.field}>
+                                    <label className={styles.label}>Sous-total</label>
+                                    <input value={subTotal} disabled className={`${styles.input} ${styles.totalInput}`} />
                                 </div>
-                                <div>
-                                    <label style={{ display: 'block', fontSize: '14px', color: '#555', marginBottom: '5px' }}>Remise</label>
+                                <div className={styles.field}>
+                                    <label className={styles.label}>Remise (%)</label>
                                     <input
                                         type="number"
-                                        name="discount"
-                                        value={invoice.discount}
-                                        onChange={handleChange}
-                                        min="0"
                                         step="0.01"
-                                        style={{
-                                            border: '2px solid #eee',
-                                            padding: '10px',
-                                            borderRadius: '6px',
-                                            fontSize: '14px',
-                                            width: '100%'
-                                        }}
+                                        {...register('discount', { min: { value: 0, message: 'Minimum 0' } })}
+                                        disabled={loading}
+                                        className={styles.input}
                                     />
+                                    {errors.discount && <span className={styles.error}>{errors.discount.message}</span>}
                                 </div>
-                                <div>
-                                    <label style={{ display: 'block', fontSize: '14px', color: '#555', marginBottom: '5px' }}>Frais de livraison</label>
+                                <div className={styles.field}>
+                                    <label className={styles.label}>Frais de livraison</label>
                                     <input
                                         type="number"
-                                        name="shippingCharges"
-                                        value={invoice.shippingCharges}
-                                        onChange={handleChange}
-                                        min="0"
                                         step="0.01"
-                                        style={{
-                                            border: '2px solid #eee',
-                                            padding: '10px',
-                                            borderRadius: '6px',
-                                            fontSize: '14px',
-                                            width: '100%'
-                                        }}
+                                        {...register('shippingCharges', { min: { value: 0, message: 'Minimum 0' } })}
+                                        disabled={loading}
+                                        className={styles.input}
                                     />
+                                    {errors.shippingCharges && <span className={styles.error}>{errors.shippingCharges.message}</span>}
                                 </div>
-                                <div>
-                                    <label style={{ display: 'block', fontSize: '14px', color: '#555', marginBottom: '5px' }}>Ajustement</label>
-                                    <input
-                                        type="number"
-                                        name="adjustment"
-                                        value={invoice.adjustment}
-                                        onChange={handleChange}
-                                        step="0.01"
-                                        style={{
-                                            border: '2px solid #eee',
-                                            padding: '10px',
-                                            borderRadius: '6px',
-                                            fontSize: '14px',
-                                            width: '100%'
-                                        }}
-                                    />
-                                </div>
-                                <div>
-                                    <label style={{ display: 'block', fontSize: '14px', color: '#555', marginBottom: '5px' }}>Total</label>
-                                    <input
-                                        type="number"
-                                        value={invoice.total.toFixed(2)}
-                                        disabled
-                                        style={{
-                                            border: '2px solid #eee',
-                                            padding: '10px',
-                                            borderRadius: '6px',
-                                            fontSize: '14px',
-                                            backgroundColor: '#f8f9fa',
-                                            color: '#666',
-                                            width: '100%'
-                                        }}
-                                    />
+                                <div className={styles.field}>
+                                    <label className={styles.label}>Total</label>
+                                    <input value={total} disabled className={`${styles.input} ${styles.totalInput}`} />
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div style={{ display: 'flex', gap: '30px' }}>
+                    <div className={styles.notesSection}>
                         <div style={{ flex: 1 }}>
-                            <label style={{
-                                display: 'block',
-                                marginBottom: '5px',
-                                fontSize: '14px',
-                                color: '#555',
-                                fontWeight: '500'
-                            }}>Notes client</label>
+                            <label className={styles.label}>Notes client</label>
                             <textarea
-                                name="customerNotes"
-                                placeholder="Notes pour le client..."
-                                value={invoice.customerNotes}
-                                onChange={handleChange}
-                                style={{
-                                    width: '100%',
-                                    border: '2px solid #ddd',
-                                    padding: '15px',
-                                    borderRadius: '10px',
-                                    minHeight: '120px',
-                                    fontSize: '16px',
-                                    resize: 'vertical',
-                                    backgroundColor: 'white',
-                                    transition: 'all 0.3s ease'
-                                }}
-                                onFocus={(e) => e.target.style.borderColor = '#4facfe'}
-                                onBlur={(e) => e.target.style.borderColor = '#ddd'}
+                                {...register('customerNotes')}
+                                disabled={loading}
+                                className={styles.textarea}
                             />
                         </div>
                         <button
                             type="submit"
-                            style={{
-                                background: 'linear-gradient(to right, #2ecc71, #27ae60)',
-                                color: 'white',
-                                padding: '15px 40px',
-                                borderRadius: '25px',
-                                border: 'none',
-                                fontSize: '18px',
-                                fontWeight: '600',
-                                cursor: 'pointer',
-                                transition: 'all 0.3s ease',
-                                boxShadow: '0 4px 15px rgba(46, 204, 113, 0.4)',
-                                alignSelf: 'flex-end'
-                            }}
-                            onMouseEnter={(e) => e.target.style.transform = 'scale(1.05)'}
-                            onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
+                            disabled={loading}
+                            className={styles.submitButton}
                         >
-                            Créer la Facture
+                            {loading ? 'Création...' : 'Créer la Facture'}
                         </button>
                     </div>
                 </form>
