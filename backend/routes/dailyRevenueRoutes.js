@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const dailyRevenueController = require('../controllers/dailyRevenueController');
-const auth = require('../middleware/auth');
+const auth = require('../middlewares/auth');
 
 // Apply authentication middleware to all routes
 router.use(auth);
