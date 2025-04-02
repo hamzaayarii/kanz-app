@@ -1,0 +1,75 @@
+PI FullStack JS: Evaluation of Sprint 1 & 2
+**Integration is mandatory, a live demo of the application (Front End + Back End) on one machine.
+**The individual grade concerns the contribution of each student in the presented work by the team (individual presentation not allowed).
+
+Team: ……………….
+
+Class: …………….
+Individual Mark
+
+Student
+
+Back-end
+side
+Implementati
+on and
+Exposition of
+web services
+(3 pts)
+
+Dynamic
+and
+ergonomic
+user
+Interfaces
+(4
+pts)
+
+Added
+value (1
+pt)
+
+Team Mark
+Individual
+contribution and
+technical expertise
+(6 pts)
+
+Use of a
+Git/ Git
+Project
+(2 pts)
+
+Final
+Mark
+Use of
+version
+control,
+automation
+and
+continuous
+integration
+(2 pts)
+
+Scenario
+and test
+(2 pts)
+
+Details:
+●
+
+Back-end side Implementation and Exposition of web services: The student has created and implemented backend web services that
+involve form data validation, utilizing a NoSQL database management system.
+● Dynamic and ergonomic user Interfaces: The student has created user interfaces that are dynamic, user-friendly and responsive,
+incorporating form data validation for improved user experience.
+● individual contribution and technical expertise: the student communicates and responds to the team. He/she is involved in the team's
+work and present during team meetings with the coach. The student responded to technical questions.
+● Added value: The student has added value and has put in considerable effort.
+● Scenario and test: The team has implemented all possible scenarios related to the project. Take into consideration all the management
+related to the actors of the application (front office and back office.)
+● Use of a Git/ Git Project: the team used Git and Git project in a continuous way to organize tasks and monitor progress.
+● Use of version control, automation and continuous integration: the team seamlessly employed version control, automation, and
+continuous integration tools such as Git, Jenkins, and Docker to streamline collaboration and enhance project integration within the
+team.
+
+
