@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const journalController = require('../controllers/journalController');
-const auth = require('../middleware/auth');
+const auth = require('../middlewares/auth');
 
 // Apply auth middleware to all routes
 router.use(auth);
