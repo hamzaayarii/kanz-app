@@ -1,40 +1,80 @@
 const Business = require('../models/Business');
 const User = require('../models/User.js');
-
 const addBusiness = async (req, res) => {
     try {
-        const { name, type, taxNumber, address, phone } = req.body;
+        const { 
+            name, 
+            address, 
+            country, 
+            state, 
+            type, 
+            businessActivity, 
+            taxNumber, 
+            phone, 
+            capital,
+            vatRegistration,
+            exportOriented,
+            employeeCount
+        } = req.body;
+        
         const userId = req.user._id || req.user.id; // Handle both _id and id
 
-        if (!name || !type || !taxNumber || !address) {
+        // Validate required fields
+        if (!name || !type || !taxNumber || !address || !country || !state || !phone) {
             return res.status(400).json({
-                errorMessage: "Please provide all required fields (name, type, taxNumber, address).",
+                errorMessage: "Please provide all required fields (name, type, taxNumber, address, country, state, phone).",
+                status: false,
+            });
+        }
+
+        // Check if business with same tax number already exists
+        const existingBusiness = await Business.findOne({ taxNumber });
+        if (existingBusiness) {
+            return res.status(400).json({
+                errorMessage: "A business with this tax number already exists.",
                 status: false,
             });
         }
 
         const newBusiness = new Business({
             name,
-            type,
-            taxNumber,
             address,
-            phone: phone || null,
+            country,
+            state,
+            type,
+            businessActivity,
+            taxNumber,
+            phone,
+            capital,
+            vatRegistration: vatRegistration || false,
+            exportOriented: exportOriented || false,
+            employeeCount: employeeCount || '1-5',
             owner: userId,
+            status: 'pending' // Default status for new businesses
         });
 
         await newBusiness.save();
 
         res.status(201).json({
-            status: true,
-            message: "Business added successfully.",
+            success: true, // Changed to match what the frontend expects
+            message: "Business registered successfully.",
             business: newBusiness,
         });
 
     } catch (error) {
-        console.error('Error adding business:', error);
+        console.error('Error registering business:', error);
+        
+        // Handle duplicate key error specifically
+        if (error.code === 11000) {
+            return res.status(400).json({
+                success: false,
+                message: "This tax number is already registered."
+            });
+        }
+        
         res.status(500).json({
-            errorMessage: "Something went wrong!",
-            status: false,
+            success: false,
+            message: "Something went wrong during business registration.",
             error: error.message,
         });
     }
