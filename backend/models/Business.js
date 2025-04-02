@@ -2,10 +2,17 @@ const mongoose = require('mongoose');
 
 const businessSchema = new mongoose.Schema({
     name: { type: String, required: true },
-    type: { type: String, required: true },
-    taxNumber: { type: String, required: true, unique: true },
     address: { type: String, required: true },
-    phone: { type: String },
+    country: { type: String, required: true, default: 'Tunisia' },
+    state: { type: String, required: true },
+    type: { type: String, required: true }, // Legal Structure
+    businessActivity: { type: String },
+    taxNumber: { type: String, required: true, unique: true },
+    phone: { type: String, required: true },
+    capital: { type: String },
+    vatRegistration: { type: Boolean, default: false },
+    exportOriented: { type: Boolean, default: false },
+    employeeCount: { type: String, default: '1-5' },
     owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // Relation with User
 }, {
     timestamps: true
