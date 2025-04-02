@@ -1,4 +1,3 @@
-// models/TaxReport.js
 const mongoose = require('mongoose');
 
 const taxReportSchema = new mongoose.Schema({
@@ -14,14 +13,12 @@ const taxReportSchema = new mongoose.Schema({
     income: {
         type: Number,
         required: true,
+        min: 0 // Ajout de validation minimale
     },
     expenses: {
         type: Number,
         required: true,
-    },
-    taxRate: {
-        type: Number,
-        required: true,  // E.g., 0.15 for 15% tax rate
+        min: 0 // Ajout de validation minimale
     },
     calculatedTax: {
         type: Number,
@@ -31,7 +28,13 @@ const taxReportSchema = new mongoose.Schema({
         type: String,
         enum: ['pending', 'approved', 'rejected'],
         default: 'pending',
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now // Ajout de timestamp
     }
+}, {
+    indexes: [{ key: { userId: 1, year: 1 }, unique: true }] // Contrainte unique
 });
 
 module.exports = mongoose.model('TaxReport', taxReportSchema);

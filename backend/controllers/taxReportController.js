@@ -1,3 +1,5 @@
+const TaxReport = require('../models/TaxReport');
+
 const generateTaxReport = async (req, res) => {
     const { income, expenses, year, taxRate } = req.body;
 
@@ -6,11 +8,11 @@ const generateTaxReport = async (req, res) => {
     }
 
     try {
-        // Calculate tax based on the provided income, expenses, and tax rate
+        // Calcul du revenu imposable et de la taxe
         const taxableIncome = income - expenses;
         const calculatedTax = taxableIncome * taxRate;
 
-        // Create and save the tax report
+        // Création du rapport fiscal
         const taxReport = new TaxReport({
             userId: req.user.id,
             year,
@@ -38,7 +40,4 @@ const getTaxReports = async (req, res) => {
     }
 };
 
-module.exports = {
-    generateTaxReport,
-    getTaxReports
-};  
+module.exports = { generateTaxReport, getTaxReports };

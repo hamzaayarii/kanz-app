@@ -7,19 +7,20 @@ const UsersList = () => {
     const [users, setUsers] = useState([]);
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [redirect, setRedirect] = useState(false);
+    const [accessDenied, setAccessDenied] = useState(false); // New state to track access denial
 
-    // Vérifier si l'utilisateur est un admin et non banni
     const storedUser = localStorage.getItem('user');
     const user = storedUser ? JSON.parse(storedUser) : null;
 
+    // Vérifier si l'utilisateur est un admin et non banni
     useEffect(() => {
         if (!user || user.role !== 'admin' || user.isBanned) {
             console.log('User is not an admin or is banned:', user);
-            setRedirect(true);
+            setAccessDenied(true); // Set access denied flag
         }
     }, [user]);
 
+    // Effect to fetch users
     useEffect(() => {
         const fetchUsers = async () => {
             try {
@@ -28,16 +29,12 @@ const UsersList = () => {
                     throw new Error('Authentication token missing. Please log in again.');
                 }
 
-                console.log("Using Token:", token); // Debugging
-
                 const response = await axios.get('http://localhost:5000/api/users', {
                     headers: { Authorization: `Bearer ${token}` }
                 });
 
-                console.log("Users fetched:", response.data);
                 setUsers(response.data.users);
             } catch (err) {
-                console.error("Error fetching users:", err);
                 setError(err.response?.data?.message || "Failed to load users. Please try again.");
             } finally {
                 setLoading(false);
@@ -51,6 +48,11 @@ const UsersList = () => {
 
     // Fonction pour bannir/débannir un utilisateur
     const toggleBan = async (id, isBanned) => {
+        if (!user || user.role !== 'admin' || user.isBanned) {
+            setAccessDenied(true); // Set access denied if the user is not admin or is banned
+            return;
+        }
+
         try {
             const token = localStorage.getItem('authToken');
             if (!token) throw new Error('No authentication token found.');
@@ -60,14 +62,9 @@ const UsersList = () => {
 
             setUsers(users.map(user => user._id === id ? { ...user, isBanned: !isBanned } : user));
         } catch (err) {
-            console.error(`Error ${isBanned ? 'unbanning' : 'banning'} user:`, err);
             setError(`Failed to ${isBanned ? 'unban' : 'ban'} user. Please try again.`);
         }
     };
-
-    if (redirect) {
-        return <Navigate to="/" replace />;
-    }
 
     return (
         <div style={{
@@ -114,6 +111,19 @@ const UsersList = () => {
                         </Alert>
                     )}
 
+                    {accessDenied && !user?.isBanned && (
+                        <Alert color="warning" style={{
+                            borderRadius: '10px',
+                            marginBottom: '20px',
+                            fontWeight: '500',
+                            background: 'linear-gradient(to right, #ffcc00, #ff9900)',
+                            color: 'white',
+                            border: 'none'
+                        }}>
+                            Accès refusé : Vous n'êtes pas un administrateur.
+                        </Alert>
+                    )}
+
                     {loading ? (
                         <div style={{ textAlign: 'center', padding: '50px 0' }}>
                             <Spinner style={{
@@ -151,42 +161,26 @@ const UsersList = () => {
                             <tbody>
                             {users.length > 0 ? (
                                 users.map(user => (
-                                    <tr key={user._id} style={{
-                                        transition: 'transform 0.2s ease, background-color 0.3s ease'
-                                    }}
-                                        onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-3px)'}
-                                        onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}>
+                                    <tr key={user._id}>
                                         <td style={{ padding: '15px' }}>{user.fullName}</td>
                                         <td style={{ padding: '15px' }}>{user.email}</td>
                                         <td style={{ padding: '15px' }}>
-                                                <span style={{
-                                                    padding: '5px 10px',
-                                                    borderRadius: '20px',
-                                                    fontSize: '0.9rem',
-                                                    fontWeight: '500',
-                                                    backgroundColor: user.isBanned ? '#ff8787' : '#b8e994',
-                                                    color: user.isBanned ? '#721c24' : '#2d572c'
-                                                }}>
-                                                    {user.isBanned ? 'Banni' : 'Actif'}
-                                                </span>
+                                            <span style={{
+                                                padding: '5px 10px',
+                                                borderRadius: '20px',
+                                                fontSize: '0.9rem',
+                                                fontWeight: '500',
+                                                backgroundColor: user.isBanned ? '#ff8787' : '#b8e994',
+                                                color: user.isBanned ? '#721c24' : '#2d572c'
+                                            }}>
+                                                {user.isBanned ? 'Banni' : 'Actif'}
+                                            </span>
                                         </td>
                                         <td style={{ padding: '15px' }}>
                                             <Button
                                                 color={user.isBanned ? 'success' : 'danger'}
                                                 size="sm"
                                                 onClick={() => toggleBan(user._id, user.isBanned)}
-                                                style={{
-                                                    background: user.isBanned
-                                                        ? 'linear-gradient(to right, #2ecc71, #27ae60)'
-                                                        : 'linear-gradient(to right, #ff6b6b, #ff8787)',
-                                                    border: 'none',
-                                                    borderRadius: '25px',
-                                                    padding: '8px 16px',
-                                                    fontWeight: '500',
-                                                    transition: 'transform 0.2s ease, box-shadow 0.2s ease'
-                                                }}
-                                                onMouseEnter={(e) => e.target.style.transform = 'scale(1.05)'}
-                                                onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
                                             >
                                                 {user.isBanned ? 'Débannir' : 'Bannir'}
                                             </Button>

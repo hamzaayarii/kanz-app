@@ -19,7 +19,9 @@ import Items from './views/examples/Items.js'; // Add import for Items
 import SalesReceipts from './views/examples/SalesReceipts'; // Add import for SalesReceipts
 import CreateInvoice from './views/examples/CreateInvoice';
 import InvoiceList from './views/examples/InvoiceList';
-
+import EmployeeManagement  from "./views/examples/EmployeeManagement";
+import FinancialStatements from './views/examples/FinancialStatements'; // Add import for FinancialStatements
+import PayrollManagement   from "./views/examples/PayrollManagement";
 import BusinessRegistrationPage from './views/buisness/BusinessRegistrationPage.js';
 import BusinessManagement from './views/buisness/BusinessManagement.js';
 import AssignAccountant from './views/accountant/AssignAccountant.js';
@@ -33,6 +35,39 @@ var routes = [
       <AuthRoute>
         <Index />
       </AuthRoute>
+    ),
+    layout: '/admin',
+  },
+  {
+    path: '/EmployeeManagement',
+    name: 'EmployeeManagement',
+    icon: 'ni ni-tv-2 text-primary',
+    component: (
+        <AuthRoute>
+          <EmployeeManagement />
+        </AuthRoute>
+    ),
+    layout: '/admin',
+  },
+  {
+    path: '/FinancialStatements',
+    name: 'FinancialStatements',
+    icon: 'ni ni-tv-2 text-primary',
+    component: (
+        <AuthRoute>
+          <FinancialStatements />
+        </AuthRoute>
+    ),
+    layout: '/admin',
+  },
+  {
+    path: '/PayrollManagement',
+    name: 'PayrollManagement',
+    icon: 'ni ni-tv-2 text-primary',
+    component: (
+        <AuthRoute>
+          <PayrollManagement />
+        </AuthRoute>
     ),
     layout: '/admin',
   },

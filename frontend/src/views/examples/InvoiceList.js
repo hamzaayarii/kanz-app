@@ -3,34 +3,97 @@ import axios from 'axios';
 
 const InvoiceList = () => {
     const [invoices, setInvoices] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
         fetchInvoices();
     }, []);
 
     const fetchInvoices = async () => {
+        setLoading(true);
+        setError(null);
         try {
-            const response = await axios.get('http://localhost:5000/api/invoices');
-            setInvoices(response.data);
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                throw new Error('Veuillez vous connecter pour voir vos factures');
+            }
+            const response = await axios.get('http://localhost:5000/api/invoices', {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+            setInvoices(response.data.invoices || response.data);
         } catch (error) {
+            setError(error.response?.data?.message || error.message || 'Erreur lors du chargement des factures');
             console.error('Erreur lors du chargement des factures', error);
+        } finally {
+            setLoading(false);
         }
     };
 
     const deleteInvoice = async (id) => {
-        if (window.confirm("Voulez-vous vraiment supprimer cette facture ?")) {
+        if (window.confirm('Voulez-vous vraiment supprimer cette facture ?')) {
             try {
-                await axios.delete(`http://localhost:5000/api/invoices/${id}`);
+                const token = localStorage.getItem('authToken');
+                if (!token) {
+                    throw new Error('Veuillez vous connecter pour supprimer une facture');
+                }
+                await axios.delete(`http://localhost:5000/api/invoices/${id}`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
                 alert('Facture supprimée avec succès');
                 fetchInvoices();
             } catch (error) {
                 console.error('Erreur lors de la suppression', error);
+                alert(error.response?.data?.message || 'Erreur lors de la suppression');
             }
         }
     };
 
-    const downloadPDF = (id) => {
-        window.open(`http://localhost:5000/api/invoices/${id}/pdf`, "_blank");
+    const downloadPDF = async (id) => {
+        try {
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                alert('Veuillez vous connecter pour télécharger le PDF');
+                return;
+            }
+
+            const response = await axios.get(`http://localhost:5000/api/invoices/${id}/pdf`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+                responseType: 'blob', // Important pour les fichiers binaires
+            });
+
+            // Vérifier que la réponse est bien un PDF
+            const contentType = response.headers['content-type'];
+            if (contentType !== 'application/pdf') {
+                throw new Error('La réponse reçue n\'est pas un PDF');
+            }
+
+            // Créer et télécharger le fichier
+            const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `facture-${id}.pdf`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Erreur lors du téléchargement du PDF:', error);
+            const message = error.response?.data?.message || error.message || 'Erreur lors du téléchargement du PDF';
+            alert(message);
+
+            // Si l'erreur vient d'une réponse non-JSON (par ex. HTML), tenter de lire le blob
+            if (error.response?.data instanceof Blob) {
+                const text = await error.response.data.text();
+                console.error('Détails de l\'erreur:', text);
+            }
+        }
     };
 
     return (
@@ -72,7 +135,15 @@ const InvoiceList = () => {
 
                 {/* Contenu */}
                 <div style={{ padding: '40px' }}>
-                    {invoices.length === 0 ? (
+                    {loading ? (
+                        <p style={{ textAlign: 'center', fontSize: '18px', color: '#666' }}>
+                            Chargement...
+                        </p>
+                    ) : error ? (
+                        <p style={{ textAlign: 'center', fontSize: '18px', color: 'red' }}>
+                            {error}
+                        </p>
+                    ) : invoices.length === 0 ? (
                         <p style={{
                             textAlign: 'center',
                             fontSize: '18px',
@@ -94,8 +165,8 @@ const InvoiceList = () => {
                                     transition: 'all 0.3s ease',
                                     borderLeft: '5px solid #4facfe'
                                 }}
-                                onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-5px)'}
-                                onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}>
+                                     onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-5px)'}
+                                     onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}>
                                     <div style={{ marginBottom: '15px' }}>
                                         <p style={{
                                             fontSize: '18px',

@@ -5,23 +5,19 @@ const jwt = require('jsonwebtoken');
 const dbConfig = require('./config/db.json'); // MongoDB connection config
 const userRoutes = require('./routes/userRoutes'); // User routes
 const User = require('./models/User'); // Import the User model
-
 const purchaseRoutes = require('./routes/purchaseRoutes');
 const productRoutes = require('./routes/productRoutes'); // Product routes
 const salesReceiptsRoutes = require('./routes/salesReceipts'); // Sales Receipts routes
 const invoiceRoutes = require('./routes/invoiceRoutes');
 const Product = require('./models/Product'); // Import the Product model
-
 const expenseRoutes = require('./routes/expenseRoutes');
 const invoice1Routes = require('./routes/invoice1Routes');
-
 const { authenticate } = require('./middlewares/authMiddleware');
-
-//const taxReportsRoutes = require('./routes/taxReportsRoutes');
-
+const taxReportsRoutes = require('./routes/taxReportsRoutes');
 const businessRoutes = require('./routes/businessRoutes');
 const cookieParser = require('cookie-parser');
-
+const employeeRoutes = require('./routes/employeeRoutes');
+const payrollRoutes = require('./routes/payrollsRoutes');
 const app = express();
 
 // MongoDB connection
@@ -43,9 +39,9 @@ app.use('/api/invoices', invoiceRoutes);
 app.use('/api/invoices1', invoice1Routes);
 app.use('/uploads', express.static('uploads'));
 app.use('/api/expenses', expenseRoutes);
-
-//problem here
-//app.use('/api/taxReports', taxReportsRoutes);  // Tax Reports routes
+app.use('/api/employees', employeeRoutes);
+app.use('/api/payrolls', payrollRoutes);
+app.use('/api/taxReports', taxReportsRoutes);
 app.use('/api/business', businessRoutes); /// api/business/add
 
 // Fetch user data by ID (API route)
