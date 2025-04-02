@@ -29,7 +29,7 @@ const Profile = () => {
 
         // Decode token to get user ID
         const decoded = jwtDecode(token);
-        const userId = decoded.id;
+        const userId = decoded._id;
         console.log("User ID from token:", userId);
 
         // Fetch user data from API with token in headers
