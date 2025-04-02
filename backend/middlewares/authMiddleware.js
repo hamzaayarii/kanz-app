@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const SECRET_KEY = process.env.JWT_SECRET || 'your_secret_key';
+const SECRET_KEY = process.env.SECRET_KEY || 'your_secret_key';
 
 const authenticate = (req, res, next) => {
     // First try to get token from Authorization header
@@ -16,12 +16,14 @@ const authenticate = (req, res, next) => {
 
     jwt.verify(token, SECRET_KEY, (err, decoded) => {
         if (err) {
+            console.error('Token verification error:', err);
             return res.status(403).json({ message: 'Invalid or expired token' });
         }
-        req.user = decoded; // Stocker les informations de l'utilisateur décodées dans la requête
+        req.user = decoded;
         next();
     });
 };
+
 // Middleware to authorize accountants
 const authorizeAccountant = (req, res, next) => {
     if (req.user.role !== 'accountant' && req.user.role !== 'admin') {

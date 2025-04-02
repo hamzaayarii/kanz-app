@@ -4,6 +4,7 @@ const User = require('../models/User.js');
 const addBusiness = async (req, res) => {
     try {
         const { name, type, taxNumber, address, phone } = req.body;
+        const userId = req.user._id || req.user.id; // Handle both _id and id
 
         if (!name || !type || !taxNumber || !address) {
             return res.status(400).json({
@@ -18,7 +19,7 @@ const addBusiness = async (req, res) => {
             taxNumber,
             address,
             phone: phone || null,
-            owner: req.user.id, // Assuming authentication middleware sets `req.user`
+            owner: userId,
         });
 
         await newBusiness.save();
@@ -30,6 +31,7 @@ const addBusiness = async (req, res) => {
         });
 
     } catch (error) {
+        console.error('Error adding business:', error);
         res.status(500).json({
             errorMessage: "Something went wrong!",
             status: false,
@@ -41,12 +43,14 @@ const addBusiness = async (req, res) => {
 // New function to get businesses for the logged-in user
 const getUserBusinesses = async (req, res) => {
     try {
-        const businesses = await Business.find({ owner: req.user.id });
+        const userId = req.user._id || req.user.id;
+        const businesses = await Business.find({ owner: userId });
         res.status(200).json({
             status: true,
             businesses
         });
     } catch (error) {
+        console.error('Error getting user businesses:', error);
         res.status(500).json({
             errorMessage: "Something went wrong!",
             status: false,
@@ -54,27 +58,28 @@ const getUserBusinesses = async (req, res) => {
         });
     }
 };
+
 const checkUserBusiness = async (req, res) => {
     try {
-        const businesses = await Business.find({ owner: req.user.id });
+        const userId = req.user._id || req.user.id;
+        const businesses = await Business.find({ owner: userId });
 
         res.json({
             hasBusiness: businesses.length > 0,
-            businesses // Send back the list of businesses
+            businesses
         });
     } catch (error) {
         console.error('Error checking user business:', error);
         res.status(500).json({
-            message: 'Server error'
+            message: 'Server error',
+            error: error.message
         });
     }
 };
 
-
 // Updated getAccountant controller function
 const getAccountant = async (req, res) => {
     try {
-        // Fix: Set default role to "accountant" if not provided
         const role = req.query.role || "accountant";
 
         if (role !== "accountant") {
@@ -84,25 +89,33 @@ const getAccountant = async (req, res) => {
         const accountants = await User.find({ role: "accountant" });
         res.json(accountants);
     } catch (error) {
-        res.status(500).json({ message: "Server error", error });
+        console.error('Error getting accountants:', error);
+        res.status(500).json({ message: "Server error", error: error.message });
     }
 };
 
 const assignAccountant = async (req, res) => {
     try {
         const { accountantId } = req.body;
-        const businessId = req.user.businessId; // Assuming user is authenticated
+        const userId = req.user._id || req.user.id;
 
         if (!accountantId) {
             return res.status(400).json({ message: "Accountant ID is required." });
         }
 
         // Update business with assigned accountant
-        await Business.findByIdAndUpdate(businessId, { accountant: accountantId });
+        const business = await Business.findOne({ owner: userId });
+        if (!business) {
+            return res.status(404).json({ message: "Business not found." });
+        }
 
-        res.json({ message: "Accountant assigned successfully." });
+        business.accountant = accountantId;
+        await business.save();
+
+        res.json({ message: "Accountant assigned successfully.", business });
     } catch (error) {
-        res.status(500).json({ message: "Error assigning accountant", error });
+        console.error('Error assigning accountant:', error);
+        res.status(500).json({ message: "Server error", error: error.message });
     }
 };
 
@@ -120,6 +133,7 @@ const deleteBusiness = async (req, res) => {
         res.status(500).json({ message: "Error deleting business", error });
     }
 };
+
 const updateBusiness = async (req, res) => {
     try {
         const { businessId } = req.params;
