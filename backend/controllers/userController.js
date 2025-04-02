@@ -198,13 +198,13 @@ export const login = async (req, res) => {
 
         const token = jwt.sign(
             {
-                id: user._id,
+                _id: user._id,
                 email: user.email,
                 role: user.role,
                 isBanned: user.isBanned
             },
-            process.env.SECRET_KEY,  // Secret key loaded from environment variables
-            { expiresIn: process.env.JWT_EXPIRES_IN || '1h' }  // Default expiration time
+            process.env.SECRET_KEY,
+            { expiresIn: process.env.JWT_EXPIRES_IN || '1h' }
         );
 
         console.log('Token generated:', token);

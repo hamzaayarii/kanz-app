@@ -18,6 +18,8 @@ const businessRoutes = require('./routes/businessRoutes');
 const cookieParser = require('cookie-parser');
 const employeeRoutes = require('./routes/employeeRoutes');
 const payrollRoutes = require('./routes/payrollsRoutes');
+const journalRoutes = require('./routes/journalRoutes');
+const dailyRevenueRoutes = require('./routes/dailyRevenueRoutes');
 const app = express();
 
 // MongoDB connection
@@ -26,7 +28,11 @@ mongoose.connect(dbConfig.mongodb.url, { useNewUrlParser: true, useUnifiedTopolo
     .catch((err) => console.error('Failed to connect to MongoDB:', err));
 
 // Middleware
-app.use(cors({ origin: 'http://localhost:3000', methods: 'GET,POST,PUT,DELETE', credentials: true }));
+app.use(cors({
+    origin: 'http://localhost:3000',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+    credentials: true
+}));
 app.use(express.json());  // To parse JSON request bodies
 
 app.use(cookieParser());
@@ -43,6 +49,8 @@ app.use('/api/employees', employeeRoutes);
 app.use('/api/payrolls', payrollRoutes);
 app.use('/api/taxReports', taxReportsRoutes);
 app.use('/api/business', businessRoutes); /// api/business/add
+app.use('/api/journal', journalRoutes);
+app.use('/api/daily-revenue', dailyRevenueRoutes);
 
 // Fetch user data by ID (API route)
 app.get('/api/users/:id', authenticate, async (req, res) => {

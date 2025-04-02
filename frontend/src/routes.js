@@ -16,7 +16,7 @@ import TaxReportsList from './views/examples/TaxReportsList'; // Add import for 
 import Invoices from "./views/examples/Invoices.js"; // Add import for Items
 
 import Items from './views/examples/Items.js'; // Add import for Items
-import SalesReceipts from './views/examples/SalesReceipts'; // Add import for SalesReceipts
+import Journal from './views/examples/Journal';
 import CreateInvoice from './views/examples/CreateInvoice';
 import InvoiceList from './views/examples/InvoiceList';
 import EmployeeManagement  from "./views/examples/EmployeeManagement";
@@ -25,6 +25,7 @@ import PayrollManagement   from "./views/examples/PayrollManagement";
 import BusinessRegistrationPage from './views/buisness/BusinessRegistrationPage.js';
 import BusinessManagement from './views/buisness/BusinessManagement.js';
 import AssignAccountant from './views/accountant/AssignAccountant.js';
+import DailyRevenue from './views/examples/DailyRevenue';
 
 var routes = [
   {
@@ -94,15 +95,26 @@ var routes = [
     layout: '/admin',
   },
   {
-    path: '/sales-receipts',
-    name: 'Sales Receipts',
-    icon: 'ni ni-credit-card text-blue',
+    path: '/journal',
+    name: 'Journal Comptable',
+    icon: 'ni ni-book-bookmark text-primary',
+    component: (
+        <AuthRoute>
+            <Journal />
+        </AuthRoute>
+    ),
+    layout: '/admin'
+  },
+  {
+    path: '/daily-revenue',
+    name: 'Daily Revenue',
+    icon: 'ni ni-money-coins text-success',
     component: (
       <AuthRoute>
-        <SalesReceipts />
+        <DailyRevenue />
       </AuthRoute>
     ),
-    layout: '/admin',
+    layout: '/admin'
   },
   {
     path: '/create-invoice',
@@ -235,6 +247,7 @@ var routes = [
     icon: 'ni ni-key-25 text-info',
     component: <Login />,
     layout: '/auth',
+    showInSidebar: false
   },
   {
     path: '/register',
@@ -242,6 +255,7 @@ var routes = [
     icon: 'ni ni-circle-08 text-pink',
     component: <Register />,
     layout: '/auth',
+    showInSidebar: false
   },
   {
     path: '/password-reset',
@@ -249,6 +263,7 @@ var routes = [
     icon: 'ni ni-circle-08 text-pink',
     component: <PasswordReset />,
     layout: '/auth',
+    showInSidebar: false
   },
   {
     path: '/new-password/:token',
@@ -256,6 +271,7 @@ var routes = [
     icon: 'ni ni-circle-08 text-pink',
     component: <NewPassword />,
     layout: '/auth',
+    showInSidebar: false
   },
   // Standalone routes
   {
