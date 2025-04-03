@@ -313,23 +313,6 @@ const EmployeeManagement = () => {
                 </form>
             </div>
 
-            {/* Import Employees */}
-            <div className={styles.form}>
-                <h3>Import Employees</h3>
-                <div className={styles.field}>
-                    <label>JSON Data</label>
-                    <textarea
-                        value={importData}
-                        onChange={(e) => setImportData(e.target.value)}
-                        placeholder='[{"firstName": "John", "lastName": "Doe", "position": "Developer", "salary": 2000, "hireDate": "2023-01-01", "businessId": "business_id"}]'
-                        rows="5"
-                        disabled={loading}
-                    />
-                </div>
-                <button onClick={handleImportEmployees} disabled={loading || !importData}>
-                    {loading ? 'Importing...' : 'Import Employees'}
-                </button>
-            </div>
 
             {/* List of Employees */}
             <div className={styles.employees}>
