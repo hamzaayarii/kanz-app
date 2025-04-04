@@ -9,289 +9,262 @@ import AuthRoute from 'components/AuthRoute.js';
 import PasswordReset from './views/examples/PasswordReset.js';
 import NewPassword from './views/examples/NewPassword.js';
 import Purchases from './views/examples/Purchases.js';
-import Expenses from './views/examples/Expenses.js'; // Corrected import path
-import UserList from './views/examples/UserList.js'; // Corrected import path
-import TaxReportForm from './views/examples/TaxReportForm';  // Add import for TaxReportForm
-import TaxReportsList from './views/examples/TaxReportsList'; // Add import for TaxReportsList
-import Invoices from "./views/examples/Invoices.js"; // Add import for Items
-
-import Items from './views/examples/Items.js'; // Add import for Items
+import Expenses from './views/examples/Expenses.js';
+import UserList from './views/examples/UserList.js';
+import TaxReportForm from './views/examples/TaxReportForm.js';
+import TaxReportsList from './views/examples/TaxReportsList.js';
+import Invoices from './views/examples/Invoices.js';
+import Items from './views/examples/Items.js';
 import Journal from './views/examples/Journal';
 import CreateInvoice from './views/examples/CreateInvoice';
 import InvoiceList from './views/examples/InvoiceList';
-import EmployeeManagement  from "./views/examples/EmployeeManagement";
-import FinancialStatements from './views/examples/FinancialStatements'; // Add import for FinancialStatements
-import PayrollManagement   from "./views/examples/PayrollManagement";
+import EmployeeManagement from './views/examples/EmployeeManagement';
+import FinancialStatements from './views/examples/FinancialStatements';
+import PayrollManagement from './views/examples/PayrollManagement';
 import BusinessRegistrationPage from './views/buisness/BusinessRegistrationPage.js';
 import BusinessManagement from './views/buisness/BusinessManagement.js';
 import AssignAccountant from './views/accountant/AssignAccountant.js';
 import DailyRevenue from './views/examples/DailyRevenue';
 
-var routes = [
+// Grouped and enhanced routes for better UX
+const routes = [
+  // Dashboard & Overview
   {
     path: '/index',
-    name: 'Dashboard',
+    name: 'Dashboard Hub',
     icon: 'ni ni-tv-2 text-primary',
-    component: (
-      <AuthRoute>
-        <Index />
-      </AuthRoute>
-    ),
+    description: 'Your business at a glance',
+    component: <AuthRoute><Index /></AuthRoute>,
     layout: '/admin',
-  },
-  {
-    path: '/EmployeeManagement',
-    name: 'EmployeeManagement',
-    icon: 'ni ni-tv-2 text-primary',
-    component: (
-        <AuthRoute>
-          <EmployeeManagement />
-        </AuthRoute>
-    ),
-    layout: '/admin',
-  },
-  {
-    path: '/FinancialStatements',
-    name: 'FinancialStatements',
-    icon: 'ni ni-tv-2 text-primary',
-    component: (
-        <AuthRoute>
-          <FinancialStatements />
-        </AuthRoute>
-    ),
-    layout: '/admin',
-  },
-  {
-    path: '/PayrollManagement',
-    name: 'PayrollManagement',
-    icon: 'ni ni-tv-2 text-primary',
-    component: (
-        <AuthRoute>
-          <PayrollManagement />
-        </AuthRoute>
-    ),
-    layout: '/admin',
-  },
-  {
-    path: '/business-management',
-    name: 'Business Management',
-    icon: 'ni ni-building text-primary',
-    component: (
-      <AuthRoute>
-        <BusinessManagement />
-      </AuthRoute>
-    ),
-    layout: '/admin',
-  },
-  {
-    path: '/items',
-    name: 'Items',
-    icon: 'ni ni-box-2 text-orange',
-    component: (
-      <AuthRoute>
-        <Items />
-      </AuthRoute>
-    ),
-    layout: '/admin',
-  },
-  {
-    path: '/journal',
-    name: 'Journal Comptable',
-    icon: 'ni ni-book-bookmark text-primary',
-    component: (
-        <AuthRoute>
-            <Journal />
-        </AuthRoute>
-    ),
-    layout: '/admin'
+    category: 'Overview',
   },
   {
     path: '/daily-revenue',
-    name: 'Daily Revenue',
+    name: 'Daily Earnings',
     icon: 'ni ni-money-coins text-success',
-    component: (
-      <AuthRoute>
-        <DailyRevenue />
-      </AuthRoute>
-    ),
-    layout: '/admin'
+    description: 'Track your daily revenue flow',
+    component: <AuthRoute><DailyRevenue /></AuthRoute>,
+    layout: '/admin',
+    category: 'Overview',
+  },
+
+  // Financial Management
+  {
+    path: '/journal',
+    name: 'Accounting Journal',
+    icon: 'ni ni-book-bookmark text-indigo',
+    description: 'Log all your financial entries',
+    component: <AuthRoute><Journal /></AuthRoute>,
+    layout: '/admin',
+    category: 'Finance',
+  },
+  {
+    path: '/purchases',
+    name: 'Purchases',
+    icon: 'ni ni-cart text-orange',
+    description: 'Manage your spending',
+    component: <AuthRoute><Purchases /></AuthRoute>,
+    layout: '/admin',
+    category: 'Finance',
+  },
+  {
+    path: '/expenses',
+    name: 'Expenses',
+    icon: 'ni ni-credit-card text-red',
+    description: 'Keep expenses in check',
+    component: <AuthRoute><Expenses /></AuthRoute>,
+    layout: '/admin',
+    category: 'Finance',
+  },
+  {
+    path: '/invoices1',
+    name: 'Invoice Tracker',
+    icon: 'ni ni-paper-diploma text-blue',
+    description: 'Monitor all invoices',
+    component: <AuthRoute><Invoices /></AuthRoute>,
+    layout: '/admin',
+    category: 'Finance',
   },
   {
     path: '/create-invoice',
-    name: 'Create Invoice',
-    icon: 'ni ni-paper-diploma text-blue',
-    component: (
-      <AuthRoute>
-        <CreateInvoice />
-      </AuthRoute>
-    ),
+    name: 'New Invoice',
+    icon: 'ni ni-fat-add text-teal',
+    description: 'Create a fresh invoice',
+    component: <AuthRoute><CreateInvoice /></AuthRoute>,
     layout: '/admin',
+    category: 'Finance',
   },
   {
     path: '/invoices',
-    name: 'Invoices List',
+    name: 'Invoice List',
     icon: 'ni ni-bullet-list-67 text-green',
-    component: (
-      <AuthRoute>
-        <InvoiceList />
-      </AuthRoute>
-    ),
+    description: 'View all invoices',
+    component: <AuthRoute><InvoiceList /></AuthRoute>,
     layout: '/admin',
+    category: 'Finance',
   },
   {
-    path: '/users',
-    name: 'Users List',
-    icon: 'ni ni-bullet-list-67 text-red',
-    component: (
-      <AuthRoute>
-        <UserList />
-      </AuthRoute>
-    ),
+    path: '/financial-statements',
+    name: 'Financial Reports',
+    icon: 'ni ni-chart-bar-32 text-purple',
+    description: 'Detailed financial insights',
+    component: <AuthRoute><FinancialStatements /></AuthRoute>,
     layout: '/admin',
+    category: 'Finance',
   },
 
-  {
-    path: '/icons',
-    name: 'Icons',
-    icon: 'ni ni-planet text-blue',
-    component: (
-      <AuthRoute>
-        <Icons />
-      </AuthRoute>
-    ),
-    layout: '/admin',
-  },
-  {
-    path: '/purchases', // Updated path
-    name: 'Purchases', // Updated name
-    icon: 'ni ni-cart text-orange', // Updated icon
-    component: (
-      <AuthRoute>
-        <Purchases /> {/* Updated component */}
-      </AuthRoute>
-    ),
-
-    layout: '/admin',
-  },
-  {
-    path: '/invoices1', // Updated path
-    name: 'Invoices', // Updated name
-    icon: 'ni ni-cart text-orange', // Updated icon
-    component: (
-      <AuthRoute>
-        <Invoices /> {/* Updated component */}
-      </AuthRoute>
-    ),
-
-    layout: '/admin',
-  },
-  {
-    path: '/expenses', // Updated path
-    name: 'Expenses', // Updated name
-    icon: 'ni ni-cart text-orange', // Updated icon
-    component: (
-      <AuthRoute>
-        <Expenses /> {/* Updated component */}
-      </AuthRoute>
-    ),
-
-    layout: '/admin',
-  },
-  {
-    path: '/user-profile',
-    name: 'User Profile',
-    icon: 'ni ni-single-02 text-yellow',
-    component: (
-      <AuthRoute>
-        <Profile />
-      </AuthRoute>
-    ),
-    layout: '/admin',
-  },
-  {
-    path: '/tables',
-    name: 'Tables',
-    icon: 'ni ni-bullet-list-67 text-red',
-    component: (
-      <AuthRoute>
-        <Tables />
-      </AuthRoute>
-    ),
-    layout: '/admin',
-  },
+  // Tax Management
   {
     path: '/tax-report',
-    name: 'Generate Tax Report',
-    icon: 'ni ni-file-03 text-green',
-    component: (
-      <AuthRoute>
-        <TaxReportForm />
-      </AuthRoute>
-    ),
+    name: 'Tax Report Generator',
+    icon: 'ni ni-single-copy-04 text-green',
+    description: 'Prepare your tax reports',
+    component: <AuthRoute><TaxReportForm /></AuthRoute>,
     layout: '/admin',
+    category: 'Taxes',
   },
   {
     path: '/tax-reports',
-    name: 'Tax Reports List',
-    icon: 'ni ni-collection text-purple',
-    component: (
-      <AuthRoute>
-        <TaxReportsList />
-      </AuthRoute>
-    ),
+    name: 'Tax Reports Archive',
+    icon: 'ni ni-archive-2 text-purple',
+    description: 'Browse past tax reports',
+    component: <AuthRoute><TaxReportsList /></AuthRoute>,
     layout: '/admin',
+    category: 'Taxes',
   },
+
+  // Business & Employee Management
+  {
+    path: '/business-management',
+    name: 'Business Control',
+    icon: 'ni ni-building text-primary',
+    description: 'Manage your business settings',
+    component: <AuthRoute><BusinessManagement /></AuthRoute>,
+    layout: '/admin',
+    category: 'Business',
+  },
+  {
+    path: '/employee-management',
+    name: 'employee-management',
+    icon: 'ni ni-badge text-yellow',
+    description: 'Oversee your employees',
+    component: <AuthRoute><EmployeeManagement /></AuthRoute>,
+    layout: '/admin',
+    category: 'Business',
+  },
+  {
+    path: '/payroll-management',
+    name: 'Payroll Center',
+    icon: 'ni ni-money-coins text-teal',
+    description: 'Handle payroll with ease',
+    component: <AuthRoute><PayrollManagement /></AuthRoute>,
+    layout: '/admin',
+    category: 'Business',
+  },
+  {
+    path: '/assign-accountant',
+    name: 'Accountant Setup',
+    icon: 'ni ni-single-02 text-green',
+    description: 'Link an accountant',
+    component: <AuthRoute><AssignAccountant /></AuthRoute>,
+    layout: '/admin',
+    category: 'Business',
+  },
+
+  // Inventory & Assets
+  {
+    path: '/items',
+    name: 'Inventory',
+    icon: 'ni ni-box-2 text-orange',
+    description: 'Track your stock',
+    component: <AuthRoute><Items /></AuthRoute>,
+    layout: '/admin',
+    category: 'Inventory',
+  },
+
+  // User Management
+  {
+    path: '/user-profile',
+    name: 'My Profile',
+    icon: 'ni ni-circle-08 text-yellow',
+    description: 'Update your details',
+    component: <AuthRoute><Profile /></AuthRoute>,
+    layout: '/admin',
+    category: 'Users',
+  },
+  {
+    path: '/users',
+    name: 'User Directory',
+    icon: 'ni ni-single-02 text-red',
+    description: 'Manage all users',
+    component: <AuthRoute><UserList /></AuthRoute>,
+    layout: '/admin',
+    category: 'Users',
+  },
+
+  // Utility Pages
+  {
+    path: '/tables',
+    name: 'Data Tables',
+    icon: 'ni ni-bullet-list-67 text-red',
+    description: 'View structured data',
+    component: <AuthRoute><Tables /></AuthRoute>,
+    layout: '/admin',
+    category: 'Utilities',
+  },
+  {
+    path: '/icons',
+    name: 'Icon Gallery',
+    icon: 'ni ni-planet text-blue',
+    description: 'Explore icons',
+    component: <AuthRoute><Icons /></AuthRoute>,
+    layout: '/admin',
+    category: 'Utilities',
+  },
+
+  // Authentication Routes (Hidden from Sidebar)
   {
     path: '/login',
     name: 'Login',
     icon: 'ni ni-key-25 text-info',
     component: <Login />,
     layout: '/auth',
-    showInSidebar: false
+    showInSidebar: false,
   },
   {
     path: '/register',
-    name: 'Register',
+    name: 'Sign Up',
     icon: 'ni ni-circle-08 text-pink',
     component: <Register />,
     layout: '/auth',
-    showInSidebar: false
+    showInSidebar: false,
   },
   {
     path: '/password-reset',
-    name: 'PasswordReset',
-    icon: 'ni ni-circle-08 text-pink',
+    name: 'Reset Password',
+    icon: 'ni ni-lock-circle-open text-pink',
     component: <PasswordReset />,
     layout: '/auth',
-    showInSidebar: false
+    showInSidebar: false,
   },
   {
     path: '/new-password/:token',
-    name: 'PasswordReset',
-    icon: 'ni ni-circle-08 text-pink',
+    name: 'Set New Password',
+    icon: 'ni ni-lock-circle-open text-pink',
     component: <NewPassword />,
     layout: '/auth',
-    showInSidebar: false
-  },
-  // Standalone routes
-  {
-    path: '/business-registration',
-    name: 'Business Registration',
-    component: <BusinessRegistrationPage />,
-    layout: '/standalone',
-  },
-  {
-    path: '/assign-accountant',
-    name: 'Assign Accountant',
-    icon: 'ni ni-single-02 text-green', // Choose an appropriate icon
-    component: (
-      <AuthRoute>
-        <AssignAccountant />
-      </AuthRoute>
-    ),
-    layout: '/admin',
+    showInSidebar: false,
   },
 
+  // Standalone Routes
+  {
+    path: '/business-registration',
+    name: 'Start Your Business',
+    icon: 'ni ni-briefcase-24 text-primary',
+    component: <BusinessRegistrationPage />,
+    layout: '/standalone',
+    showInSidebar: false,
+  },
 ];
 
 export default routes;

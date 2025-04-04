@@ -1,47 +1,112 @@
 .container {
-    padding: 20px;
-    max-width: 1200px;
+    padding: 30px;
+    max-width: 1300px;
     margin: 0 auto;
+    background: linear-gradient(135deg, #e6f0fa 0%, #d1e8ff 100%);
+    min-height: 100vh;
+}
+
+.title {
+    font-size: 2.5rem;
+    color: #2c3e50;
+    margin-bottom: 30px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+}
+
+.alert {
+    margin-bottom: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.spinner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.2rem;
+    color: #2980b9;
+    margin: 20px 0;
+}
+
+.card {
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+    background: #fff;
+    transition: transform 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.cardTitle {
+    font-size: 1.5rem;
+    color: #34495e;
+    padding: 15px 20px;
+    border-bottom: 1px solid #ecf0f1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 .form {
-    background-color: #f9f9f9;
     padding: 20px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-}
-
-.form h3 {
-    margin-bottom: 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
 }
 
 .field {
-    margin-bottom: 15px;
+    display: flex;
+    flex-direction: column;
 }
 
 .field label {
-    display: block;
+    font-weight: 600;
+    color: #2c3e50;
     margin-bottom: 5px;
-    font-weight: bold;
 }
 
 .field input,
 .field select,
 .field textarea {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
+    padding: 10px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+    border-color: #2980b9;
+    outline: none;
+}
+
+.buttonGroup {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
 }
 
 button {
-    background-color: #4facfe;
-    color: white;
     padding: 10px 20px;
     border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    margin-right: 10px;
+    border-radius: 6px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+button:hover:not(:disabled) {
+    transform: scale(1.05);
 }
 
 button:disabled {
@@ -49,30 +114,78 @@ button:disabled {
     cursor: not-allowed;
 }
 
-.cancelButton {
-    background-color: #6c757d;
-}
-
-.employees {
+.employeeList {
     margin-top: 20px;
 }
 
-.employee {
-    background-color: #fff;
-    padding: 15px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
+.subtitle {
+    font-size: 1.8rem;
+    color: #34495e;
+    margin: 30px 0 20px;
+    font-weight: 600;
+}
+
+.employeeCard {
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    background: #fff;
+    transition: transform 0.3s ease;
+    margin-bottom: 15px;
+}
+
+.employeeCard:hover {
+    transform: translateY(-5px);
+}
+
+.employeeInfo {
+    padding: 20px;
+}
+
+.employeeInfo h4 {
+    font-size: 1.3rem;
+    color: #2c3e50;
     margin-bottom: 10px;
 }
 
-.editButton {
-    background-color: #28a745;
+.employeeInfo p {
+    margin: 5px 0;
+    color: #7f8c8d;
 }
 
-.deleteButton {
-    background-color: #dc3545;
+.employeeActions {
+    padding: 0 20px 20px;
+    display: flex;
+    gap: 10px;
 }
 
-.absenceButton {
-    background-color: #ffca2c;
+.absences {
+    margin-top: 10px;
+    color: #e67e22;
+}
+
+.absences ul {
+    padding-left: 20px;
+    margin: 5px 0 0;
+}
+
+.modal .field {
+    margin-bottom: 15px;
+}
+.error {
+    color: #dc3545;
+    font-size: 0.8rem;
+    margin-top: 5px;
+}
+.importButton {
+    margin-top: 10px;
+}
+
+/* Ensure other styles remain as previously defined */
+@media (max-width: 768px) {
+    .form {
+        grid-template-columns: 1fr;
+    }
+    .employeeActions {
+        flex-direction: column;
+    }
 }

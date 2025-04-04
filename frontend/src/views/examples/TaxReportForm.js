@@ -1,41 +1,92 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import axios from 'axios';
-import { Button, Input, FormGroup, Label, Container, Alert } from 'reactstrap';
+import { Button, Input, FormGroup, Label, Container, Alert, FormFeedback } from 'reactstrap';
+import debounce from 'lodash/debounce';
+
+// Validation regex patterns
+const PATTERNS = {
+    amount: /^\d+(\.\d{1,2})?$/,
+    year: /^\d{4}$/,
+};
+
+// Messages d'erreur personnalisés
+const ERROR_MESSAGES = {
+    required: 'Ce champ est requis',
+    invalidAmount: 'Nombre positif requis (max 2 décimales)',
+    invalidYear: 'Année invalide (format YYYY)',
+    pastLimit: 'Année antérieure à 2000 non permise',
+    futureYear: 'Année future non permise',
+};
 
 const TaxReportForm = () => {
     const [income, setIncome] = useState('');
     const [expenses, setExpenses] = useState('');
     const [year, setYear] = useState('');
+    const [formErrors, setFormErrors] = useState({ income: '', expenses: '', year: '' });
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
     const [calculatedTax, setCalculatedTax] = useState(null);
+    const [loading, setLoading] = useState(false);
 
     const API_URL = 'http://localhost:5000/api';
+    const currentYear = new Date().getFullYear();
+
+    // Validation avancée
+    const validateAmount = useCallback((value) => {
+        if (!value) return ERROR_MESSAGES.required;
+        return PATTERNS.amount.test(value) && Number(value) >= 0 ? '' : ERROR_MESSAGES.invalidAmount;
+    }, []);
+
+    const validateYear = useCallback((value) => {
+        if (!value) return ERROR_MESSAGES.required;
+        if (!PATTERNS.year.test(value)) return ERROR_MESSAGES.invalidYear;
+        const yearNum = Number(value);
+        if (yearNum < 2000) return ERROR_MESSAGES.pastLimit;
+        if (yearNum > currentYear) return ERROR_MESSAGES.futureYear;
+        return '';
+    }, [currentYear]);
+
+    const debouncedValidate = useCallback(
+        debounce((name, value) => {
+            const error = name === 'year' ? validateYear(value) : validateAmount(value);
+            setFormErrors(prev => ({ ...prev, [name]: error }));
+        }, 300),
+        [validateAmount, validateYear]
+    );
+
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        switch (name) {
+            case 'income': setIncome(value); break;
+            case 'expenses': setExpenses(value); break;
+            case 'year': setYear(value); break;
+            default: break;
+        }
+        debouncedValidate(name, value);
+        setError('');
+        setMessage('');
+    };
+
+    const validateForm = () => {
+        const errors = {
+            income: validateAmount(income),
+            expenses: validateAmount(expenses),
+            year: validateYear(year)
+        };
+        setFormErrors(errors);
+        return Object.values(errors).every(error => !error);
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (!validateForm()) return;
 
-        if (!income || !expenses || !year) {
-            setError('All fields are required');
-            return;
-        }
-
-        if (Number(income) < 0 || Number(expenses) < 0) {
-            setError('Income and expenses must be positive numbers');
-            return;
-        }
-
-        const currentYear = new Date().getFullYear();
-        if (Number(year) < 2000 || Number(year) > currentYear) {
-            setError(`Year must be between 2000 and ${currentYear}`);
-            return;
-        }
-
+        setLoading(true);
         setError('');
         setMessage('');
         try {
             const token = localStorage.getItem('authToken');
-            if (!token) throw new Error('Authentication required');
+            if (!token) throw new Error('Authentification requise');
 
             const response = await axios.post(
                 `${API_URL}/taxReports/generate`,
@@ -48,8 +99,11 @@ const TaxReportForm = () => {
             setIncome('');
             setExpenses('');
             setYear('');
+            setFormErrors({ income: '', expenses: '', year: '' });
         } catch (err) {
-            setError(err.response?.data?.message || err.message || 'Failed to generate tax report');
+            setError(err.response?.data?.message || err.message || 'Échec de la génération du rapport fiscal');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -75,12 +129,12 @@ const TaxReportForm = () => {
                     borderRadius: '20px 20px 0 0'
                 }}>
                     <h2 style={{ fontSize: '36px', fontWeight: 'bold', margin: '0', textShadow: '2px 2px 4px rgba(0,0,0,0.2)' }}>
-                        Generate Tax Report
+                        Générer un Rapport Fiscal
                     </h2>
-                    <p style={{ margin: '10px 0 0', fontSize: '18px' }}>Create your tax report with ease</p>
+                    <p style={{ margin: '10px 0 0', fontSize: '18px' }}>Créez votre rapport fiscal facilement</p>
                 </div>
 
-                <form onSubmit={handleSubmit} style={{ padding: '40px' }}>
+                <div style={{ padding: '40px' }}>
                     {error && (
                         <Alert color="danger" style={{
                             borderRadius: '10px',
@@ -104,22 +158,24 @@ const TaxReportForm = () => {
                         }}>
                             {message}
                             {calculatedTax !== null && (
-                                <div>Calculated Tax (TND): {calculatedTax}</div>
+                                <div>Taxe calculée (TND) : {calculatedTax.toFixed(2)}</div>
                             )}
                         </Alert>
                     )}
 
                     <FormGroup>
-                        <Label style={{ fontSize: '14px', color: '#555', fontWeight: '500' }}>Income (TND)</Label>
+                        <Label style={{ fontSize: '14px', color: '#555', fontWeight: '500' }}>Revenus (TND)</Label>
                         <Input
                             type="number"
-                            id="income"
+                            name="income"
                             value={income}
-                            onChange={e => setIncome(e.target.value)}
+                            onChange={handleInputChange}
+                            disabled={loading}
+                            invalid={!!formErrors.income}
                             required
                             min="0"
                             step="0.01"
-                            placeholder="Enter your income"
+                            placeholder="Entrez vos revenus"
                             style={{
                                 padding: '12px 16px',
                                 border: '2px solid #ddd',
@@ -130,19 +186,22 @@ const TaxReportForm = () => {
                             onFocus={e => e.target.style.borderColor = '#4facfe'}
                             onBlur={e => e.target.style.borderColor = '#ddd'}
                         />
+                        <FormFeedback>{formErrors.income}</FormFeedback>
                     </FormGroup>
 
                     <FormGroup>
-                        <Label style={{ fontSize: '14px', color: '#555', fontWeight: '500' }}>Expenses (TND)</Label>
+                        <Label style={{ fontSize: '14px', color: '#555', fontWeight: '500' }}>Dépenses (TND)</Label>
                         <Input
                             type="number"
-                            id="expenses"
+                            name="expenses"
                             value={expenses}
-                            onChange={e => setExpenses(e.target.value)}
+                            onChange={handleInputChange}
+                            disabled={loading}
+                            invalid={!!formErrors.expenses}
                             required
                             min="0"
                             step="0.01"
-                            placeholder="Enter your expenses"
+                            placeholder="Entrez vos dépenses"
                             style={{
                                 padding: '12px 16px',
                                 border: '2px solid #ddd',
@@ -153,19 +212,22 @@ const TaxReportForm = () => {
                             onFocus={e => e.target.style.borderColor = '#4facfe'}
                             onBlur={e => e.target.style.borderColor = '#ddd'}
                         />
+                        <FormFeedback>{formErrors.expenses}</FormFeedback>
                     </FormGroup>
 
                     <FormGroup>
-                        <Label style={{ fontSize: '14px', color: '#555', fontWeight: '500' }}>Year</Label>
+                        <Label style={{ fontSize: '14px', color: '#555', fontWeight: '500' }}>Année</Label>
                         <Input
                             type="number"
-                            id="year"
+                            name="year"
                             value={year}
-                            onChange={e => setYear(e.target.value)}
+                            onChange={handleInputChange}
+                            disabled={loading}
+                            invalid={!!formErrors.year}
                             required
                             min="2000"
-                            max={new Date().getFullYear()}
-                            placeholder="Enter the year"
+                            max={currentYear}
+                            placeholder="Entrez l'année"
                             style={{
                                 padding: '12px 16px',
                                 border: '2px solid #ddd',
@@ -176,10 +238,12 @@ const TaxReportForm = () => {
                             onFocus={e => e.target.style.borderColor = '#4facfe'}
                             onBlur={e => e.target.style.borderColor = '#ddd'}
                         />
+                        <FormFeedback>{formErrors.year}</FormFeedback>
                     </FormGroup>
 
                     <Button
-                        type="submit"
+                        onClick={handleSubmit}
+                        disabled={loading || Object.values(formErrors).some(err => !!err)}
                         style={{
                             background: 'linear-gradient(to right, #2ecc71, #27ae60)',
                             color: 'white',
@@ -197,9 +261,9 @@ const TaxReportForm = () => {
                         onMouseEnter={e => e.target.style.transform = 'scale(1.05)'}
                         onMouseLeave={e => e.target.style.transform = 'scale(1)'}
                     >
-                        Generate Report
+                        {loading ? 'Génération...' : 'Générer le Rapport'}
                     </Button>
-                </form>
+                </div>
             </Container>
         </div>
     );
