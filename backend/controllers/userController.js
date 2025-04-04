@@ -405,30 +405,32 @@ export const reset_password = async (req, res) => {
 
 export const assignAccountant = async (req, res) => {
     try {
-        const { accountantId } = req.body; // The accountantId should be passed from the request body
+        const { accountantId } = req.body;
 
-        // Find the accountant and assign
         const accountant = await User.findById(accountantId);
-
-        if (!accountant) {
-            return res.status(404).json({ message: 'Accountant not found' });
+        if (!accountant || accountant.role !== "accountant") {
+            return res.status(404).json({ message: 'Invalid accountant ID' });
         }
 
-        // Example: Assign the accountant to a business owner (you may need to adjust this part)
-        // Assume that the business_owner has an 'assignedAccountant' field or similar
-        const businessOwner = await User.findById(req.user._id); // Get the currently authenticated business owner
-
-        if (!businessOwner) {
-            return res.status(404).json({ message: 'Business owner not found' });
+        const businessOwner = await User.findById(req.user._id);
+        if (!businessOwner || businessOwner.role !== "business_owner") {
+            return res.status(403).json({ message: 'Unauthorized' });
         }
 
-        // Assign the accountant (assuming you're using a field like `assignedTo`)
-        businessOwner.assignedTo = accountantId;
+        if (businessOwner.assignedTo) {
+            return res.status(400).json({ message: "You’ve already assigned an accountant." });
+        }
+
+        // Link both
+        businessOwner.assignedTo = accountant._id;
+        accountant.assignedTo = businessOwner._id;
+
         await businessOwner.save();
+        await accountant.save();
 
         res.status(200).json({ message: 'Accountant assigned successfully' });
-    } catch (error) {
-        console.error('Error assigning accountant:', error);
+    } catch (err) {
+        console.error('Error assigning accountant:', err);
         res.status(500).json({ message: 'Server error' });
     }
 };
