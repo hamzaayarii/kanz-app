@@ -42,24 +42,110 @@ const businessTypes = [
     "Groupement d'Intérêt Économique"
 ];
 
+// Validation patterns
+const validationPatterns = {
+    phone: /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/,
+    email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+    taxNumber: /^\d{8}[A-Z](\/[A-Z])?\/\d{3}$/, // Format like 12345678A/M/000
+    rneNumber: /^\d{11}$/ // Keep this the same
+};
+
+// Validation rules and error messages
+const validationRules = {
+    name: {
+        required: true,
+        minLength: 3,
+        message: {
+            required: 'Organization name is required',
+            minLength: 'Organization name must be at least 3 characters'
+        }
+    },
+    address: {
+        required: true,
+        minLength: 5,
+        message: {
+            required: 'Organization address is required',
+            minLength: 'Address must be at least 5 characters'
+        }
+    },
+    country: {
+        required: true,
+        message: {
+            required: 'Country is required'
+        }
+    },
+    state: {
+        required: true,
+        message: {
+            required: 'State/Province is required'
+        }
+    },
+    type: {
+        required: true,
+        message: {
+            required: 'Organization type is required'
+        }
+    },
+    taxNumber: {
+        required: true,
+        pattern: validationPatterns.taxNumber,
+        message: {
+            required: 'Tax number is required',
+            pattern: 'Tax number should be in format 12345678A/M/000'
+        }
+    },
+    rneNumber: {
+        required: true,
+        pattern: /^\d{11}$/,
+        message: {
+            required: 'RNE number is required',
+            pattern: 'RNE number should be exactly 11 digits'
+        }
+    },
+    phone: {
+        required: true,
+        pattern: validationPatterns.phone,
+        message: {
+            required: 'Phone number is required',
+            pattern: 'Please enter a valid phone number'
+        }
+    },
+    email: {
+        required: false,
+        pattern: validationPatterns.email,
+        message: {
+            pattern: 'Please enter a valid email address'
+        }
+    },
+    capital: {
+        required: false,
+        min: 0,
+        message: {
+            min: 'Capital cannot be negative'
+        }
+    }
+};
+
 const BusinessRegistrationPage = () => {
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
         name: '',
         address: '',
-        country: 'Tunisia', // Default to Tunisia
+        country: 'Tunisia',
         state: '',
         type: '',
         taxNumber: '',
+        rneNumber: '',
         phone: '',
-        legalStructure: '',
         businessActivity: '',
         capital: '',
         vatRegistration: false,
         exportOriented: false,
-        employeeCount: '1-5'
+        employeeCount: '1-5',
+        email: '',
     });
 
+    const [touched, setTouched] = useState({});
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
     const [businesses, setBusinesses] = useState([]);
@@ -94,15 +180,44 @@ const BusinessRegistrationPage = () => {
         fetchBusinesses();
     }, [navigate]);
 
+    // Real-time validation of individual fields
+    const validateField = (name, value) => {
+        const rules = validationRules[name];
+        if (!rules) return '';
+        
+        // Check if required and empty
+        if (rules.required && !value.trim()) {
+            return rules.message.required;
+        }
+        
+        // Check minimum length
+        if (rules.minLength && value.trim().length < rules.minLength) {
+            return rules.message.minLength;
+        }
+        
+        // Check minimum value for numbers
+        if (rules.min !== undefined && value !== '' && Number(value) < rules.min) {
+            return rules.message.min;
+        }
+        
+        // Check pattern
+        if (rules.pattern && value.trim() && !rules.pattern.test(value.trim())) {
+            return rules.message.pattern;
+        }
+        
+        return '';
+    };
+
+    // Validate entire form
     const validateForm = () => {
         const newErrors = {};
-        if (!formData.name.trim()) newErrors.name = 'Organization name is required';
-        if (!formData.address.trim()) newErrors.address = 'Organization address is required';
-        if (!formData.country.trim()) newErrors.country = 'Country is required';
-        if (!formData.state.trim()) newErrors.state = 'State/Province is required';
-        if (!formData.type.trim()) newErrors.type = 'Organization type is required';
-        if (!formData.taxNumber.trim()) newErrors.taxNumber = 'Tax number is required';
-        if (!formData.phone.trim()) newErrors.phone = 'Phone is required';
+        Object.keys(validationRules).forEach(fieldName => {
+            const error = validateField(fieldName, formData[fieldName]);
+            if (error) {
+                newErrors[fieldName] = error;
+            }
+        });
+        
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
@@ -113,10 +228,24 @@ const BusinessRegistrationPage = () => {
         // Handle checkbox values
         const inputValue = type === 'checkbox' ? checked : value;
         
-        setFormData({
-            ...formData,
+        // Update form data
+        setFormData(prev => ({
+            ...prev,
             [name]: inputValue
-        });
+        }));
+        
+        // Mark field as touched
+        setTouched(prev => ({
+            ...prev,
+            [name]: true
+        }));
+        
+        // Validate field on change
+        const errorMessage = validateField(name, inputValue);
+        setErrors(prev => ({
+            ...prev,
+            [name]: errorMessage
+        }));
         
         // If country changes, update available states
         if (name === 'country') {
@@ -132,8 +261,33 @@ const BusinessRegistrationPage = () => {
         }
     };
 
+    // Handle field blur for validation
+    const handleBlur = (e) => {
+        const { name, value } = e.target;
+        
+        // Mark field as touched
+        setTouched(prev => ({
+            ...prev,
+            [name]: true
+        }));
+        
+        // Validate field on blur
+        const errorMessage = validateField(name, value);
+        setErrors(prev => ({
+            ...prev,
+            [name]: errorMessage
+        }));
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        // Mark all fields as touched when submitting
+        const allTouched = {};
+        Object.keys(validationRules).forEach(field => {
+            allTouched[field] = true;
+        });
+        setTouched(allTouched);
 
         if (!validateForm()) {
             return;
@@ -167,6 +321,31 @@ const BusinessRegistrationPage = () => {
             });
         }
     };
+
+    // Show error only if field is touched
+    const showError = (fieldName) => {
+        return touched[fieldName] && errors[fieldName];
+    };
+
+    // Get field validation status
+    const getFieldStatus = (fieldName) => {
+        return touched[fieldName] ? (errors[fieldName] ? 'danger' : 'success') : null;
+    };
+
+    // Get form completion percentage
+    const getCompletionPercentage = () => {
+        const requiredFields = Object.keys(validationRules).filter(
+            field => validationRules[field].required
+        );
+        
+        const completedFields = requiredFields.filter(
+            field => formData[field] && !errors[field]
+        );
+        
+        return Math.round((completedFields.length / requiredFields.length) * 100);
+    };
+
+    const completionPercentage = getCompletionPercentage();
 
     return (
         <div className="main-content">
@@ -217,9 +396,27 @@ const BusinessRegistrationPage = () => {
                                 </div>
                             </CardHeader>
                             <CardBody className="px-lg-5 py-lg-5">
+                                {/* Form Completion Progress */}
+                                <div className="mb-4">
+                                    <div className="d-flex justify-content-between mb-1">
+                                        <span>Form Completion</span>
+                                        <span>{completionPercentage}%</span>
+                                    </div>
+                                    <div className="progress">
+                                        <div 
+                                            className={`progress-bar bg-${completionPercentage === 100 ? 'success' : 'primary'}`}
+                                            role="progressbar" 
+                                            style={{ width: `${completionPercentage}%` }}
+                                            aria-valuenow={completionPercentage} 
+                                            aria-valuemin="0" 
+                                            aria-valuemax="100"
+                                        />
+                                    </div>
+                                </div>
+                                
                                 {errors.general && (
-                                    <div className="text-center mb-3">
-                                        <small className="text-danger">{errors.general}</small>
+                                    <div className="text-center mb-3 alert alert-danger">
+                                        <small>{errors.general}</small>
                                     </div>
                                 )}
                                 <Form role="form" onSubmit={handleSubmit}>
@@ -227,7 +424,12 @@ const BusinessRegistrationPage = () => {
                                     <Row>
                                         <Col md="12">
                                             <FormGroup>
-                                                <label className="form-control-label">Organization Name*</label>
+                                                <label className="form-control-label">
+                                                    Organization Name*
+                                                    {touched.name && !errors.name && (
+                                                        <i className="fas fa-check-circle text-success ml-2"></i>
+                                                    )}
+                                                </label>
                                                 <Input
                                                     className="form-control-alternative"
                                                     name="name"
@@ -235,9 +437,14 @@ const BusinessRegistrationPage = () => {
                                                     type="text"
                                                     value={formData.name}
                                                     onChange={handleChange}
-                                                    invalid={!!errors.name}
+                                                    onBlur={handleBlur}
+                                                    invalid={showError('name')}
+                                                    valid={touched.name && !errors.name}
                                                 />
                                                 <FormFeedback>{errors.name}</FormFeedback>
+                                                <small className="form-text text-muted">
+                                                    Must be at least 3 characters
+                                                </small>
                                             </FormGroup>
                                         </Col>
                                     </Row>
@@ -245,14 +452,21 @@ const BusinessRegistrationPage = () => {
                                     <Row>
                                         <Col md="6">
                                             <FormGroup>
-                                                <label className="form-control-label">Country*</label>
+                                                <label className="form-control-label">
+                                                    Country*
+                                                    {touched.country && !errors.country && (
+                                                        <i className="fas fa-check-circle text-success ml-2"></i>
+                                                    )}
+                                                </label>
                                                 <Input
                                                     className="form-control-alternative"
                                                     name="country"
                                                     type="select"
                                                     value={formData.country}
                                                     onChange={handleChange}
-                                                    invalid={!!errors.country}
+                                                    onBlur={handleBlur}
+                                                    invalid={showError('country')}
+                                                    valid={touched.country && !errors.country}
                                                 >
                                                     {countries.map(country => (
                                                         <option key={country.code} value={country.name}>
@@ -265,14 +479,21 @@ const BusinessRegistrationPage = () => {
                                         </Col>
                                         <Col md="6">
                                             <FormGroup>
-                                                <label className="form-control-label">State/Province*</label>
+                                                <label className="form-control-label">
+                                                    State/Province*
+                                                    {touched.state && !errors.state && (
+                                                        <i className="fas fa-check-circle text-success ml-2"></i>
+                                                    )}
+                                                </label>
                                                 <Input
                                                     className="form-control-alternative"
                                                     name="state"
                                                     type="select"
                                                     value={formData.state}
                                                     onChange={handleChange}
-                                                    invalid={!!errors.state}
+                                                    onBlur={handleBlur}
+                                                    invalid={showError('state')}
+                                                    valid={touched.state && !errors.state}
                                                 >
                                                     <option value="">Select State/Province</option>
                                                     {availableStates.map(state => (
@@ -287,7 +508,12 @@ const BusinessRegistrationPage = () => {
                                     </Row>
 
                                     <FormGroup>
-                                        <label className="form-control-label">Organization Address*</label>
+                                        <label className="form-control-label">
+                                            Organization Address*
+                                            {touched.address && !errors.address && (
+                                                <i className="fas fa-check-circle text-success ml-2"></i>
+                                            )}
+                                        </label>
                                         <Input
                                             className="form-control-alternative"
                                             name="address"
@@ -295,22 +521,34 @@ const BusinessRegistrationPage = () => {
                                             type="text"
                                             value={formData.address}
                                             onChange={handleChange}
-                                            invalid={!!errors.address}
+                                            onBlur={handleBlur}
+                                            invalid={showError('address')}
+                                            valid={touched.address && !errors.address}
                                         />
                                         <FormFeedback>{errors.address}</FormFeedback>
+                                        <small className="form-text text-muted">
+                                            Must be at least 5 characters
+                                        </small>
                                     </FormGroup>
 
                                     <Row>
                                         <Col md="6">
                                             <FormGroup>
-                                                <label className="form-control-label">Legal Structure*</label>
+                                                <label className="form-control-label">
+                                                    Legal Structure*
+                                                    {touched.type && !errors.type && (
+                                                        <i className="fas fa-check-circle text-success ml-2"></i>
+                                                    )}
+                                                </label>
                                                 <Input
                                                     className="form-control-alternative"
                                                     name="type"
                                                     type="select"
                                                     value={formData.type}
                                                     onChange={handleChange}
-                                                    invalid={!!errors.type}
+                                                    onBlur={handleBlur}
+                                                    invalid={showError('type')}
+                                                    valid={touched.type && !errors.type}
                                                 >
                                                     <option value="">Select legal structure</option>
                                                     {businessTypes.map(type => (
@@ -324,7 +562,7 @@ const BusinessRegistrationPage = () => {
                                         </Col>
                                         <Col md="6">
                                             <FormGroup>
-                                                <label className="form-control-label">Business Activity/Sector*</label>
+                                                <label className="form-control-label">Business Activity/Sector</label>
                                                 <Input
                                                     className="form-control-alternative"
                                                     name="businessActivity"
@@ -332,25 +570,92 @@ const BusinessRegistrationPage = () => {
                                                     type="text"
                                                     value={formData.businessActivity}
                                                     onChange={handleChange}
+                                                    onBlur={handleBlur}
                                                 />
                                             </FormGroup>
                                         </Col>
                                     </Row>
 
                                     <Row>
+                                    <Col md="6">
+                                    <FormGroup>
+  <label className="form-control-label">
+    Tax Number (Matricule Fiscal)*
+    {touched.taxNumber && !errors.taxNumber && (
+      <i className="fas fa-check-circle text-success ml-2"></i>
+    )}
+  </label>
+  <Input
+    className="form-control-alternative"
+    name="taxNumber"
+    placeholder="e.g. 12345678A/M/000"
+    type="text"
+    value={formData.taxNumber}
+    onChange={handleChange}
+    onBlur={handleBlur}
+    invalid={showError('taxNumber')}
+    valid={touched.taxNumber && !errors.taxNumber}
+    pattern="^\d{8}[A-Z](\/[A-Z])?\/\d{3}$"
+  />
+  <FormFeedback>{errors.taxNumber}</FormFeedback>
+  <small className="form-text text-muted">
+    Format: 12345678A/M/000
+  </small>
+</FormGroup>
+</Col>
+
+                                        <Col md="6">
+                                        <FormGroup>
+  <label className="form-control-label">
+    Numéro RNE*
+    {touched.rneNumber && !errors.rneNumber && formData.rneNumber && (
+      <i className="fas fa-check-circle text-success ml-2"></i>
+    )}
+  </label>
+  <Input
+    className="form-control-alternative"
+    name="rneNumber"
+    placeholder="e.g. 12345678901"
+    type="text"
+    value={formData.rneNumber}
+    onChange={handleChange}
+    onBlur={handleBlur}
+    invalid={showError('rneNumber')}
+    valid={touched.rneNumber && !errors.rneNumber && formData.rneNumber}
+    pattern="^\d{11}$"
+/>
+  <FormFeedback>{errors.rneNumber}</FormFeedback>
+  <small className="form-text text-muted">
+    Required - Should be 11 digits
+  </small>
+</FormGroup>
+                                        </Col>
+                                    </Row>
+
+                                    <Row>
                                         <Col md="6">
                                             <FormGroup>
-                                                <label className="form-control-label">Tax Number (Matricule Fiscal)*</label>
+                                                <label className="form-control-label">
+                                                    Phone Number*
+                                                    {touched.phone && !errors.phone && (
+                                                        <i className="fas fa-check-circle text-success ml-2"></i>
+                                                    )}
+                                                </label>
                                                 <Input
                                                     className="form-control-alternative"
-                                                    name="taxNumber"
-                                                    placeholder="Enter your tax number"
+                                                    name="phone"
+                                                    placeholder="e.g. +216 12 345 678"
                                                     type="text"
-                                                    value={formData.taxNumber}
+                                                    value={formData.phone}
                                                     onChange={handleChange}
-                                                    invalid={!!errors.taxNumber}
+                                                    onBlur={handleBlur}
+                                                    invalid={showError('phone')}
+                                                    valid={touched.phone && !errors.phone}
                                                 />
-                                                <FormFeedback>{errors.taxNumber}</FormFeedback>
+                                                <FormFeedback>{errors.phone}</FormFeedback>
+                                                <small className="form-text text-muted">
+                                                    Enter a valid phone number with country code
+                                                </small>
                                             </FormGroup>
                                         </Col>
                                         <Col md="6">
@@ -363,27 +668,16 @@ const BusinessRegistrationPage = () => {
                                                     type="number"
                                                     value={formData.capital}
                                                     onChange={handleChange}
+                                                    onBlur={handleBlur}
+                                                    invalid={showError('capital')}
+                                                    valid={touched.capital && !errors.capital && formData.capital}
                                                 />
+                                                <FormFeedback>{errors.capital}</FormFeedback>
                                             </FormGroup>
                                         </Col>
                                     </Row>
 
                                     <Row>
-                                        <Col md="6">
-                                            <FormGroup>
-                                                <label className="form-control-label">Phone Number*</label>
-                                                <Input
-                                                    className="form-control-alternative"
-                                                    name="phone"
-                                                    placeholder="Enter your phone number"
-                                                    type="text"
-                                                    value={formData.phone}
-                                                    onChange={handleChange}
-                                                    invalid={!!errors.phone}
-                                                />
-                                                <FormFeedback>{errors.phone}</FormFeedback>
-                                            </FormGroup>
-                                        </Col>
                                         <Col md="6">
                                             <FormGroup>
                                                 <label className="form-control-label">Expected Number of Employees</label>
@@ -393,6 +687,7 @@ const BusinessRegistrationPage = () => {
                                                     type="select"
                                                     value={formData.employeeCount}
                                                     onChange={handleChange}
+                                                    onBlur={handleBlur}
                                                 >
                                                     <option value="1-5">1-5</option>
                                                     <option value="6-10">6-10</option>
@@ -400,6 +695,28 @@ const BusinessRegistrationPage = () => {
                                                     <option value="21-50">21-50</option>
                                                     <option value="50+">50+</option>
                                                 </Input>
+                                            </FormGroup>
+                                        </Col>
+                                        <Col md="6">
+                                            <FormGroup>
+                                                <label className="form-control-label">
+                                                    Business Email
+                                                    {touched.email && !errors.email && formData.email && (
+                                                        <i className="fas fa-check-circle text-success ml-2"></i>
+                                                    )}
+                                                </label>
+                                                <Input
+                                                    className="form-control-alternative"
+                                                    name="email"
+                                                    placeholder="e.g. business@example.com"
+                                                    type="email"
+                                                    value={formData.email}
+                                                    onChange={handleChange}
+                                                    onBlur={handleBlur}
+                                                    invalid={showError('email')}
+                                                    valid={touched.email && !errors.email && formData.email}
+                                                />
+                                                <FormFeedback>{errors.email}</FormFeedback>
                                             </FormGroup>
                                         </Col>
                                     </Row>
@@ -435,12 +752,10 @@ const BusinessRegistrationPage = () => {
                                         </Col>
                                     </Row>
 
-                                   
-
                                     <div className="text-center">
                                         <Button
                                             className="my-4"
-                                            color="primary"
+                                            color={completionPercentage === 100 ? "success" : "primary"}
                                             type="submit"
                                             disabled={loading}
                                         >

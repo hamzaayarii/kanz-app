@@ -10,28 +10,38 @@ const addBusiness = async (req, res) => {
             type, 
             businessActivity, 
             taxNumber, 
+            rneNumber, // ADD THIS LINE
             phone, 
             capital,
             vatRegistration,
             exportOriented,
-            employeeCount
+            employeeCount,
+            email // Also consider adding email if it's in your schema
         } = req.body;
         
-        const userId = req.user._id || req.user.id; // Handle both _id and id
+        const userId = req.user._id || req.user.id;
 
-        // Validate required fields
-        if (!name || !type || !taxNumber || !address || !country || !state || !phone) {
+        // Update validation to include rneNumber
+        if (!name || !type || !taxNumber || !rneNumber || !address || !country || !state || !phone) {
             return res.status(400).json({
-                errorMessage: "Please provide all required fields (name, type, taxNumber, address, country, state, phone).",
+                errorMessage: "Please provide all required fields (name, type, taxNumber, rneNumber, address, country, state, phone).",
                 status: false,
             });
         }
 
-        // Check if business with same tax number already exists
-        const existingBusiness = await Business.findOne({ taxNumber });
+        // Check if business with same tax number or RNE already exists
+        const existingBusiness = await Business.findOne({ 
+            $or: [
+                { taxNumber },
+                { rneNumber }
+            ]
+        });
+        
         if (existingBusiness) {
             return res.status(400).json({
-                errorMessage: "A business with this tax number already exists.",
+                errorMessage: existingBusiness.taxNumber === taxNumber 
+                    ? "A business with this tax number already exists." 
+                    : "A business with this RNE number already exists.",
                 status: false,
             });
         }
@@ -44,19 +54,21 @@ const addBusiness = async (req, res) => {
             type,
             businessActivity,
             taxNumber,
+            rneNumber, // ADD THIS LINE
             phone,
+            email, // Add if needed
             capital,
             vatRegistration: vatRegistration || false,
             exportOriented: exportOriented || false,
             employeeCount: employeeCount || '1-5',
             owner: userId,
-            status: 'pending' // Default status for new businesses
+            status: 'pending'
         });
 
         await newBusiness.save();
 
         res.status(201).json({
-            success: true, // Changed to match what the frontend expects
+            success: true,
             message: "Business registered successfully.",
             business: newBusiness,
         });
@@ -64,11 +76,20 @@ const addBusiness = async (req, res) => {
     } catch (error) {
         console.error('Error registering business:', error);
         
-        // Handle duplicate key error specifically
         if (error.code === 11000) {
+            const field = error.keyPattern.taxNumber ? 'taxNumber' : 'rneNumber';
             return res.status(400).json({
                 success: false,
-                message: "This tax number is already registered."
+                message: `This ${field === 'taxNumber' ? 'tax number' : 'RNE number'} is already registered.`
+            });
+        }
+        
+        // Handle Mongoose validation errors specifically
+        if (error.name === 'ValidationError') {
+            return res.status(400).json({
+                success: false,
+                message: "Validation failed",
+                errors: Object.values(error.errors).map(err => err.message)
             });
         }
         
