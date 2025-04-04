@@ -1,7 +1,7 @@
 // src/routes/userRoutes.js
 const express = require('express');
 const router = express.Router();
-const { create, list, updateUser, deleteUser, googleAuth, googleAuthRequest, forgot_password, reset_password, toggleBan, login } = require('../controllers/userController');
+const { create, list, updateUser, deleteUser, googleAuth, googleAuthRequest, forgot_password, reset_password, toggleBan, login,assignAccountant,getUsersByRole  } = require('../controllers/userController');
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -104,5 +104,12 @@ router.post('/:id/unban', authenticate, authorizeAdmin, async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 });
+
+
+
+// Assign an accountant to current user (must be business owner)
+router.post('/assign', authenticate, assignAccountant);
+
+router.get('/getUsersByRole', authenticate, getUsersByRole);
 
 module.exports = router;

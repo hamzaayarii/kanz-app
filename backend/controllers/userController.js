@@ -401,3 +401,51 @@ export const reset_password = async (req, res) => {
     }
 };
 /* <= forgot-password */
+
+
+export const assignAccountant = async (req, res) => {
+    try {
+        const { accountantId } = req.body; // The accountantId should be passed from the request body
+
+        // Find the accountant and assign
+        const accountant = await User.findById(accountantId);
+
+        if (!accountant) {
+            return res.status(404).json({ message: 'Accountant not found' });
+        }
+
+        // Example: Assign the accountant to a business owner (you may need to adjust this part)
+        // Assume that the business_owner has an 'assignedAccountant' field or similar
+        const businessOwner = await User.findById(req.user._id); // Get the currently authenticated business owner
+
+        if (!businessOwner) {
+            return res.status(404).json({ message: 'Business owner not found' });
+        }
+
+        // Assign the accountant (assuming you're using a field like `assignedTo`)
+        businessOwner.assignedTo = accountantId;
+        await businessOwner.save();
+
+        res.status(200).json({ message: 'Accountant assigned successfully' });
+    } catch (error) {
+        console.error('Error assigning accountant:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+export const getUsersByRole = async (req, res) => {
+    try {
+        const { role } = req.query;
+
+        if (!role) {
+            return res.status(400).json({ message: 'Role query param is required' });
+        }
+
+        // Get all users with the specified role (no filter on assignedTo)
+        const users = await User.find({ role }).select('fullName email _id');
+
+        res.json(users);
+    } catch (error) {
+        console.error('Error fetching users by role:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};

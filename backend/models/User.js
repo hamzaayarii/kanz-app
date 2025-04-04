@@ -43,7 +43,12 @@ const userSchema = new Schema({
         enum: ['admin', 'accountant', 'business_owner','user'],
         default: 'business_owner',
         required: true
-    }
+    },
+    assignedTo: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        default: null
+      }
 });
 
 // Vérifier si le modèle est déjà compilé
