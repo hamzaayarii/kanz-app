@@ -10,42 +10,65 @@ const addBusiness = async (req, res) => {
             type, 
             businessActivity, 
             taxNumber, 
-            rneNumber, // ADD THIS LINE
+            rneNumber,
             phone, 
             capital,
             vatRegistration,
             exportOriented,
             employeeCount,
-            email // Also consider adding email if it's in your schema
+            email // This is the problematic field
         } = req.body;
         
-        const userId = req.user._id || req.user.id;
+        const userId = req.user._id;
 
-        // Update validation to include rneNumber
-        if (!name || !type || !taxNumber || !rneNumber || !address || !country || !state || !phone) {
+        // 1. Validate required fields
+        const requiredFields = { name, type, taxNumber, rneNumber, address, country, state, phone };
+        const missingFields = Object.entries(requiredFields)
+            .filter(([_, value]) => !value)
+            .map(([key]) => key);
+
+        if (missingFields.length > 0) {
             return res.status(400).json({
-                errorMessage: "Please provide all required fields (name, type, taxNumber, rneNumber, address, country, state, phone).",
-                status: false,
+                success: false,
+                message: `Missing required fields: ${missingFields.join(', ')}`
             });
         }
 
-        // Check if business with same tax number or RNE already exists
+        // 2. Validate formats
+        if (!/^\d{11}$/.test(rneNumber)) {
+            return res.status(400).json({
+                success: false,
+                message: "RNE number must be exactly 11 digits"
+            });
+        }
+
+        if (!/^\d{8}[A-Z](\/[A-Z])?\/\d{3}$/.test(taxNumber)) {
+            return res.status(400).json({
+                success: false,
+                message: "Tax number should be in format 12345678A/M/000"
+            });
+        }
+
+        // 3. Check for existing identifiers (RNE and tax number)
         const existingBusiness = await Business.findOne({ 
             $or: [
-                { taxNumber },
-                { rneNumber }
+                { rneNumber },
+                { taxNumber }
             ]
-        });
-        
+        }).select('rneNumber taxNumber');
+
         if (existingBusiness) {
-            return res.status(400).json({
-                errorMessage: existingBusiness.taxNumber === taxNumber 
-                    ? "A business with this tax number already exists." 
-                    : "A business with this RNE number already exists.",
-                status: false,
+            const conflictField = existingBusiness.rneNumber === rneNumber 
+                ? 'RNE number' 
+                : 'tax number';
+            
+            return res.status(409).json({
+                success: false,
+                message: `This ${conflictField} is already registered`
             });
         }
 
+        // 4. Create new business (make email optional or handle duplicates)
         const newBusiness = new Business({
             name,
             address,
@@ -54,12 +77,12 @@ const addBusiness = async (req, res) => {
             type,
             businessActivity,
             taxNumber,
-            rneNumber, // ADD THIS LINE
+            rneNumber,
             phone,
-            email, // Add if needed
-            capital,
-            vatRegistration: vatRegistration || false,
-            exportOriented: exportOriented || false,
+            email: email || null, // Make email optional by setting to null if empty
+            capital: capital || 0,
+            vatRegistration: Boolean(vatRegistration),
+            exportOriented: Boolean(exportOriented),
             employeeCount: employeeCount || '1-5',
             owner: userId,
             status: 'pending'
@@ -67,36 +90,44 @@ const addBusiness = async (req, res) => {
 
         await newBusiness.save();
 
-        res.status(201).json({
+        return res.status(201).json({
             success: true,
-            message: "Business registered successfully.",
-            business: newBusiness,
+            message: "Business registered successfully",
+            businessId: newBusiness._id
         });
 
     } catch (error) {
-        console.error('Error registering business:', error);
+        console.error('Registration error:', error);
         
+        // Handle duplicate key errors
         if (error.code === 11000) {
-            const field = error.keyPattern.taxNumber ? 'taxNumber' : 'rneNumber';
-            return res.status(400).json({
+            const duplicateField = Object.keys(error.keyPattern)[0];
+            const fieldName = duplicateField === 'taxNumber' ? 'tax number' : 
+                           duplicateField === 'rneNumber' ? 'RNE number' :
+                           duplicateField === 'email' ? 'email' :
+                           duplicateField;
+            
+            return res.status(409).json({
                 success: false,
-                message: `This ${field === 'taxNumber' ? 'tax number' : 'RNE number'} is already registered.`
+                message: `This ${fieldName} is already registered`,
+                field: duplicateField
             });
         }
         
-        // Handle Mongoose validation errors specifically
+        // Handle validation errors
         if (error.name === 'ValidationError') {
+            const errors = Object.values(error.errors).map(err => err.message);
             return res.status(400).json({
                 success: false,
                 message: "Validation failed",
-                errors: Object.values(error.errors).map(err => err.message)
+                errors
             });
         }
         
-        res.status(500).json({
+        // Handle other errors
+        return res.status(500).json({
             success: false,
-            message: "Something went wrong during business registration.",
-            error: error.message,
+            message: "Internal server error"
         });
     }
 };
