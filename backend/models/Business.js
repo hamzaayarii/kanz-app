@@ -7,6 +7,8 @@ const businessSchema = new mongoose.Schema({
     state: { type: String, required: true },
     type: { type: String, required: true }, // Legal Structure
     businessActivity: { type: String },
+    email: { type: String, required: true, unique: true },
+    rneNumber: { type: String, required: true, unique: true }, // RNE number
     taxNumber: { type: String, required: true, unique: true },
     phone: { type: String, required: true },
     capital: { type: String },
