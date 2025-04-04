@@ -5,6 +5,7 @@ import { Container, Table, Alert, Spinner, Button, Modal, ModalHeader, ModalBody
 const TaxReportsList = () => {
     const [reports, setReports] = useState([]);
     const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
     const [loading, setLoading] = useState(true);
     const [modal, setModal] = useState(false);
     const [selectedReport, setSelectedReport] = useState(null);
@@ -12,77 +13,115 @@ const TaxReportsList = () => {
     const [expenses, setExpenses] = useState('');
     const [year, setYear] = useState('');
 
+    const API_URL = 'http://localhost:5000/api';
+
     useEffect(() => {
-        const fetchReports = async () => {
-            try {
-                setError('');
-                const token = localStorage.getItem('authToken');
-                const response = await axios.get('http://localhost:5000/api/taxReports/reports', {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    }
-                });
-
-                if (response.data && response.data.reports) {
-                    console.log("Reports fetched:", response.data.reports);
-                    setReports(response.data.reports);
-                } else {
-                    throw new Error("Invalid response format.");
-                }
-            } catch (err) {
-                console.error("Error fetching reports:", err);
-                setError("Failed to load tax reports. Please try again.");
-            } finally {
-                setLoading(false);
-            }
-        };
-
         fetchReports();
     }, []);
 
-    const deleteReport = async (id) => {
+    const fetchReports = async () => {
+        setLoading(true);
+        setError('');
         try {
             const token = localStorage.getItem('authToken');
-            await axios.delete(`http://localhost:5000/api/taxReports/delete/${id}`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                }
+            if (!token) throw new Error('Authentication required');
+
+            const response = await axios.get(`${API_URL}/taxReports/reports`, {
+                headers: { Authorization: `Bearer ${token}` }
             });
-            setReports(reports.filter((report) => report._id !== id));
+
+            setReports(response.data.reports || []);
         } catch (err) {
-            console.error("Error deleting tax report:", err);
-            setError("Failed to delete the tax report. Please try again.");
+            setError(err.response?.data?.message || err.message || 'Failed to load tax reports');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const deleteReport = async (id) => {
+        if (!window.confirm('Are you sure you want to delete this tax report?')) return;
+
+        setError('');
+        setSuccess('');
+        try {
+            const token = localStorage.getItem('authToken');
+            if (!token) throw new Error('Authentication required');
+
+            const response = await axios.delete(`${API_URL}/taxReports/delete/${id}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            setReports(reports.filter(report => report._id !== id));
+            setSuccess(response.data.message);
+            setTimeout(() => setSuccess(''), 3000);
+        } catch (err) {
+            setError(err.response?.data?.message || 'Failed to delete tax report');
         }
     };
 
     const updateReport = async (id) => {
+        if (!income || !expenses || !year) {
+            setError('All fields are required');
+            return;
+        }
+
+        if (Number(income) < 0 || Number(expenses) < 0) {
+            setError('Income and expenses must be positive numbers');
+            return;
+        }
+
+        const currentYear = new Date().getFullYear();
+        if (Number(year) < 2000 || Number(year) > currentYear) {
+            setError(`Year must be between 2000 and ${currentYear}`);
+            return;
+        }
+
+        setError('');
+        setSuccess('');
         try {
             const token = localStorage.getItem('authToken');
-            const updatedData = { income, expenses, year };
+            if (!token) throw new Error('Authentication required');
 
-            const response = await axios.put(`http://localhost:5000/api/taxReports/update/${id}`, updatedData, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                }
+            const updatedData = {
+                income: Number(income),
+                expenses: Number(expenses),
+                year: Number(year)
+            };
+
+            const response = await axios.put(`${API_URL}/taxReports/update/${id}`, updatedData, {
+                headers: { Authorization: `Bearer ${token}` }
             });
 
-            setReports(reports.map((report) => (report._id === id ? response.data.taxReport : report)));
+            // Mise à jour immédiate de la liste avec les nouvelles données
+            setReports(reports.map(report => (report._id === id ? response.data.taxReport : report)));
+            setSuccess(response.data.message);
+            setTimeout(() => setSuccess(''), 3000);
             toggleModal();
+            // Rafraîchir la liste pour garantir la synchronisation avec le backend
+            fetchReports();
         } catch (err) {
-            console.error("Error updating tax report:", err);
-            setError("Failed to update the tax report. Please try again.");
+            setError(err.response?.data?.message || 'Failed to update tax report');
         }
     };
 
     const toggleModal = () => {
         setModal(!modal);
+        if (!modal) {
+            setError('');
+            setSuccess('');
+        } else {
+            setIncome('');
+            setExpenses('');
+            setYear('');
+            setSelectedReport(null);
+        }
     };
 
     const openEditModal = (report) => {
         setSelectedReport(report);
-        setIncome(report.income);
-        setExpenses(report.expenses);
-        setYear(report.year);
+        setIncome(report.income.toString());
+        setExpenses(report.expenses.toString());
+        setYear(report.year.toString());
         toggleModal();
     };
 
@@ -107,12 +146,9 @@ const TaxReportsList = () => {
                     color: 'white',
                     borderRadius: '20px 20px 0 0'
                 }}>
-                    <h2 style={{
-                        fontSize: '36px',
-                        fontWeight: 'bold',
-                        margin: '0',
-                        textShadow: '2px 2px 4px rgba(0,0,0,0.2)'
-                    }}>Your Tax Reports</h2>
+                    <h2 style={{ fontSize: '36px', fontWeight: 'bold', margin: '0', textShadow: '2px 2px 4px rgba(0,0,0,0.2)' }}>
+                        Your Tax Reports
+                    </h2>
                     <p style={{ margin: '10px 0 0', fontSize: '18px' }}>View and manage your tax reports</p>
                 </div>
 
@@ -129,21 +165,25 @@ const TaxReportsList = () => {
                             {error}
                         </Alert>
                     )}
+                    {success && (
+                        <Alert color="success" style={{
+                            borderRadius: '10px',
+                            marginBottom: '20px',
+                            fontWeight: '500',
+                            background: 'linear-gradient(to right, #2ecc71, #27ae60)',
+                            color: 'white',
+                            border: 'none'
+                        }}>
+                            {success}
+                        </Alert>
+                    )}
 
                     {loading ? (
                         <div style={{ textAlign: 'center', padding: '50px 0' }}>
-                            <Spinner style={{
-                                width: '3rem',
-                                height: '3rem',
-                                borderWidth: '0.4em',
-                                color: '#4facfe'
-                            }} />
-                            <p style={{
-                                marginTop: '15px',
-                                fontSize: '1.2rem',
-                                color: '#4facfe',
-                                fontWeight: '500'
-                            }}>Loading reports...</p>
+                            <Spinner style={{ width: '3rem', height: '3rem', borderWidth: '0.4em', color: '#4facfe' }} />
+                            <p style={{ marginTop: '15px', fontSize: '1.2rem', color: '#4facfe', fontWeight: '500' }}>
+                                Loading reports...
+                            </p>
                         </div>
                     ) : (
                         <Table bordered hover style={{
@@ -159,9 +199,9 @@ const TaxReportsList = () => {
                                 fontWeight: '600'
                             }}>
                                 <th style={{ padding: '15px' }}>Year</th>
-                                <th style={{ padding: '15px' }}>Income</th>
-                                <th style={{ padding: '15px' }}>Expenses</th>
-                                <th style={{ padding: '15px' }}>Calculated Tax</th>
+                                <th style={{ padding: '15px' }}>Income (TND)</th>
+                                <th style={{ padding: '15px' }}>Expenses (TND)</th>
+                                <th style={{ padding: '15px' }}>Calculated Tax (TND)</th>
                                 <th style={{ padding: '15px' }}>Actions</th>
                             </tr>
                             </thead>
@@ -171,12 +211,12 @@ const TaxReportsList = () => {
                                     <tr key={report._id} style={{
                                         transition: 'transform 0.2s ease, background-color 0.3s ease'
                                     }}
-                                        onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-3px)'}
-                                        onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}>
+                                        onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-3px)'}
+                                        onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>
                                         <td style={{ padding: '15px' }}>{report.year}</td>
-                                        <td style={{ padding: '15px' }}>{report.income}</td>
-                                        <td style={{ padding: '15px' }}>{report.expenses}</td>
-                                        <td style={{ padding: '15px' }}>{report.calculatedTax}</td>
+                                        <td style={{ padding: '15px' }}>{report.income.toFixed(2)}</td>
+                                        <td style={{ padding: '15px' }}>{report.expenses.toFixed(2)}</td>
+                                        <td style={{ padding: '15px' }}>{report.calculatedTax.toFixed(2)}</td>
                                         <td style={{ padding: '15px' }}>
                                             <Button
                                                 color="warning"
@@ -190,8 +230,8 @@ const TaxReportsList = () => {
                                                     marginRight: '10px',
                                                     transition: 'transform 0.2s ease, box-shadow 0.2s ease'
                                                 }}
-                                                onMouseEnter={(e) => e.target.style.transform = 'scale(1.05)'}
-                                                onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
+                                                onMouseEnter={e => e.target.style.transform = 'scale(1.05)'}
+                                                onMouseLeave={e => e.target.style.transform = 'scale(1)'}
                                             >
                                                 Update
                                             </Button>
@@ -206,8 +246,8 @@ const TaxReportsList = () => {
                                                     fontWeight: '500',
                                                     transition: 'transform 0.2s ease, box-shadow 0.2s ease'
                                                 }}
-                                                onMouseEnter={(e) => e.target.style.transform = 'scale(1.05)'}
-                                                onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
+                                                onMouseEnter={e => e.target.style.transform = 'scale(1.05)'}
+                                                onMouseLeave={e => e.target.style.transform = 'scale(1)'}
                                             >
                                                 Delete
                                             </Button>
@@ -232,7 +272,7 @@ const TaxReportsList = () => {
                 </div>
             </Container>
 
-            {/* Modal pour modifier le rapport fiscal */}
+            {/* Modal for editing tax report */}
             <Modal isOpen={modal} toggle={toggleModal} style={{ fontFamily: "'Arial', sans-serif" }}>
                 <ModalHeader toggle={toggleModal} style={{
                     background: 'linear-gradient(to right, #4facfe, #00f2fe)',
@@ -242,6 +282,30 @@ const TaxReportsList = () => {
                     Update Tax Report
                 </ModalHeader>
                 <ModalBody style={{ padding: '20px' }}>
+                    {error && (
+                        <Alert color="danger" style={{
+                            borderRadius: '10px',
+                            marginBottom: '20px',
+                            fontWeight: '500',
+                            background: 'linear-gradient(to right, #ff6b6b, #ff8787)',
+                            color: 'white',
+                            border: 'none'
+                        }}>
+                            {error}
+                        </Alert>
+                    )}
+                    {success && (
+                        <Alert color="success" style={{
+                            borderRadius: '10px',
+                            marginBottom: '20px',
+                            fontWeight: '500',
+                            background: 'linear-gradient(to right, #2ecc71, #27ae60)',
+                            color: 'white',
+                            border: 'none'
+                        }}>
+                            {success}
+                        </Alert>
+                    )}
                     <Form>
                         <FormGroup>
                             <Label style={{ fontSize: '14px', color: '#555', fontWeight: '500' }}>Year</Label>
@@ -249,8 +313,10 @@ const TaxReportsList = () => {
                                 type="number"
                                 name="year"
                                 value={year}
-                                onChange={(e) => setYear(e.target.value)}
+                                onChange={e => setYear(e.target.value)}
                                 required
+                                min="2000"
+                                max={new Date().getFullYear()}
                                 style={{
                                     padding: '12px 16px',
                                     border: '2px solid #ddd',
@@ -258,18 +324,20 @@ const TaxReportsList = () => {
                                     fontSize: '16px',
                                     transition: 'border-color 0.3s ease'
                                 }}
-                                onFocus={(e) => e.target.style.borderColor = '#4facfe'}
-                                onBlur={(e) => e.target.style.borderColor = '#ddd'}
+                                onFocus={e => e.target.style.borderColor = '#4facfe'}
+                                onBlur={e => e.target.style.borderColor = '#ddd'}
                             />
                         </FormGroup>
                         <FormGroup>
-                            <Label style={{ fontSize: '14px', color: '#555', fontWeight: '500' }}>Income</Label>
+                            <Label style={{ fontSize: '14px', color: '#555', fontWeight: '500' }}>Income (TND)</Label>
                             <Input
                                 type="number"
                                 name="income"
                                 value={income}
-                                onChange={(e) => setIncome(e.target.value)}
+                                onChange={e => setIncome(e.target.value)}
                                 required
+                                min="0"
+                                step="0.01"
                                 style={{
                                     padding: '12px 16px',
                                     border: '2px solid #ddd',
@@ -277,18 +345,20 @@ const TaxReportsList = () => {
                                     fontSize: '16px',
                                     transition: 'border-color 0.3s ease'
                                 }}
-                                onFocus={(e) => e.target.style.borderColor = '#4facfe'}
-                                onBlur={(e) => e.target.style.borderColor = '#ddd'}
+                                onFocus={e => e.target.style.borderColor = '#4facfe'}
+                                onBlur={e => e.target.style.borderColor = '#ddd'}
                             />
                         </FormGroup>
                         <FormGroup>
-                            <Label style={{ fontSize: '14px', color: '#555', fontWeight: '500' }}>Expenses</Label>
+                            <Label style={{ fontSize: '14px', color: '#555', fontWeight: '500' }}>Expenses (TND)</Label>
                             <Input
                                 type="number"
                                 name="expenses"
                                 value={expenses}
-                                onChange={(e) => setExpenses(e.target.value)}
+                                onChange={e => setExpenses(e.target.value)}
                                 required
+                                min="0"
+                                step="0.01"
                                 style={{
                                     padding: '12px 16px',
                                     border: '2px solid #ddd',
@@ -296,8 +366,8 @@ const TaxReportsList = () => {
                                     fontSize: '16px',
                                     transition: 'border-color 0.3s ease'
                                 }}
-                                onFocus={(e) => e.target.style.borderColor = '#4facfe'}
-                                onBlur={(e) => e.target.style.borderColor = '#ddd'}
+                                onFocus={e => e.target.style.borderColor = '#4facfe'}
+                                onBlur={e => e.target.style.borderColor = '#ddd'}
                             />
                         </FormGroup>
                     </Form>
@@ -305,7 +375,7 @@ const TaxReportsList = () => {
                 <ModalFooter style={{ padding: '15px' }}>
                     <Button
                         color="primary"
-                        onClick={() => updateReport(selectedReport._id)}
+                        onClick={() => updateReport(selectedReport?._id)}
                         style={{
                             background: 'linear-gradient(to right, #2ecc71, #27ae60)',
                             border: 'none',
@@ -314,8 +384,8 @@ const TaxReportsList = () => {
                             fontWeight: '500',
                             transition: 'transform 0.2s ease, box-shadow 0.2s ease'
                         }}
-                        onMouseEnter={(e) => e.target.style.transform = 'scale(1.05)'}
-                        onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
+                        onMouseEnter={e => e.target.style.transform = 'scale(1.05)'}
+                        onMouseLeave={e => e.target.style.transform = 'scale(1)'}
                     >
                         Save Changes
                     </Button>
@@ -330,8 +400,8 @@ const TaxReportsList = () => {
                             fontWeight: '500',
                             transition: 'transform 0.2s ease, box-shadow 0.2s ease'
                         }}
-                        onMouseEnter={(e) => e.target.style.transform = 'scale(1.05)'}
-                        onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
+                        onMouseEnter={e => e.target.style.transform = 'scale(1.05)'}
+                        onMouseLeave={e => e.target.style.transform = 'scale(1)'}
                     >
                         Cancel
                     </Button>

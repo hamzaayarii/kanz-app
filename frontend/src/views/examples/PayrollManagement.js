@@ -17,6 +17,8 @@ const PayrollManagement = () => {
     const [editPayroll, setEditPayroll] = useState(null);
     const [cnssPeriod, setCnssPeriod] = useState('');
 
+    const API_URL = 'http://localhost:5000/api';
+
     useEffect(() => {
         fetchEmployees();
         fetchPayrolls();
@@ -28,15 +30,15 @@ const PayrollManagement = () => {
         try {
             const token = localStorage.getItem('authToken');
             if (!token) {
-                throw new Error('You must be logged in to access this page');
+                throw new Error('Authentication required');
             }
 
-            const response = await axios.get('http://localhost:5000/api/employees', {
+            const response = await axios.get(`${API_URL}/employees`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setEmployees(response.data.employees || []);
         } catch (err) {
-            setError(err.response?.data?.message || 'Error fetching employees');
+            setError(err.response?.data?.message || err.message || 'Error fetching employees');
         } finally {
             setLoading(false);
         }
@@ -47,7 +49,7 @@ const PayrollManagement = () => {
         setError('');
         try {
             const token = localStorage.getItem('authToken');
-            const response = await axios.get('http://localhost:5000/api/payrolls', {
+            const response = await axios.get(`${API_URL}/payrolls`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setPayrolls(response.data.payrolls || []);
@@ -58,7 +60,21 @@ const PayrollManagement = () => {
         }
     };
 
+    const validateForm = () => {
+        if (!formData.employeeId || !formData.period) {
+            setError('Employee and period are required');
+            return false;
+        }
+        if (!/^\d{4}-\d{2}$/.test(formData.period)) {
+            setError('Period must be in YYYY-MM format');
+            return false;
+        }
+        return true;
+    };
+
     const handleGeneratePayroll = async () => {
+        if (!validateForm()) return;
+
         setError('');
         setSuccess('');
         setLoading(true);
@@ -66,13 +82,13 @@ const PayrollManagement = () => {
         try {
             const token = localStorage.getItem('authToken');
             const response = await axios.post(
-                'http://localhost:5000/api/payrolls/generate',
+                `${API_URL}/payrolls/generate`,
                 formData,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
 
             setPayrolls([...payrolls, response.data.payroll]);
-            setSuccess('Payroll generated successfully');
+            setSuccess(response.data.message);
             setFormData({ employeeId: '', period: '' });
         } catch (err) {
             setError(err.response?.data?.message || 'Error generating payroll');
@@ -85,11 +101,13 @@ const PayrollManagement = () => {
         setEditPayroll(payroll);
         setFormData({
             employeeId: payroll.employeeId._id,
-            period: new Date(payroll.period).toISOString().split('T')[0].substring(0, 7) // Format YYYY-MM
+            period: new Date(payroll.period).toISOString().slice(0, 7) // YYYY-MM
         });
     };
 
     const handleUpdatePayroll = async () => {
+        if (!validateForm()) return;
+
         setError('');
         setSuccess('');
         setLoading(true);
@@ -97,13 +115,13 @@ const PayrollManagement = () => {
         try {
             const token = localStorage.getItem('authToken');
             const response = await axios.put(
-                `http://localhost:5000/api/payrolls/${editPayroll._id}`,
+                `${API_URL}/payrolls/${editPayroll._id}`,
                 formData,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
 
             setPayrolls(payrolls.map(p => (p._id === editPayroll._id ? response.data.payroll : p)));
-            setSuccess('Payroll updated successfully');
+            setSuccess(response.data.message);
             setEditPayroll(null);
             setFormData({ employeeId: '', period: '' });
         } catch (err) {
@@ -122,12 +140,12 @@ const PayrollManagement = () => {
 
         try {
             const token = localStorage.getItem('authToken');
-            await axios.delete(`http://localhost:5000/api/payrolls/${id}`, {
+            const response = await axios.delete(`${API_URL}/payrolls/${id}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
             setPayrolls(payrolls.filter(p => p._id !== id));
-            setSuccess('Payroll deleted successfully');
+            setSuccess(response.data.message);
         } catch (err) {
             setError(err.response?.data?.message || 'Error deleting payroll');
         } finally {
@@ -136,6 +154,11 @@ const PayrollManagement = () => {
     };
 
     const handleGenerateCnssDeclaration = async () => {
+        if (!cnssPeriod || !/^\d{4}-\d{2}$/.test(cnssPeriod)) {
+            setError('Period must be in YYYY-MM format');
+            return;
+        }
+
         setError('');
         setSuccess('');
         setLoading(true);
@@ -143,13 +166,13 @@ const PayrollManagement = () => {
         try {
             const token = localStorage.getItem('authToken');
             const response = await axios.post(
-                'http://localhost:5000/api/payrolls/declare-cnss',
+                `${API_URL}/payrolls/declare-cnss`,
                 { period: cnssPeriod },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
 
             setCnssDeclaration(response.data.declaration);
-            setSuccess('CNSS declaration generated successfully');
+            setSuccess(response.data.message);
         } catch (err) {
             setError(err.response?.data?.message || 'Error generating CNSS declaration');
         } finally {
@@ -193,7 +216,7 @@ const PayrollManagement = () => {
                     </select>
                 </div>
                 <div className={styles.field}>
-                    <label>Period</label>
+                    <label>Period (YYYY-MM)</label>
                     <input
                         type="month"
                         name="period"
@@ -224,7 +247,7 @@ const PayrollManagement = () => {
             <div className={styles.form}>
                 <h3>Generate CNSS Declaration</h3>
                 <div className={styles.field}>
-                    <label>Period</label>
+                    <label>Period (YYYY-MM)</label>
                     <input
                         type="month"
                         value={cnssPeriod}
@@ -245,13 +268,13 @@ const PayrollManagement = () => {
             {cnssDeclaration && (
                 <div className={styles.cnssDeclaration}>
                     <h3>CNSS Declaration ({cnssDeclaration.period})</h3>
-                    <p><strong>Total CNSS:</strong> {cnssDeclaration.totalCnss} TND</p>
+                    <p><strong>Total CNSS:</strong> {cnssDeclaration.totalCnss.toFixed(2)} TND</p>
                     <h4>Employees:</h4>
                     {cnssDeclaration.employees.map(emp => (
-                        <div key={emp.employeeId}>
+                        <div key={emp.employeeId} className={styles.employee}>
                             <p><strong>Name:</strong> {emp.employeeName}</p>
-                            <p><strong>Gross Salary:</strong> {emp.grossSalary} TND</p>
-                            <p><strong>CNSS Contribution:</strong> {emp.cnssContribution} TND</p>
+                            <p><strong>Gross Salary:</strong> {emp.grossSalary.toFixed(2)} TND</p>
+                            <p><strong>CNSS Contribution:</strong> {emp.cnssContribution.toFixed(2)} TND</p>
                         </div>
                     ))}
                 </div>
@@ -265,13 +288,13 @@ const PayrollManagement = () => {
                 )}
                 {payrolls.map(payroll => (
                     <div key={payroll._id} className={styles.payroll}>
-                        <p><strong>Employee:</strong> {payroll.employeeId ? `${payroll.employeeId.firstName} ${payroll.employeeId.lastName}` : 'Unknown Employee'}
-                        </p>
-                        <p><strong>Period:</strong> {new Date(payroll.period).toLocaleDateString()}</p>
-                        <p><strong>Gross Salary:</strong> {payroll.grossSalary} TND</p>
-                        <p><strong>CNSS Contribution:</strong> {payroll.cnssContribution} TND</p>
-                        <p><strong>IRPP:</strong> {payroll.irpp} TND</p>
-                        <p><strong>Net Salary:</strong> {payroll.netSalary} TND</p>
+                        <p><strong>Employee:</strong> {payroll.employeeId ? `${payroll.employeeId.firstName} ${payroll.employeeId.lastName}` : 'Unknown'}</p>
+                        <p><strong>Business:</strong> {payroll.businessId?.name || 'Unknown'}</p>
+                        <p><strong>Period:</strong> {new Date(payroll.period).toLocaleDateString('en-US', { year: 'numeric', month: 'long' })}</p>
+                        <p><strong>Gross Salary:</strong> {payroll.grossSalary.toFixed(2)} TND</p>
+                        <p><strong>CNSS Contribution:</strong> {payroll.cnssContribution.toFixed(2)} TND</p>
+                        <p><strong>IRPP:</strong> {payroll.irpp.toFixed(2)} TND</p>
+                        <p><strong>Net Salary:</strong> {payroll.netSalary.toFixed(2)} TND</p>
                         <button
                             onClick={() => handleEditPayroll(payroll)}
                             disabled={loading}

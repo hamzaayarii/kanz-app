@@ -27,6 +27,9 @@ const EmployeeManagement = () => {
     });
     const [showAbsenceModal, setShowAbsenceModal] = useState(false);
 
+    // Base URL for API (consider moving to .env)
+    const API_URL = 'http://localhost:5000/api';
+
     useEffect(() => {
         fetchBusinesses();
         fetchEmployees();
@@ -49,7 +52,7 @@ const EmployeeManagement = () => {
         setError('');
         try {
             const token = localStorage.getItem('authToken');
-            const response = await axios.get('http://localhost:5000/api/employees', {
+            const response = await axios.get(`${API_URL}/employees`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setEmployees(response.data.employees || []);
@@ -60,12 +63,27 @@ const EmployeeManagement = () => {
         }
     };
 
+    const validateForm = () => {
+        if (!formData.firstName || !formData.lastName || !formData.position ||
+            !formData.salary || !formData.hireDate || !formData.businessId) {
+            setError('All fields are required');
+            return false;
+        }
+        if (Number(formData.salary) < 0) {
+            setError('Salary must be a positive number');
+            return false;
+        }
+        return true;
+    };
+
     const handleInputChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
     const handleAddEmployee = async (e) => {
         e.preventDefault();
+        if (!validateForm()) return;
+
         setError('');
         setSuccess('');
         setLoading(true);
@@ -73,13 +91,13 @@ const EmployeeManagement = () => {
         try {
             const token = localStorage.getItem('authToken');
             const response = await axios.post(
-                'http://localhost:5000/api/employees',
+                `${API_URL}/employees`,
                 formData,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
 
             setEmployees([...employees, response.data.employee]);
-            setSuccess('Employee added successfully');
+            setSuccess(response.data.message);
             setFormData({
                 firstName: '',
                 lastName: '',
@@ -101,14 +119,16 @@ const EmployeeManagement = () => {
             firstName: employee.firstName,
             lastName: employee.lastName,
             position: employee.position,
-            salary: employee.salary,
+            salary: employee.salary.toString(), // Convert to string for input
             hireDate: new Date(employee.hireDate).toISOString().split('T')[0],
-            businessId: employee.businessId._id
+            businessId: employee.businessId._id || employee.businessId // Handle populated vs ID
         });
     };
 
     const handleUpdateEmployee = async (e) => {
         e.preventDefault();
+        if (!validateForm()) return;
+
         setError('');
         setSuccess('');
         setLoading(true);
@@ -116,13 +136,15 @@ const EmployeeManagement = () => {
         try {
             const token = localStorage.getItem('authToken');
             const response = await axios.put(
-                `http://localhost:5000/api/employees/${editEmployee._id}`,
+                `${API_URL}/employees/${editEmployee._id}`,
                 formData,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
 
-            setEmployees(employees.map(emp => (emp._id === editEmployee._id ? response.data.employee : emp)));
-            setSuccess('Employee updated successfully');
+            setEmployees(employees.map(emp =>
+                emp._id === editEmployee._id ? response.data.employee : emp
+            ));
+            setSuccess(response.data.message);
             setEditEmployee(null);
             setFormData({
                 firstName: '',
@@ -148,12 +170,12 @@ const EmployeeManagement = () => {
 
         try {
             const token = localStorage.getItem('authToken');
-            await axios.delete(`http://localhost:5000/api/employees/${id}`, {
+            const response = await axios.delete(`${API_URL}/employees/${id}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
             setEmployees(employees.filter(emp => emp._id !== id));
-            setSuccess('Employee deleted successfully');
+            setSuccess(response.data.message);
         } catch (err) {
             setError(err.response?.data?.message || 'Error deleting employee');
         } finally {
@@ -168,18 +190,21 @@ const EmployeeManagement = () => {
 
         try {
             const employeesToImport = JSON.parse(importData);
+            if (!Array.isArray(employeesToImport) || employeesToImport.length === 0) {
+                throw new Error('Import data must be a non-empty array');
+            }
             const token = localStorage.getItem('authToken');
             const response = await axios.post(
-                'http://localhost:5000/api/employees/import',
+                `${API_URL}/employees/import`,
                 { employees: employeesToImport },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
 
             setEmployees([...employees, ...response.data.employees]);
-            setSuccess('Employees imported successfully');
+            setSuccess(response.data.message);
             setImportData('');
         } catch (err) {
-            setError(err.response?.data?.message || 'Error importing employees');
+            setError(err.response?.data?.message || err.message || 'Error importing employees');
         } finally {
             setLoading(false);
         }
@@ -189,7 +214,23 @@ const EmployeeManagement = () => {
         setAbsenceData({ ...absenceData, [e.target.name]: e.target.value });
     };
 
+    const validateAbsence = () => {
+        if (!absenceData.startDate || !absenceData.endDate || !absenceData.reason) {
+            setError('All absence fields are required');
+            return false;
+        }
+        const start = new Date(absenceData.startDate);
+        const end = new Date(absenceData.endDate);
+        if (start > end) {
+            setError('Start date must be before end date');
+            return false;
+        }
+        return true;
+    };
+
     const handleAddAbsence = async () => {
+        if (!validateAbsence()) return;
+
         setError('');
         setSuccess('');
         setLoading(true);
@@ -197,13 +238,15 @@ const EmployeeManagement = () => {
         try {
             const token = localStorage.getItem('authToken');
             const response = await axios.post(
-                `http://localhost:5000/api/employees/${absenceData.employeeId}/absences`,
+                `${API_URL}/employees/${absenceData.employeeId}/absences`,
                 absenceData,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
 
-            setEmployees(employees.map(emp => (emp._id === absenceData.employeeId ? response.data.employee : emp)));
-            setSuccess('Absence added successfully');
+            setEmployees(employees.map(emp =>
+                emp._id === absenceData.employeeId ? response.data.employee : emp
+            ));
+            setSuccess(response.data.message);
             setShowAbsenceModal(false);
             setAbsenceData({ employeeId: '', startDate: '', endDate: '', reason: '' });
         } catch (err) {
@@ -267,6 +310,7 @@ const EmployeeManagement = () => {
                             disabled={loading}
                             required
                             min="0"
+                            step="0.01"
                         />
                     </div>
                     <div className={styles.field}>
@@ -313,6 +357,20 @@ const EmployeeManagement = () => {
                 </form>
             </div>
 
+            {/* Import Employees */}
+            <div className={styles.import}>
+                <h3>Import Employees</h3>
+                <textarea
+                    value={importData}
+                    onChange={(e) => setImportData(e.target.value)}
+                    placeholder='Paste JSON array of employees here'
+                    rows="4"
+                    disabled={loading}
+                />
+                <button onClick={handleImportEmployees} disabled={loading || !importData}>
+                    {loading ? 'Importing...' : 'Import Employees'}
+                </button>
+            </div>
 
             {/* List of Employees */}
             <div className={styles.employees}>
@@ -326,14 +384,15 @@ const EmployeeManagement = () => {
                         <p><strong>Position:</strong> {employee.position}</p>
                         <p><strong>Salary:</strong> {employee.salary} TND</p>
                         <p><strong>Hire Date:</strong> {new Date(employee.hireDate).toLocaleDateString()}</p>
-                        <p><strong>Business:</strong> {employee.businessId.name}</p>
+                        <p><strong>Business:</strong> {employee.businessId?.name || 'Unknown'}</p>
                         {employee.absences && employee.absences.length > 0 && (
                             <div>
                                 <strong>Absences:</strong>
                                 <ul>
                                     {employee.absences.map((absence, index) => (
                                         <li key={index}>
-                                            {new Date(absence.startDate).toLocaleDateString()} - {new Date(absence.endDate).toLocaleDateString()}: {absence.reason}
+                                            {new Date(absence.startDate).toLocaleDateString()} -
+                                            {new Date(absence.endDate).toLocaleDateString()}: {absence.reason}
                                         </li>
                                     ))}
                                 </ul>
@@ -378,6 +437,7 @@ const EmployeeManagement = () => {
                             name="startDate"
                             value={absenceData.startDate}
                             onChange={handleAbsenceInputChange}
+                            disabled={loading}
                             required
                         />
                     </div>
@@ -388,6 +448,7 @@ const EmployeeManagement = () => {
                             name="endDate"
                             value={absenceData.endDate}
                             onChange={handleAbsenceInputChange}
+                            disabled={loading}
                             required
                         />
                     </div>
@@ -398,6 +459,7 @@ const EmployeeManagement = () => {
                             name="reason"
                             value={absenceData.reason}
                             onChange={handleAbsenceInputChange}
+                            disabled={loading}
                             required
                         />
                     </div>

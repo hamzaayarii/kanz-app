@@ -5,7 +5,8 @@ const { authenticate, authorizeBusinessOwner } = require('../middlewares/authMid
 require('dotenv').config();
 
 const router = express.Router();
-// Middleware de gestion d'erreurs async
+
+// Async handler middleware
 const asyncHandler = fn => (req, res, next) =>
     Promise.resolve(fn(req, res, next)).catch(err => {
         console.error(err.stack);
@@ -15,7 +16,7 @@ const asyncHandler = fn => (req, res, next) =>
         });
     });
 
-// Validation des données d'employé
+// Validation middleware for employee data
 const validateEmployeeInput = (req, res, next) => {
     const { firstName, lastName, position, salary, hireDate, businessId } = req.body;
 
@@ -23,8 +24,8 @@ const validateEmployeeInput = (req, res, next) => {
         return res.status(400).json({ message: 'All required fields must be provided' });
     }
 
-    if (salary < 0) {
-        return res.status(400).json({ message: 'Salary must be positive' });
+    if (!Number.isFinite(Number(salary)) || Number(salary) < 0) {
+        return res.status(400).json({ message: 'Salary must be a positive number' });
     }
 
     const hireDateObj = new Date(hireDate);
@@ -35,123 +36,182 @@ const validateEmployeeInput = (req, res, next) => {
     next();
 };
 
-// 📌 Ajouter un employé
-router.post('/', authenticate, authorizeBusinessOwner, validateEmployeeInput, asyncHandler(async (req, res) => {
-    const { firstName, lastName, position, salary, hireDate, businessId } = req.body;
+// Add an employee
+router.post('/',
+    authenticate,
+    authorizeBusinessOwner,
+    validateEmployeeInput,
+    asyncHandler(async (req, res) => {
+        const { firstName, lastName, position, salary, hireDate, businessId } = req.body;
 
-    const business = await Business.findOne({ _id: businessId, owner: req.user.id });
-    if (!business) {
-        return res.status(403).json({ message: 'Business not found or not authorized' });
-    }
-
-    const employee = new Employee({
-        businessId,
-        userId: req.user.id,
-        firstName,
-        lastName,
-        position,
-        salary,
-        hireDate: new Date(hireDate),
-        createdAt: new Date()
-    });
-
-    await employee.save();
-    res.status(201).json({ message: 'Employee added successfully', employee });
-}));
-
-// 📌 Récupérer tous les employés de l'utilisateur
-router.get('/', authenticate, authorizeBusinessOwner, asyncHandler(async (req, res) => {
-    const employees = await Employee.find({ userId: req.user.id })
-        .populate('businessId', 'name')
-        .sort({ createdAt: -1 });
-    res.status(200).json({ employees });
-}));
-
-// 📌 Récupérer un employé par ID
-router.get('/:id', authenticate, authorizeBusinessOwner, asyncHandler(async (req, res) => {
-    const employee = await Employee.findById(req.params.id).populate('businessId', 'name');
-    if (!employee) {
-        return res.status(404).json({ message: 'Employee not found' });
-    }
-    if (employee.userId.toString() !== req.user.id) {
-        return res.status(403).json({ message: 'Not authorized' });
-    }
-    res.status(200).json({ employee });
-}));
-
-// 📌 Mettre à jour un employé
-router.put('/:id', authenticate, authorizeBusinessOwner, validateEmployeeInput, asyncHandler(async (req, res) => {
-    const employee = await Employee.findById(req.params.id);
-    if (!employee) {
-        return res.status(404).json({ message: 'Employee not found' });
-    }
-    if (employee.userId.toString() !== req.user.id) {
-        return res.status(403).json({ message: 'Not authorized' });
-    }
-
-    const updatedEmployee = await Employee.findByIdAndUpdate(
-        req.params.id,
-        { ...req.body, updatedAt: new Date() },
-        { new: true }
-    ).populate('businessId', 'name');
-
-    res.status(200).json({ message: 'Employee updated successfully', employee: updatedEmployee });
-}));
-
-// 📌 Supprimer un employé
-router.delete('/:id', authenticate, authorizeBusinessOwner, asyncHandler(async (req, res) => {
-    const employee = await Employee.findById(req.params.id);
-    if (!employee) {
-        return res.status(404).json({ message: 'Employee not found' });
-    }
-    if (employee.userId.toString() !== req.user.id) {
-        return res.status(403).json({ message: 'Not authorized' });
-    }
-
-    await Employee.findByIdAndDelete(req.params.id);
-    res.status(200).json({ message: 'Employee deleted successfully' });
-}));
-
-// 📌 Importer des employés
-router.post('/import', authenticate, authorizeBusinessOwner, asyncHandler(async (req, res) => {
-    const { employees } = req.body;
-
-    if (!Array.isArray(employees) || employees.length === 0) {
-        return res.status(400).json({ message: 'Data must be a non-empty array of employees' });
-    }
-
-    const createdEmployees = [];
-    for (const employeeData of employees) {
-        const { firstName, lastName, position, salary, hireDate, businessId } = employeeData;
-
-        if (!firstName || !lastName || !position || !salary || !hireDate || !businessId) {
-            continue; // Ignorer les entrées invalides
-        }
-
-        const business = await Business.findOne({ _id: businessId, owner: req.user.id });
+        const business = await Business.findOne({ _id: businessId, owner: req.user._id || req.user.id });
         if (!business) {
-            continue; // Ignorer si la société n'est pas autorisée
+            return res.status(403).json({ message: 'Business not found or not authorized' });
         }
 
         const employee = new Employee({
             businessId,
-            userId: req.user.id,
+            userId: req.user._id || req.user.id,
             firstName,
             lastName,
             position,
-            salary,
+            salary: Number(salary),
             hireDate: new Date(hireDate),
             createdAt: new Date()
         });
 
-        await employee.save();
-        createdEmployees.push(employee);
-    }
+        const savedEmployee = await employee.save();
+        const populatedEmployee = await Employee.findById(savedEmployee._id).populate('businessId', 'name');
 
-    res.status(201).json({ message: 'Employees imported successfully', employees: createdEmployees });
-}));
+        res.status(201).json({
+            message: 'Employee added successfully',
+            employee: populatedEmployee
+        });
+    })
+);
 
-// 📌 Ajouter une absence pour un employé
+// Get all employees for the authenticated user
+router.get('/',
+    authenticate,
+    authorizeBusinessOwner,
+    asyncHandler(async (req, res) => {
+        const userId = req.user._id || req.user.id;
+        const employees = await Employee.find({ userId })
+            .populate('businessId', 'name')
+            .sort({ createdAt: -1 });
+
+        res.status(200).json({
+            success: true,
+            employees
+        });
+    })
+);
+
+// Get a specific employee
+router.get('/:id',
+    authenticate,
+    authorizeBusinessOwner,
+    asyncHandler(async (req, res) => {
+        const employee = await Employee.findById(req.params.id)
+            .populate('businessId', 'name');
+
+        if (!employee) {
+            return res.status(404).json({ message: 'Employee not found' });
+        }
+
+        if (employee.userId.toString() !== (req.user._id || req.user.id).toString()) {
+            return res.status(403).json({ message: 'Not authorized' });
+        }
+
+        res.status(200).json({
+            success: true,
+            employee
+        });
+    })
+);
+
+// Update an employee
+router.put('/:id',
+    authenticate,
+    authorizeBusinessOwner,
+    validateEmployeeInput,
+    asyncHandler(async (req, res) => {
+        const employee = await Employee.findById(req.params.id);
+        if (!employee) {
+            return res.status(404).json({ message: 'Employee not found' });
+        }
+
+        if (employee.userId.toString() !== (req.user._id || req.user.id).toString()) {
+            return res.status(403).json({ message: 'Not authorized' });
+        }
+
+        const updatedEmployee = await Employee.findByIdAndUpdate(
+            req.params.id,
+            {
+                ...req.body,
+                salary: Number(req.body.salary),
+                hireDate: new Date(req.body.hireDate),
+                updatedAt: new Date()
+            },
+            { new: true }
+        ).populate('businessId', 'name');
+
+        res.status(200).json({
+            message: 'Employee updated successfully',
+            employee: updatedEmployee
+        });
+    })
+);
+
+// Delete an employee
+router.delete('/:id',
+    authenticate,
+    authorizeBusinessOwner,
+    asyncHandler(async (req, res) => {
+        const employee = await Employee.findById(req.params.id);
+        if (!employee) {
+            return res.status(404).json({ message: 'Employee not found' });
+        }
+
+        if (employee.userId.toString() !== (req.user._id || req.user.id).toString()) {
+            return res.status(403).json({ message: 'Not authorized' });
+        }
+
+        await Employee.findByIdAndDelete(req.params.id);
+        res.status(200).json({ message: 'Employee deleted successfully' });
+    })
+);
+
+// Import employees
+router.post('/import',
+    authenticate,
+    authorizeBusinessOwner,
+    asyncHandler(async (req, res) => {
+        const { employees } = req.body;
+
+        if (!Array.isArray(employees) || employees.length === 0) {
+            return res.status(400).json({ message: 'Data must be a non-empty array of employees' });
+        }
+
+        const userId = req.user._id || req.user.id;
+        const createdEmployees = [];
+
+        for (const employeeData of employees) {
+            const { firstName, lastName, position, salary, hireDate, businessId } = employeeData;
+
+            if (!firstName || !lastName || !position || !salary || !hireDate || !businessId) {
+                continue;
+            }
+
+            const business = await Business.findOne({ _id: businessId, owner: userId });
+            if (!business) {
+                continue;
+            }
+
+            const employee = new Employee({
+                businessId,
+                userId,
+                firstName,
+                lastName,
+                position,
+                salary: Number(salary),
+                hireDate: new Date(hireDate),
+                createdAt: new Date()
+            });
+
+            const savedEmployee = await employee.save();
+            const populatedEmployee = await Employee.findById(savedEmployee._id).populate('businessId', 'name');
+            createdEmployees.push(populatedEmployee);
+        }
+
+        res.status(201).json({
+            message: 'Employees imported successfully',
+            employees: createdEmployees
+        });
+    })
+);
+
+// Validation for absence input
 const validateAbsenceInput = (req, res, next) => {
     const { startDate, endDate, reason } = req.body;
 
@@ -172,20 +232,36 @@ const validateAbsenceInput = (req, res, next) => {
     next();
 };
 
-router.post('/:id/absences', authenticate, authorizeBusinessOwner, validateAbsenceInput, asyncHandler(async (req, res) => {
-    const employee = await Employee.findById(req.params.id);
-    if (!employee) {
-        return res.status(404).json({ message: 'Employee not found' });
-    }
-    if (employee.userId.toString() !== req.user.id) {
-        return res.status(403).json({ message: 'Not authorized' });
-    }
+// Add an absence
+router.post('/:id/absences',
+    authenticate,
+    authorizeBusinessOwner,
+    validateAbsenceInput,
+    asyncHandler(async (req, res) => {
+        const employee = await Employee.findById(req.params.id);
+        if (!employee) {
+            return res.status(404).json({ message: 'Employee not found' });
+        }
 
-    const { startDate, endDate, reason } = req.body;
-    employee.absences.push({ startDate: new Date(startDate), endDate: new Date(endDate), reason });
-    await employee.save();
+        if (employee.userId.toString() !== (req.user._id || req.user.id).toString()) {
+            return res.status(403).json({ message: 'Not authorized' });
+        }
 
-    res.status(200).json({ message: 'Absence added successfully', employee });
-}));
+        const { startDate, endDate, reason } = req.body;
+        employee.absences.push({
+            startDate: new Date(startDate),
+            endDate: new Date(endDate),
+            reason
+        });
+
+        const updatedEmployee = await employee.save();
+        await updatedEmployee.populate('businessId', 'name');
+
+        res.status(200).json({
+            message: 'Absence added successfully',
+            employee: updatedEmployee
+        });
+    })
+);
 
 module.exports = router;

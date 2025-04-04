@@ -381,12 +381,10 @@ const parseInvoiceText = (text) => {
 
 router.post('/extract', authenticate, upload.single('file'), asyncHandler(async (req, res) => {
     const { businessId } = req.body;
-
-    if (!businessId) {
-        return res.status(400).json({ message: 'Veuillez sélectionner une société' });
-    }
-
-    const business = await Business.findOne({ _id: businessId, owner: req.user.id });
+    console.log('/extract - User ID:', req.user.id);
+    console.log('/extract - Business ID:', businessId);
+    const business = await Business.findOne({ _id: businessId, owner: req.user._id });
+    console.log('/extract - Found Business:', business);
     if (!business) {
         return res.status(403).json({ message: 'Société non trouvée ou non autorisée' });
     }
@@ -411,7 +409,7 @@ router.get('/:id/pdf', authenticate, asyncHandler(async (req, res) => {
     if (!invoice) {
         return res.status(404).json({ message: 'Facture non trouvée' });
     }
-    if (invoice.userId.toString() !== req.user.id) {
+    if (invoice.userId.toString() !== req.user._id) {
         return res.status(403).json({ message: 'Non autorisé' });
     }
 
@@ -563,14 +561,18 @@ router.get('/:id/pdf', authenticate, asyncHandler(async (req, res) => {
 router.post('/', authenticate, validateInvoiceInput, asyncHandler(async (req, res) => {
     const { businessId } = req.body;
 
-    const business = await Business.findOne({ _id: businessId, owner: req.user.id });
+    console.log('/invoices POST - User:', req.user);
+    console.log('/invoices POST - Business ID:', businessId);
+    console.log('/invoices POST - Full Body:', req.body); // Debug full request body
+    const business = await Business.findOne({ _id: businessId, owner: req.user._id });
+    console.log('/invoices POST - Found Business:', business);
     if (!business) {
         return res.status(403).json({ message: 'Société non trouvée ou non autorisée' });
     }
 
     const invoiceData = sanitizeInvoiceData({
         ...req.body,
-        userId: req.user.id,
+        userId: req.user._id,
         businessId: businessId,
         createdAt: new Date()
     });
@@ -584,13 +586,13 @@ router.get('/', authenticate, asyncHandler(async (req, res) => {
     const { page = 1, limit = 10, sort = '-invoiceDate' } = req.query;
     const skip = (page - 1) * limit;
 
-    const invoices = await Invoice.find({ userId: req.user.id })
+    const invoices = await Invoice.find({ userId: req.user._id })
         .sort(sort)
         .skip(skip)
         .limit(parseInt(limit))
         .populate('businessId', 'name');
 
-    const total = await Invoice.countDocuments({ userId: req.user.id });
+    const total = await Invoice.countDocuments({ userId: req.user._id });
 
     res.json({
         invoices,
@@ -658,7 +660,7 @@ router.delete('/:id', authenticate, asyncHandler(async (req, res) => {
     if (!invoice) {
         return res.status(404).json({ message: 'Facture non trouvée' });
     }
-    if (invoice.userId.toString() !== req.user.id) {
+    if (invoice.userId.toString() !== req.user._id) {
         return res.status(403).json({ message: 'Non autorisé' });
     }
 

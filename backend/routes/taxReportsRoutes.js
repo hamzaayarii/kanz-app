@@ -4,7 +4,6 @@ const { authenticate } = require('../middlewares/authMiddleware');
 
 const router = express.Router();
 
-// Middleware de gestion d'erreurs async
 const asyncHandler = fn => (req, res, next) =>
     Promise.resolve(fn(req, res, next)).catch(err => {
         console.error(err.stack);
@@ -14,12 +13,11 @@ const asyncHandler = fn => (req, res, next) =>
         });
     });
 
-// Validation des entrées
 const validateTaxInput = (req, res, next) => {
     const { income, expenses, year } = req.body;
 
-    if (!income || !expenses || !year) {
-        return res.status(400).json({ message: 'All fields are required.' });
+    if (!Number.isFinite(Number(income)) || !Number.isFinite(Number(expenses)) || !Number.isFinite(Number(year))) {
+        return res.status(400).json({ message: 'Income, expenses, and year must be numbers' });
     }
 
     if (income < 0 || expenses < 0) {
@@ -28,103 +26,141 @@ const validateTaxInput = (req, res, next) => {
 
     const currentYear = new Date().getFullYear();
     if (year < 2000 || year > currentYear) {
-        return res.status(400).json({ message: 'Invalid year' });
+        return res.status(400).json({ message: `Year must be between 2000 and ${currentYear}` });
     }
 
     next();
 };
 
-// Calcul de la taxe selon la loi tunisienne
 const calculateTax = (income, expenses) => {
-    const taxableIncome = income - expenses;
+    const parsedIncome = Number(income);
+    const parsedExpenses = Number(expenses);
+    if (isNaN(parsedIncome) || isNaN(parsedExpenses)) {
+        throw new Error('Income and expenses must be valid numbers');
+    }
+
+    const taxableIncome = Math.max(0, parsedIncome - parsedExpenses);
     let calculatedTax = 0;
 
     if (taxableIncome <= 5000) {
         calculatedTax = 0;
+    } else if (taxableIncome <= 10000) {
+        calculatedTax = (taxableIncome - 5000) * 0.15;
     } else if (taxableIncome <= 20000) {
-        calculatedTax = (taxableIncome - 5000) * 0.26;
+        calculatedTax = (5000 * 0.15) + (taxableIncome - 10000) * 0.20;
     } else if (taxableIncome <= 30000) {
-        calculatedTax = (15000 * 0.26) + (taxableIncome - 20000) * 0.28;
+        calculatedTax = (5000 * 0.15) + (10000 * 0.20) + (taxableIncome - 20000) * 0.25;
+    } else if (taxableIncome <= 40000) {
+        calculatedTax = (5000 * 0.15) + (10000 * 0.20) + (10000 * 0.25) + (taxableIncome - 30000) * 0.30;
     } else if (taxableIncome <= 50000) {
-        calculatedTax = (15000 * 0.26) + (10000 * 0.28) + (taxableIncome - 30000) * 0.32;
+        calculatedTax = (5000 * 0.15) + (10000 * 0.20) + (10000 * 0.25) + (10000 * 0.30) + (taxableIncome - 40000) * 0.35;
+    } else if (taxableIncome <= 60000) {
+        calculatedTax = (5000 * 0.15) + (10000 * 0.20) + (10000 * 0.25) + (10000 * 0.30) + (10000 * 0.35) + (taxableIncome - 50000) * 0.37;
     } else {
-        calculatedTax = (15000 * 0.26) + (10000 * 0.28) + (20000 * 0.32) + (taxableIncome - 50000) * 0.35;
+        calculatedTax = (5000 * 0.15) + (10000 * 0.20) + (10000 * 0.25) + (10000 * 0.30) + (10000 * 0.35) + (10000 * 0.37) + (taxableIncome - 60000) * 0.40;
     }
 
-    return calculatedTax;
+    return Number(calculatedTax.toFixed(2));
 };
 
-// Générer un rapport fiscal
-router.post('/generate', authenticate, validateTaxInput, asyncHandler(async (req, res) => {
-    const { income, expenses, year } = req.body;
+router.post('/generate',
+    authenticate,
+    validateTaxInput,
+    asyncHandler(async (req, res) => {
+        const { income, expenses, year } = req.body;
 
-    const calculatedTax = calculateTax(income, expenses);
-
-    const taxReport = new TaxReport({
-        userId: req.user.id,
-        year,
-        income,
-        expenses,
-        calculatedTax,
-    });
-
-    try {
-        await taxReport.save();
-        res.status(201).json({ message: 'Tax report generated successfully', taxReport });
-    } catch (err) {
-        if (err.code === 11000) {
+        const existingReport = await TaxReport.findOne({ userId: req.user._id || req.user.id, year });
+        if (existingReport) {
             return res.status(400).json({ message: 'Tax report for this year already exists' });
         }
-        throw err;
-    }
-}));
 
-// Récupérer les rapports fiscaux
-router.get('/reports', authenticate, asyncHandler(async (req, res) => {
-    const reports = await TaxReport.find({ userId: req.user.id })
-        .sort({ year: -1 }); // Tri par année décroissante
-    res.json({ reports });
-}));
+        const calculatedTax = calculateTax(income, expenses);
 
-// Mettre à jour un rapport fiscal
-router.put('/update/:id', authenticate, validateTaxInput, asyncHandler(async (req, res) => {
-    const { income, expenses, year } = req.body;
-    const { id } = req.params;
+        const taxReport = new TaxReport({
+            userId: req.user._id || req.user.id,
+            year,
+            income,
+            expenses,
+            calculatedTax,
+            createdAt: new Date()
+        });
 
-    const taxReport = await TaxReport.findById(id);
-    if (!taxReport) {
-        return res.status(404).json({ message: 'Tax report not found' });
-    }
+        const savedReport = await taxReport.save();
+        res.status(201).json({
+            message: 'Tax report generated successfully',
+            taxReport: savedReport
+        });
+    })
+);
 
-    if (taxReport.userId.toString() !== req.user.id) {
-        return res.status(403).json({ message: 'Unauthorized' });
-    }
+router.get('/reports',
+    authenticate,
+    asyncHandler(async (req, res) => {
+        const reports = await TaxReport.find({ userId: req.user._id || req.user.id })
+            .sort({ year: -1 });
+        res.status(200).json({
+            success: true,
+            reports
+        });
+    })
+);
 
-    const calculatedTax = calculateTax(income, expenses);
-    taxReport.income = income;
-    taxReport.expenses = expenses;
-    taxReport.year = year;
-    taxReport.calculatedTax = calculatedTax;
+router.put('/update/:id',
+    authenticate,
+    validateTaxInput,
+    asyncHandler(async (req, res) => {
+        const { income, expenses, year } = req.body;
+        const { id } = req.params;
 
-    await taxReport.save();
-    res.json({ message: 'Tax report updated successfully', taxReport });
-}));
+        const taxReport = await TaxReport.findById(id);
+        if (!taxReport) {
+            return res.status(404).json({ message: 'Tax report not found' });
+        }
 
-// Supprimer un rapport fiscal
-router.delete('/delete/:id', authenticate, asyncHandler(async (req, res) => {
-    const { id } = req.params;
+        if (taxReport.userId.toString() !== (req.user._id || req.user.id).toString()) {
+            return res.status(403).json({ message: 'Unauthorized' });
+        }
 
-    const taxReport = await TaxReport.findById(id);
-    if (!taxReport) {
-        return res.status(404).json({ message: 'Tax report not found' });
-    }
+        const duplicateReport = await TaxReport.findOne({
+            userId: req.user._id || req.user.id,
+            year,
+            _id: { $ne: id }
+        });
+        if (duplicateReport) {
+            return res.status(400).json({ message: 'A tax report for this year already exists' });
+        }
 
-    if (taxReport.userId.toString() !== req.user.id) {
-        return res.status(403).json({ message: 'Unauthorized' });
-    }
+        taxReport.income = Number(income);
+        taxReport.expenses = Number(expenses);
+        taxReport.year = year;
+        taxReport.calculatedTax = calculateTax(income, expenses);
+        taxReport.updatedAt = new Date();
 
-    await TaxReport.findByIdAndDelete(id);
-    res.json({ message: 'Tax report deleted successfully' });
-}));
+        const updatedReport = await taxReport.save();
+        res.status(200).json({
+            message: 'Tax report updated successfully',
+            taxReport: updatedReport
+        });
+    })
+);
+
+router.delete('/delete/:id',
+    authenticate,
+    asyncHandler(async (req, res) => {
+        const { id } = req.params;
+
+        const taxReport = await TaxReport.findById(id);
+        if (!taxReport) {
+            return res.status(404).json({ message: 'Tax report not found' });
+        }
+
+        if (taxReport.userId.toString() !== (req.user._id || req.user.id).toString()) {
+            return res.status(403).json({ message: 'Unauthorized' });
+        }
+
+        await TaxReport.findByIdAndDelete(id);
+        res.status(200).json({ message: 'Tax report deleted successfully' });
+    })
+);
 
 module.exports = router;

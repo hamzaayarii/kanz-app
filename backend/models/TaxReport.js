@@ -13,12 +13,12 @@ const taxReportSchema = new mongoose.Schema({
     income: {
         type: Number,
         required: true,
-        min: 0 // Ajout de validation minimale
+        min: 0 // Validation minimale
     },
     expenses: {
         type: Number,
         required: true,
-        min: 0 // Ajout de validation minimale
+        min: 0 // Validation minimale
     },
     calculatedTax: {
         type: Number,
@@ -31,7 +31,7 @@ const taxReportSchema = new mongoose.Schema({
     },
     createdAt: {
         type: Date,
-        default: Date.now // Ajout de timestamp
+        default: Date.now // Timestamp
     }
 }, {
     indexes: [{ key: { userId: 1, year: 1 }, unique: true }] // Contrainte unique

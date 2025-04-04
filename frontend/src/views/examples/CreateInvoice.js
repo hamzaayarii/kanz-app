@@ -41,6 +41,7 @@ const CreateInvoice = () => {
         const fetchBusinesses = async () => {
             try {
                 const token = localStorage.getItem('authToken');
+                console.log('FetchBusinesses - Token:', token); // Debug token
                 if (!token) throw new Error('Vous devez être connecté pour récupérer les sociétés');
 
                 const response = await axios.get('http://localhost:5000/api/business/buisnessowner', {
@@ -48,12 +49,14 @@ const CreateInvoice = () => {
                     timeout: 10000
                 });
 
+                console.log('FetchBusinesses - Response:', response.data); // Debug response
                 setBusinesses(response.data.businesses || []);
                 if (response.data.businesses.length > 0) {
                     setValue('businessId', response.data.businesses[0]._id);
                 }
             } catch (err) {
                 setError(err.response?.data?.message || 'Erreur lors de la récupération des sociétés');
+                console.error('FetchBusinesses - Error:', err.response?.data || err); // Debug error
             }
         };
 
@@ -104,7 +107,7 @@ const CreateInvoice = () => {
             };
 
             const response = await axios.post(
-                'http://localhost:5000/api/invoices',
+                'http://localhost:5000/api/invoices', // Line 109
                 invoiceData,
                 { headers: { Authorization: `Bearer ${token}` }, timeout: 10000 }
             );
@@ -113,7 +116,7 @@ const CreateInvoice = () => {
             reset();
         } catch (err) {
             setError(err.response?.data?.message || err.message || 'Erreur lors de la création de la facture');
-            console.error('Erreur lors de la création:', err);
+            console.error('Erreur lors de la création:', err); // Line 119
         } finally {
             setLoading(false);
         }
