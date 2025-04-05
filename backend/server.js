@@ -20,6 +20,7 @@ const employeeRoutes = require('./routes/employeeRoutes');
 const payrollRoutes = require('./routes/payrollsRoutes');
 const journalRoutes = require('./routes/journalRoutes');
 const dailyRevenueRoutes = require('./routes/dailyRevenueRoutes');
+const categoryRoutes = require('./routes/categoryRoutes');
 const app = express();
 
 // MongoDB connection
@@ -51,6 +52,7 @@ app.use('/api/taxReports', taxReportsRoutes);
 app.use('/api/business', businessRoutes); /// api/business/add
 app.use('/api/journal', journalRoutes);
 app.use('/api/daily-revenue', dailyRevenueRoutes);
+app.use('/api/categories', categoryRoutes);
 
 // Fetch user data by ID (API route)
 app.get('/api/users/:id', authenticate, async (req, res) => {

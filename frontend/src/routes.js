@@ -25,6 +25,7 @@ import BusinessRegistrationPage from './views/buisness/BusinessRegistrationPage.
 import BusinessManagement from './views/buisness/BusinessManagement.js';
 import AssignAccountant from './views/accountant/AssignAccountant.js';
 import DailyRevenue from './views/examples/DailyRevenue';
+import Categories from "./views/examples/Categories";
 
 // Grouped and enhanced routes for better UX
 const routes = [
@@ -264,6 +265,16 @@ const routes = [
     component: <BusinessRegistrationPage />,
     layout: '/standalone',
     showInSidebar: false,
+  },
+  {
+    path: '/category',
+    name: 'Category Management',
+    component: (
+        <AuthRoute>
+          <Categories />
+        </AuthRoute>
+    ),
+    layout: '/admin',
   },
 ];
 

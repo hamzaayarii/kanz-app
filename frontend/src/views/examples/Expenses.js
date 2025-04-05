@@ -1,177 +1,222 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Card, Container, Row, Button, Form, FormGroup, Label, Input, Table } from "reactstrap";
-import Header from "components/Headers/Header.js";
 
 const Expenses = () => {
     const [expenses, setExpenses] = useState([]);
+    const [businesses, setBusinesses] = useState([]);
+    const [categories, setCategories] = useState([]);
+    const [selectedBusiness, setSelectedBusiness] = useState("");
     const [showForm, setShowForm] = useState(false);
     const [editingExpense, setEditingExpense] = useState(null);
 
     const [formData, setFormData] = useState({
+        business: "",
         category: "",
         date: "",
         amount: "",
         tax: "",
-        averageBill: "",
         vendor: "",
         reference: "",
+        description: "", // added description for expense
     });
 
-    // Fetch expenses from backend
+    // Fetch businesses and categories when the component loads
     useEffect(() => {
-        fetchExpenses();
+        fetchBusinesses();
+        fetchCategories();
     }, []);
 
-    const fetchExpenses = async () => {
+    useEffect(() => {
+        if (selectedBusiness) {
+            fetchExpenses(selectedBusiness);
+        }
+    }, [selectedBusiness]);
+
+    const fetchBusinesses = async () => {
         try {
-            const response = await axios.get("http://localhost:5000/api/expenses");
+            const response = await axios.get("http://localhost:5000/api/businesses");
+            setBusinesses(response.data);
+            if (response.data.length > 0) {
+                setSelectedBusiness(response.data[0]._id);
+            }
+        } catch (error) {
+            console.error("Error fetching businesses", error);
+        }
+    };
+
+    const fetchCategories = async () => {
+        try {
+            const response = await axios.get("http://localhost:5000/api/categories");
+            setCategories(response.data);
+        } catch (error) {
+            console.error("Error fetching categories", error);
+        }
+    };
+
+    const fetchExpenses = async (businessId) => {
+        try {
+            const response = await axios.get(`http://localhost:5000/api/expenses?business=${businessId}`);
             setExpenses(response.data);
         } catch (error) {
             console.error("Error fetching expenses", error);
         }
     };
 
-    // Handle form input change
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    // Handle form submission (Create or Update)
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
             if (editingExpense) {
-                // Update existing expense
                 await axios.put(`http://localhost:5000/api/expenses/${editingExpense._id}`, formData);
             } else {
-                // Create new expense
-                await axios.post("http://localhost:5000/api/expenses", formData);
+                await axios.post("http://localhost:5000/api/expenses", { ...formData, business: selectedBusiness });
             }
-            fetchExpenses();
+            fetchExpenses(selectedBusiness);
             resetForm();
         } catch (error) {
             console.error("Error saving expense", error);
         }
     };
 
-    // Edit an expense
     const handleEdit = (expense) => {
         setFormData(expense);
         setEditingExpense(expense);
         setShowForm(true);
     };
 
-    // Delete an expense
     const handleDelete = async (id) => {
         if (window.confirm("Are you sure you want to delete this expense?")) {
             try {
                 await axios.delete(`http://localhost:5000/api/expenses/${id}`);
-                fetchExpenses();
+                fetchExpenses(selectedBusiness);
             } catch (error) {
                 console.error("Error deleting expense", error);
             }
         }
     };
 
-    // Reset form
     const resetForm = () => {
-        setFormData({ category: "", date: "", amount: "", tax: "", averageBill: "", vendor: "", reference: "" });
+        setFormData({ business: "", category: "", date: "", amount: "", tax: "", vendor: "", reference: "", description: "" });
         setEditingExpense(null);
         setShowForm(false);
     };
 
     return (
-        <>
-            <Header />
-            <Container className="mt-5">
-                <Row className="justify-content-center">
-                    <Card className="shadow p-4">
-                        <h3>Manage Expenses</h3>
-                        <Button color="primary" onClick={() => setShowForm(!showForm)}>
-                            {showForm ? "Hide Form" : "Add Expense"}
-                        </Button>
+        <Container className="mt-5">
+            <Row className="justify-content-center">
+                <Card className="shadow p-4">
+                    <h3>Manage Expenses</h3>
 
-                        {showForm && (
-                            <Form onSubmit={handleSubmit} className="mt-3">
-                                <FormGroup>
-                                    <Label>Category</Label>
-                                    <Input type="text" name="category" value={formData.category} onChange={handleChange} required />
-                                </FormGroup>
-                                <FormGroup>
-                                    <Label>Date</Label>
-                                    <Input type="date" name="date" value={formData.date} onChange={handleChange} required />
-                                </FormGroup>
-                                <FormGroup>
-                                    <Label>Amount</Label>
-                                    <Input type="number" name="amount" value={formData.amount} onChange={handleChange} required />
-                                </FormGroup>
-                                <FormGroup>
-                                    <Label>Tax</Label>
-                                    <Input type="number" name="tax" value={formData.tax} onChange={handleChange} required />
-                                </FormGroup>
-                                <FormGroup>
-                                    <Label>Average Bill</Label>
-                                    <Input type="number" name="averageBill" value={formData.averageBill} onChange={handleChange} required />
-                                </FormGroup>
-                                <FormGroup>
-                                    <Label>Vendor</Label>
-                                    <Input type="text" name="vendor" value={formData.vendor} onChange={handleChange} required />
-                                </FormGroup>
-                                <FormGroup>
-                                    <Label>Reference</Label>
-                                    <Input type="text" name="reference" value={formData.reference} onChange={handleChange} required />
-                                </FormGroup>
-                                <Button type="submit" color="success">{editingExpense ? "Update Expense" : "Submit"}</Button>
-                                {editingExpense && <Button color="secondary" onClick={resetForm} className="ml-2">Cancel</Button>}
-                            </Form>
-                        )}
+                    {/* Business Selector */}
+                    <FormGroup>
+                        <Label>Select Business</Label>
+                        <Input type="select" value={selectedBusiness} onChange={(e) => setSelectedBusiness(e.target.value)}>
+                            {businesses.map((biz) => (
+                                <option key={biz._id} value={biz._id}>{biz.name}</option>
+                            ))}
+                        </Input>
+                    </FormGroup>
 
-                        <hr />
+                    <Button color="primary" onClick={() => setShowForm(!showForm)}>
+                        {showForm ? "Hide Form" : "Add Expense"}
+                    </Button>
 
-                        <h4>Expenses List</h4>
-                        <Table bordered responsive>
-                            <thead>
-                            <tr>
-                                <th>Category</th>
-                                <th>Date</th>
-                                <th>Amount</th>
-                                <th>Tax</th>
-                                <th>Avg Bill</th>
-                                <th>Vendor</th>
-                                <th>Reference</th>
-                                <th>Actions</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            {expenses.length > 0 ? (
-                                expenses.map((expense) => (
-                                    <tr key={expense._id}>
-                                        <td>{expense.category}</td>
-                                        <td>{new Date(expense.date).toLocaleDateString()}</td>
-                                        <td>${expense.amount}</td>
-                                        <td>${expense.tax}</td>
-                                        <td>${expense.averageBill}</td>
-                                        <td>{expense.vendor}</td>
-                                        <td>{expense.reference}</td>
-                                        <td>
-                                            <Button color="warning" size="sm" onClick={() => handleEdit(expense)}>Edit</Button>
-                                            <Button color="danger" size="sm" className="ml-2" onClick={() => handleDelete(expense._id)}>Delete</Button>
-                                        </td>
-                                    </tr>
-                                ))
-                            ) : (
-                                <tr>
-                                    <td colSpan="8" className="text-center">No expenses found</td>
+                    {showForm && (
+                        <Form onSubmit={handleSubmit} className="mt-3">
+                            <FormGroup>
+                                <Label>Category</Label>
+                                <Input
+                                    type="select"
+                                    name="category"
+                                    value={formData.category}
+                                    onChange={handleChange}
+                                    required
+                                >
+                                    <option value="">Select a category</option>
+                                    {categories.map((category) => (
+                                        <option key={category._id} value={category._id}>{category.name}</option>
+                                    ))}
+                                </Input>
+                            </FormGroup>
+                            <FormGroup>
+                                <Label>Date</Label>
+                                <Input type="date" name="date" value={formData.date} onChange={handleChange} required />
+                            </FormGroup>
+                            <FormGroup>
+                                <Label>Amount</Label>
+                                <Input type="number" name="amount" value={formData.amount} onChange={handleChange} required />
+                            </FormGroup>
+                            <FormGroup>
+                                <Label>Tax</Label>
+                                <Input type="number" name="tax" value={formData.tax} onChange={handleChange} required />
+                            </FormGroup>
+                            <FormGroup>
+                                <Label>Vendor</Label>
+                                <Input type="text" name="vendor" value={formData.vendor} onChange={handleChange} required />
+                            </FormGroup>
+                            <FormGroup>
+                                <Label>Reference</Label>
+                                <Input type="text" name="reference" value={formData.reference} onChange={handleChange} required />
+                            </FormGroup>
+                            <FormGroup>
+                                <Label>Description</Label>
+                                <Input type="text" name="description" value={formData.description} onChange={handleChange} />
+                            </FormGroup>
+                            <Button type="submit" color="success">{editingExpense ? "Update Expense" : "Submit"}</Button>
+                            {editingExpense && <Button color="secondary" onClick={resetForm} className="ml-2">Cancel</Button>}
+                        </Form>
+                    )}
+
+                    <hr />
+
+                    <h4>Expenses List</h4>
+                    <Table bordered responsive>
+                        <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th>Date</th>
+                            <th>Amount</th>
+                            <th>Tax</th>
+                            <th>Vendor</th>
+                            <th>Reference</th>
+                            <th>Description</th>
+                            <th>Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {expenses.length > 0 ? (
+                            expenses.map((expense) => (
+                                <tr key={expense._id}>
+                                    <td>{expense.category}</td>
+                                    <td>{new Date(expense.date).toLocaleDateString()}</td>
+                                    <td>${expense.amount}</td>
+                                    <td>${expense.tax}</td>
+                                    <td>{expense.vendor}</td>
+                                    <td>{expense.reference}</td>
+                                    <td>{expense.description}</td>
+                                    <td>
+                                        <Button color="warning" size="sm" onClick={() => handleEdit(expense)}>Edit</Button>
+                                        <Button color="danger" size="sm" className="ml-2" onClick={() => handleDelete(expense._id)}>Delete</Button>
+                                    </td>
                                 </tr>
-                            )}
-                            </tbody>
-                        </Table>
-                    </Card>
-                </Row>
-            </Container>
-        </>
+                            ))
+                        ) : (
+                            <tr>
+                                <td colSpan="8" className="text-center">No expenses found</td>
+                            </tr>
+                        )}
+                        </tbody>
+                    </Table>
+                </Card>
+            </Row>
+        </Container>
     );
 };
 
 export default Expenses;
+
+

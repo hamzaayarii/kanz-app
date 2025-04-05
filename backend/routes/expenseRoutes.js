@@ -14,13 +14,14 @@ router.post('/', async (req, res) => {
     }
 });
 
-// Get all expenses
+// Get all expenses or filter by business
 router.get('/', async (req, res) => {
+    const { business } = req.query;
     try {
-        const expenses = await Expense.find();
+        const query = business ? { business } : {};
+        const expenses = await Expense.find(query);
         res.json(expenses);
     } catch (error) {
-        console.error(error);
         res.status(500).json({ message: 'Server error' });
     }
 });

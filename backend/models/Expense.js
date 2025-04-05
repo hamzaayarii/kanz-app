@@ -1,13 +1,14 @@
 const mongoose = require('mongoose');
 
 const ExpenseSchema = new mongoose.Schema({
-    category: { type: String, required: true },
+    category: { type: mongoose.Schema.Types.ObjectId, ref: 'Category', required: true },
     date: { type: Date, required: true },
     amount: { type: Number, required: true },
-    tax: { type: Number, required: true },
-    averageBill: { type: Number, required: true },
-    vendor: { type: String, required: true },
-    reference: { type: String, required: true }
-}, { timestamps: true });
+    tax: { type: Number, default: 0 },
+    description: { type: String },
+    vendor: { type: String },
+    reference: { type: String },
+    business: { type: mongoose.Schema.Types.ObjectId, ref: 'Business', required: true }
+});
 
 module.exports = mongoose.model('Expense', ExpenseSchema);
