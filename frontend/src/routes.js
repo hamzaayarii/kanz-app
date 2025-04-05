@@ -27,6 +27,7 @@ import BusinessManagement from './views/buisness/BusinessManagement.js';
 import AssignAccountant from './views/accountant/AssignAccountant.js';
 import DailyRevenue from './views/examples/DailyRevenue';
 
+import Chat from './views/chat/Chat.js';
 var routes = [
   {
     path: '/index',
@@ -291,7 +292,7 @@ var routes = [
     ),
     layout: '/admin',
   },
-
+ 
 ];
 
 export default routes;
