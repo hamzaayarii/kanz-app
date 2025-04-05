@@ -213,11 +213,18 @@ const ChatWindow = () => {
                 {Array.isArray(conversations) ? (
   conversations.length > 0 ? (
     conversations.map((conversation) => (
-      <ConversationItem 
-        key={conversation._id} 
-        conversation={conversation} 
-        onSelect={selectContact}
-      />
+      <div
+        key={conversation._id}
+        className="contact-item d-flex p-2 border-bottom"
+        style={{ cursor: 'pointer' }}
+        onClick={() => selectContact(conversation.participant)}
+      >
+        <img src={'default-avatar.jpg'} className="avatar" />
+        <div className="ml-2">
+          <strong>{conversation.participant?.fullName || 'Unknown'}</strong>
+          <p>{conversation.lastMessage ? conversation.lastMessage.content : 'No message'}</p>
+        </div>
+      </div>
     ))
   ) : (
     <div className="text-center p-4">No conversations found</div>
@@ -260,7 +267,8 @@ const ChatWindow = () => {
                         <img src={'default-avatar.jpg'}  className="avatar" />
                         <div className="ml-2">
                           <strong></strong>
-                          <p>{conversation.lastMessage.content}</p>
+                          <p>{conversation.lastMessage && conversation.lastMessage.content ? conversation.lastMessage.content : 'No message'}</p>
+
                         </div>
                       </div>
                     ))
