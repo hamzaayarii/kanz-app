@@ -14,21 +14,23 @@ function initializeSocket(server) {
     transports: ['websocket', 'polling']
   });
   
-  io.use((socket, next) => {
-    try {
-      const token = socket.handshake.auth.token;
-      if (!token) {
-        return next(new Error('Authentication token missing'));
-      }
-      
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      socket.userId = decoded.id;
-      next();
-    } catch (error) {
-      console.error('Socket authentication error:', error.message);
-      next(new Error('Authentication failed: ' + error.message));
+// In socketHandler.js
+io.use((socket, next) => {
+  try {
+    const token = socket.handshake.auth.token;
+    if (!token) {
+      return next(new Error('Authentication token missing'));
     }
-  });
+    
+    // Change this line to use SECRET_KEY
+    const decoded = jwt.verify(token, process.env.SECRET_KEY);
+    socket.userId = decoded._id; // Note: you might need to use _id instead of id based on your token
+    next();
+  } catch (error) {
+    console.error('Socket authentication error:', error.message);
+    next(new Error('Authentication failed: ' + error.message));
+  }
+});
   
   io.on('connection', (socket) => {
     console.log(`User connected: ${socket.userId}`);
