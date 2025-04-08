@@ -8,75 +8,79 @@ function initializeSocket(server) {
     cors: {
       origin: 'http://localhost:3000',
       methods: ['GET', 'POST'],
-      credentials: true
-    }
+      credentials: true,
+      allowedHeaders: ['Content-Type', 'Authorization']
+    },
+    transports: ['websocket', 'polling']
   });
-
+  
   io.use((socket, next) => {
-    const token = socket.handshake.auth.token;
-    if (!token) {
-      return next(new Error('Authentication error'));
-    }
-
     try {
+      const token = socket.handshake.auth.token;
+      if (!token) {
+        return next(new Error('Authentication token missing'));
+      }
+      
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       socket.userId = decoded.id;
       next();
     } catch (error) {
-      next(new Error('Authentication error'));
+      console.error('Socket authentication error:', error.message);
+      next(new Error('Authentication failed: ' + error.message));
     }
   });
-
+  
   io.on('connection', (socket) => {
     console.log(`User connected: ${socket.userId}`);
-
+    
     // Join a conversation room
     socket.on('join_conversation', (conversationId) => {
       socket.join(conversationId);
       console.log(`User ${socket.userId} joined conversation ${conversationId}`);
     });
-
+    
     // Leave a conversation room
     socket.on('leave_conversation', (conversationId) => {
       socket.leave(conversationId);
       console.log(`User ${socket.userId} left conversation ${conversationId}`);
     });
-
+    
     // Handle sending messages
     socket.on('send_message', async (data) => {
       try {
-        const { conversationId, content, sender } = data;
-        
+        const { conversationId, content } = data;
+        const sender = socket.userId; // Use the authenticated user ID
+       
         // Create new message
         const newMessage = new Message({
           conversationId,
           sender,
           content
         });
-        
+       
         const savedMessage = await newMessage.save();
-        
+       
         // Update conversation's lastMessage and updatedAt
         await Conversation.findByIdAndUpdate(conversationId, {
           lastMessage: savedMessage._id,
           updatedAt: Date.now()
         });
-        
+       
         // Populate the sender info
         await savedMessage.populate('sender', 'name avatar');
-        
+       
         // Emit to all participants in the conversation
         io.to(conversationId).emit('receive_message', savedMessage);
       } catch (error) {
         console.error('Error handling message:', error);
       }
     });
-
+    
     socket.on('disconnect', () => {
       console.log(`User disconnected: ${socket.userId}`);
     });
   });
-
+  
   return io;
 }
 

@@ -133,24 +133,44 @@ export const sendMessage = async (req, res) => {
     res.status(500).json({ message: 'Failed to send message' });
   }
 };
-
 export const createConversation = async (req, res) => {
   try {
     const { participantId } = req.body;
     const userId = req.user._id;
     
+    console.log("Request body:", req.body);
+    console.log("Participant ID received:", participantId);
+    console.log("Current user ID:", userId);
+    
+    // Check if participantId exists in the request
+    if (!participantId) {
+      return res.status(400).json({ message: 'Participant ID is missing from request' });
+    }
+    
+    // Check if participantId is valid MongoDB ObjectId
+    if (!mongoose.Types.ObjectId.isValid(participantId)) {
+      return res.status(400).json({ 
+        message: 'Invalid participant ID format',
+        receivedId: participantId
+      });
+    }
+    
+    // Convert to ObjectId to ensure proper typing
+    const participantObjectId = new mongoose.Types.ObjectId(participantId);
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+    
     // Check if conversation already exists
     const existingConversation = await Conversation.findOne({
-      participants: { $all: [userId, participantId] }
+      participants: { $all: [userObjectId, participantObjectId] }
     });
     
     if (existingConversation) {
       return res.status(200).json({ conversationId: existingConversation._id });
     }
     
-    // Create new conversation
+    // Create new conversation with explicit array of ObjectIds
     const newConversation = new Conversation({
-      participants: [userId, participantId]
+      participants: [userObjectId, participantObjectId]
     });
     
     const savedConversation = await newConversation.save();
@@ -158,6 +178,10 @@ export const createConversation = async (req, res) => {
     res.status(201).json({ conversationId: savedConversation._id });
   } catch (error) {
     console.error('Error creating conversation:', error);
-    res.status(500).json({ message: 'Failed to create conversation' });
+    res.status(500).json({ 
+      message: 'Failed to create conversation',
+      error: error.message,
+      stack: error.stack
+    });
   }
 };
