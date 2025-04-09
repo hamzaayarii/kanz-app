@@ -17,7 +17,7 @@ import {
 
 // Country and state data
 const countries = [
-    { name: "Tunisia", code: "TN", states: ["Tunis", "Sfax", "Sousse", "Ariana", "Ben Arous", "Bizerte", "Gabès", "Gafsa", "Jijel", "Kairouan", "Kasserine", "Kébili", "Le Kef", "Mahdia", "La Manouba", "Médenine", "Monastir", "Nabeul", "Sidi Bouzid", "Siliana", "Tataouine", "Tozeur", "Zaghouan"] },
+    { name: "Tunisia", code: "TN", states: ["Tunis", "Sfax", "Sousse", "Ariana", "Ben Arous", "Bizerte", "Gabès", "Gafsa", "Jendouba", "Kairouan", "Kasserine", "Kébili", "Le Kef", "Mahdia", "La Manouba", "Médenine", "Monastir", "Nabeul", "Sidi Bouzid", "Siliana", "Tataouine", "Tozeur", "Zaghouan"] },
     { name: "United States", code: "US", states: ["Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware", "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan", "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire", "New Jersey", "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio", "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota", "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming"] },
     { name: "France", code: "FR", states: ["Auvergne-Rhône-Alpes", "Bourgogne-Franche-Comté", "Bretagne", "Centre-Val de Loire", "Corse", "Grand Est", "Hauts-de-France", "Île-de-France", "Normandie", "Nouvelle-Aquitaine", "Occitanie", "Pays de la Loire", "Provence-Alpes-Côte d'Azur"] },
     { name: "Morocco", code: "MA", states: ["Tanger-Tétouan-Al Hoceima", "L'Oriental", "Fès-Meknès", "Rabat-Salé-Kénitra", "Béni Mellal-Khénifra", "Casablanca-Settat", "Marrakech-Safi", "Drâa-Tafilalet", "Souss-Massa", "Guelmim-Oued Noun", "Laâyoune-Sakia El Hamra", "Dakhla-Oued Ed-Dahab"] },
@@ -156,42 +156,6 @@ const BusinessRegistrationPage = () => {
         const tunisiaStates = countries.find(country => country.name === "Tunisia")?.states || [];
         setAvailableStates(tunisiaStates);
     }, []);
-
-    useEffect(() => {
-        // Check user role when component mounts
-        const checkUserRole = async () => {
-            const token = localStorage.getItem('authToken');
-            if (!token) {
-                navigate('/auth/login');
-                return;
-            }
-
-            try {
-                const response = await axios.get('http://localhost:5000/api/users/me', {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-
-                // Debug the response
-                console.log('Response data:', response.data);
-
-                // The response.data is the user object directly
-                if (response.data.role === 'accountant') {
-                    navigate('/admin/journal');
-                    return;
-                }
-            } catch (error) {
-                console.error('Error checking user role:', error);
-                // Add more detailed error logging
-                if (error.response) {
-                    console.log('Response data:', error.response.data);
-                    console.log('Response status:', error.response.status);
-                }
-                navigate('/auth/login');
-            }
-        };
-
-        checkUserRole();
-    }, [navigate]);
 
     // Check if user is authenticated and redirect if they already have a business
     useEffect(() => {
