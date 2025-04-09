@@ -79,6 +79,35 @@ export const create = async (req, res) => {
 
         const savedUser = await newUser.save();
 
+        // 🔹 Send welcome email
+        try {
+            const mailOptions = {
+                from: process.env.EMAIL_USER,
+                to: email,
+                subject: 'Welcome to Accounting Management App!',
+                html: `
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                        <h2>Welcome to Accounting Management App!</h2>
+                        <p>Dear ${fullName},</p>
+                        <p>Thank you for registering with our Accounting Management App. We're excited to have you on board!</p>
+                        <p>With our app, you can:</p>
+                        <ul>
+                            <li>Manage your business finances</li>
+                            <li>Track expenses and income</li>
+                            <li>Generate financial reports</li>
+                            <li>And much more!</li>
+                        </ul>
+                        <p>If you have any questions, feel free to reach out to our support team.</p>
+                        <p>Best regards,<br>The Accounting Management Team</p>
+                    </div>
+                `
+            };
+            await transporter.sendMail(mailOptions);
+        } catch (emailError) {
+            console.error('Error sending welcome email:', emailError);
+            // We don't want to fail the registration if email fails
+        }
+
         // 🔹 Send response (excluding password)
         return res.status(201).json({
             success: true,
