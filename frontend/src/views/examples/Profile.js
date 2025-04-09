@@ -15,6 +15,16 @@ const Profile = () => {
     gender: "",
     _id: "",
   });
+  const [passwords, setPasswords] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: ""
+  });
+  const [passwordErrors, setPasswordErrors] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: ""
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -54,9 +64,38 @@ const Profile = () => {
   }, []);
 
   // Handle input field changes
+  // Password validation function
+  const validatePassword = (password) => {
+    if (!password) return "Password is required";
+    if (password.length < 8) return "Password must be at least 8 characters";
+    if (!/[A-Z]/.test(password)) return "Password must contain at least one uppercase letter";
+    if (!/[a-z]/.test(password)) return "Password must contain at least one lowercase letter";
+    if (!/[0-9]/.test(password)) return "Password must contain at least one number";
+    return "";
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setUser((prevState) => ({ ...prevState, [name]: value }));
+    if (["currentPassword", "newPassword", "confirmPassword"].includes(name)) {
+      setPasswords(prev => ({ ...prev, [name]: value }));
+      
+      // Validate password fields
+      if (name === "newPassword") {
+        const passwordError = validatePassword(value);
+        setPasswordErrors(prev => ({
+          ...prev,
+          newPassword: passwordError,
+          confirmPassword: value !== passwords.confirmPassword ? "Passwords do not match" : ""
+        }));
+      } else if (name === "confirmPassword") {
+        setPasswordErrors(prev => ({
+          ...prev,
+          confirmPassword: value !== passwords.newPassword ? "Passwords do not match" : ""
+        }));
+      }
+    } else {
+      setUser((prevState) => ({ ...prevState, [name]: value }));
+    }
   };
 
   // Handle profile picture upload
@@ -107,8 +146,32 @@ const Profile = () => {
         return;
       }
 
+      // Check if password update is requested
+      if (passwords.newPassword) {
+        // Validate password fields
+        const newPasswordError = validatePassword(passwords.newPassword);
+        if (newPasswordError) {
+          setError(newPasswordError);
+          return;
+        }
+        if (passwords.newPassword !== passwords.confirmPassword) {
+          setError("New password and confirm password do not match!");
+          return;
+        }
+        if (!passwords.currentPassword) {
+          setError("Current password is required to update password");
+          return;
+        }
+      }
+
       // Send the updated user data to the backend API URL
-      const response = await axios.put(`http://localhost:5000/api/users/${user._id}`, user, {
+      const response = await axios.put(`http://localhost:5000/api/users/${user._id}`, {
+        ...user,
+        ...(passwords.newPassword ? {
+          currentPassword: passwords.currentPassword,
+          newPassword: passwords.newPassword
+        } : {})
+      }, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -228,6 +291,67 @@ const Profile = () => {
                               <option value="Male">Male</option>
                               <option value="Female">Female</option>
                             </Input>
+                          </FormGroup>
+                        </Col>
+                      </Row>
+
+                      {/* Password Update Section */}
+                      <Row>
+                        <Col lg="12">
+                          <h6 className="heading-small text-muted mb-4">Password Update</h6>
+                        </Col>
+                        <Col lg="4">
+                          <FormGroup>
+                            <label className="form-control-label">Current Password</label>
+                            <Input
+                                type="password"
+                                name="currentPassword"
+                                value={passwords.currentPassword}
+                                onChange={handleChange}
+                                placeholder="Current Password"
+                                invalid={!!passwordErrors.currentPassword}
+                            />
+                            {passwordErrors.currentPassword && (
+                              <div className="text-danger" style={{ fontSize: '0.8rem', marginTop: '0.25rem' }}>
+                                {passwordErrors.currentPassword}
+                              </div>
+                            )}
+                          </FormGroup>
+                        </Col>
+                        <Col lg="4">
+                          <FormGroup>
+                            <label className="form-control-label">New Password</label>
+                            <Input
+                                type="password"
+                                name="newPassword"
+                                value={passwords.newPassword}
+                                onChange={handleChange}
+                                placeholder="New Password"
+                                invalid={!!passwordErrors.newPassword}
+                            />
+                            {passwordErrors.newPassword && (
+                              <div className="text-danger" style={{ fontSize: '0.8rem', marginTop: '0.25rem' }}>
+                                {passwordErrors.newPassword}
+                              </div>
+                            )}
+                          </FormGroup>
+                        </Col>
+                        <Col lg="4">
+                          <FormGroup>
+                            <label className="form-control-label">Confirm New Password</label>
+                            <Input
+                                type="password"
+                                name="confirmPassword"
+                                value={passwords.confirmPassword}
+                                onChange={handleChange}
+                                placeholder="Confirm New Password"
+                                invalid={!!passwordErrors.confirmPassword}
+                            />
+                            {passwordErrors.confirmPassword && (
+                              <div className="text-danger" style={{ fontSize: '0.8rem', marginTop: '0.25rem' }}>
+                                {passwordErrors.confirmPassword}
+                              </div>
+                            )}
                           </FormGroup>
                         </Col>
                       </Row>

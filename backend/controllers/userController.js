@@ -134,16 +134,31 @@ export const create = async (req, res) => {
 export const updateUser = async (req, res) => {
     try {
         const userId = req.params.id;
-        const updateData = req.body;
+        const { currentPassword, newPassword, ...updateData } = req.body;
 
         // Validate required fields
         if (!userId) {
             return res.status(400).json({ message: "User ID is required" });
         }
 
-        // Hash password if provided
-        if (updateData.password) {
-            const hashedPassword = await bcrypt.hash(updateData.password, 10);
+        // Get current user data
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        // Handle password update if requested
+        if (newPassword && currentPassword) {
+            // Verify current password
+            const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
+            if (!isPasswordValid) {
+                return res.status(400).json({
+                    message: "Current password is incorrect"
+                });
+            }
+
+            // Hash new password
+            const hashedPassword = await bcrypt.hash(newPassword, 10);
             updateData.password = hashedPassword;
         }
 
@@ -153,10 +168,6 @@ export const updateUser = async (req, res) => {
             updateData,
             { new: true, runValidators: true }
         );
-
-        if (!updatedUser) {
-            return res.status(404).json({ message: "User not found" });
-        }
 
         // Exclude sensitive fields from the response
         const sanitizedUser = updatedUser.toObject();
