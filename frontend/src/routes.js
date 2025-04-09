@@ -91,7 +91,7 @@ const routes = [
     component: <AuthRoute><Expenses /></AuthRoute>,
     layout: '/admin',
     category: 'Finance',
-    showInSidebar: isUserAccountant,
+    showInSidebar: isUserBusinessOwner,
   },
   {
     path: '/invoices1',
@@ -287,7 +287,7 @@ const routes = [
         </AuthRoute>
     ),
     layout: '/admin',
-    showInSidebar: isUserAccountant,
+    showInSidebar: isUserAdmin,
   },
 ];
 
