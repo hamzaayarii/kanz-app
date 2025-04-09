@@ -310,7 +310,7 @@ const EmployeeManagement = () => {
 
     return (
         <div className={styles.container}>
-            <h2 className={styles.title}><FaUserPlus /> Tableau de Bord Équipe</h2>
+            <h2 className={styles.title}><FaUserPlus /> Team Dashboard</h2>
             {error && <Alert color="danger" className={styles.alert}>{error}</Alert>}
             {success && <Alert color="success" className={styles.alert}>{success}</Alert>}
             {(loading.fetch || loading.submit) && (
@@ -320,12 +320,12 @@ const EmployeeManagement = () => {
             {/* Formulaire employé (similaire au modal d'absence) */}
             <Card className={styles.card}>
                 <CardTitle tag="h3" className={styles.cardTitle}>
-                    {editEmployee ? 'Mettre à jour un Membre' : 'Ajouter un Nouveau Membre'}
+                    {editEmployee ? 'Update a Member' : 'Add a New Member'}
                 </CardTitle>
                 <CardBody>
                     <div className={styles.form}>
                         <FormGroup className={styles.field}>
-                            <Label>Prénom</Label>
+                            <Label>First name</Label>
                             <Input
                                 type="text"
                                 name="firstName"
@@ -338,7 +338,7 @@ const EmployeeManagement = () => {
                             <FormFeedback>{formErrors.firstName}</FormFeedback>
                         </FormGroup>
                         <FormGroup className={styles.field}>
-                            <Label>Nom</Label>
+                            <Label>Name</Label>
                             <Input
                                 type="text"
                                 name="lastName"
@@ -351,7 +351,7 @@ const EmployeeManagement = () => {
                             <FormFeedback>{formErrors.lastName}</FormFeedback>
                         </FormGroup>
                         <FormGroup className={styles.field}>
-                            <Label>Poste</Label>
+                            <Label>Job</Label>
                             <Input
                                 type="text"
                                 name="position"
@@ -364,7 +364,7 @@ const EmployeeManagement = () => {
                             <FormFeedback>{formErrors.position}</FormFeedback>
                         </FormGroup>
                         <FormGroup className={styles.field}>
-                            <Label>Salaire (TND)</Label>
+                            <Label>Salary (TND)</Label>
                             <Input
                                 type="number"
                                 name="salary"
@@ -379,7 +379,7 @@ const EmployeeManagement = () => {
                             <FormFeedback>{formErrors.salary}</FormFeedback>
                         </FormGroup>
                         <FormGroup className={styles.field}>
-                            <Label>Date d'embauche</Label>
+                            <Label>Date of hire</Label>
                             <Input
                                 type="date"
                                 name="hireDate"
@@ -393,7 +393,7 @@ const EmployeeManagement = () => {
                             <FormFeedback>{formErrors.hireDate}</FormFeedback>
                         </FormGroup>
                         <FormGroup className={styles.field}>
-                            <Label>Entreprise</Label>
+                            <Label>Business</Label>
                             <Input
                                 type="select"
                                 name="businessId"
@@ -416,7 +416,7 @@ const EmployeeManagement = () => {
                                 onClick={(e) => handleSubmit(e, !!editEmployee)}
                                 disabled={loading.submit || Object.values(formErrors).some(err => !!err)}
                             >
-                                {loading.submit ? <FaSpinner className="fa-spin" /> : editEmployee ? 'Mettre à jour' : 'Ajouter'}
+                                {loading.submit ? <FaSpinner className="fa-spin" /> : editEmployee ? 'To update' : 'Add'}
                             </Button>
                             {editEmployee && (
                                 <Button
@@ -435,19 +435,19 @@ const EmployeeManagement = () => {
 
             {/* Liste des employés */}
             <div className={styles.employeeList}>
-                <h3 className={styles.subtitle}>Votre Équipe</h3>
+                <h3 className={styles.subtitle}>Your Team</h3>
                 {employees.length === 0 && !loading.fetch && !error ? (
-                    <Alert color="warning">Aucun membre d'équipe pour l'instant. Ajoutez-en ci-dessus !</Alert>
+                    <Alert color="warning">No team members yet. Add more above. !</Alert>
                 ) : (
                     employees.map(employee => (
                         <Card key={employee._id} className={styles.employeeCard}>
                             <CardBody>
                                 <div className={styles.employeeInfo}>
                                     <h4>{employee.firstName} {employee.lastName}</h4>
-                                    <p><strong>Rôle:</strong> {employee.position}</p>
-                                    <p><strong>Salaire:</strong> {employee.salary} TND</p>
-                                    <p><strong>Embauché:</strong> {new Date(employee.hireDate).toLocaleDateString('fr-FR')}</p>
-                                    <p><strong>Entreprise:</strong> {employee.businessId?.name || 'N/A'}</p>
+                                    <p><strong>Role:</strong> {employee.position}</p>
+                                    <p><strong>Salary:</strong> {employee.salary} TND</p>
+                                    <p><strong>Hiring:</strong> {new Date(employee.hireDate).toLocaleDateString('fr-FR')}</p>
+                                    <p><strong>Business:</strong> {employee.businessId?.name || 'N/A'}</p>
                                     {employee.absences?.length > 0 && (
                                         <div className={styles.absences}>
                                             <strong>Absences:</strong>
@@ -462,8 +462,8 @@ const EmployeeManagement = () => {
                                     )}
                                 </div>
                                 <div className={styles.employeeActions}>
-                                    <Button color="success" onClick={() => handleEditEmployee(employee)} disabled={loading.submit}><FaEdit /> Modifier</Button>
-                                    <Button color="danger" onClick={() => handleDeleteEmployee(employee._id)} disabled={loading.submit}><FaTrash /> Supprimer</Button>
+                                    <Button color="success" onClick={() => handleEditEmployee(employee)} disabled={loading.submit}><FaEdit /> To modify</Button>
+                                    <Button color="danger" onClick={() => handleDeleteEmployee(employee._id)} disabled={loading.submit}><FaTrash /> Delete</Button>
                                     <Button color="warning" onClick={() => { setAbsenceData({ ...absenceData, employeeId: employee._id }); setShowAbsenceModal(true); }} disabled={loading.submit}><FaCalendarAlt /> Absence</Button>
                                 </div>
                             </CardBody>
@@ -474,10 +474,10 @@ const EmployeeManagement = () => {
 
             {/* Modal Absence */}
             <Modal isOpen={showAbsenceModal} toggle={() => setShowAbsenceModal(false)} className={styles.modal}>
-                <ModalHeader toggle={() => setShowAbsenceModal(false)}>Enregistrer une Absence</ModalHeader>
+                <ModalHeader toggle={() => setShowAbsenceModal(false)}>Record an Absence</ModalHeader>
                 <ModalBody>
                     <FormGroup className={styles.field}>
-                        <Label>Employé</Label>
+                        <Label>Employee</Label>
                         <Input
                             type="select"
                             name="employeeId"
@@ -487,7 +487,7 @@ const EmployeeManagement = () => {
                             invalid={!!absenceErrors.employeeId}
                             required
                         >
-                            <option value="">Sélectionnez un employé</option>
+                            <option value="">Select an employee</option>
                             {employees.map(emp => (
                                 <option key={emp._id} value={emp._id}>{emp.firstName} {emp.lastName}</option>
                             ))}
@@ -495,7 +495,7 @@ const EmployeeManagement = () => {
                         <FormFeedback>{absenceErrors.employeeId}</FormFeedback>
                     </FormGroup>
                     <FormGroup className={styles.field}>
-                        <Label>Date de début</Label>
+                        <Label>Start date</Label>
                         <Input
                             type="date"
                             name="startDate"
@@ -508,7 +508,7 @@ const EmployeeManagement = () => {
                         <FormFeedback>{absenceErrors.startDate}</FormFeedback>
                     </FormGroup>
                     <FormGroup className={styles.field}>
-                        <Label>Date de fin</Label>
+                        <Label>End date</Label>
                         <Input
                             type="date"
                             name="endDate"
@@ -521,7 +521,7 @@ const EmployeeManagement = () => {
                         <FormFeedback>{absenceErrors.endDate}</FormFeedback>
                     </FormGroup>
                     <FormGroup className={styles.field}>
-                        <Label>Raison</Label>
+                        <Label>Reason</Label>
                         <Input
                             type="text"
                             name="reason"

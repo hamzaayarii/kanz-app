@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Card, Container, Row, Button, Form, FormGroup, Label, Input, Table } from "reactstrap";
+import { useNavigate } from 'react-router-dom';
 
 const Expenses = () => {
     const [expenses, setExpenses] = useState([]);
@@ -9,6 +10,7 @@ const Expenses = () => {
     const [selectedBusiness, setSelectedBusiness] = useState("");
     const [showForm, setShowForm] = useState(false);
     const [editingExpense, setEditingExpense] = useState(null);
+    const navigate = useNavigate();
 
     const [formData, setFormData] = useState({
         business: "",
@@ -35,10 +37,20 @@ const Expenses = () => {
 
     const fetchBusinesses = async () => {
         try {
-            const response = await axios.get("http://localhost:5000/api/businesses");
-            setBusinesses(response.data);
-            if (response.data.length > 0) {
-                setSelectedBusiness(response.data[0]._id);
+            const token = localStorage.getItem('authToken');
+
+            if (!token) {
+                navigate('/auth/login');
+                return;
+            }
+            const response = await axios.get("http://localhost:5000/api/business/buisnessowner",{
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            setBusinesses(response.data.businesses);
+            if (response.data.businesses.length > 0) {
+                setSelectedBusiness(response.data.businesses[0]._id);
             }
         } catch (error) {
             console.error("Error fetching businesses", error);
@@ -83,10 +95,15 @@ const Expenses = () => {
     };
 
     const handleEdit = (expense) => {
-        setFormData(expense);
+        const formattedDate = new Date(expense.date).toISOString().split('T')[0]; // Format date to YYYY-MM-DD
+        setFormData({
+            ...expense,
+            date: formattedDate, // Set the formatted date
+        });
         setEditingExpense(expense);
         setShowForm(true);
     };
+
 
     const handleDelete = async (id) => {
         if (window.confirm("Are you sure you want to delete this expense?")) {
@@ -103,6 +120,12 @@ const Expenses = () => {
         setFormData({ business: "", category: "", date: "", amount: "", tax: "", vendor: "", reference: "", description: "" });
         setEditingExpense(null);
         setShowForm(false);
+    };
+
+    // Function to get category name by category ID
+    const getCategoryName = (categoryId) => {
+        const category = categories.find((cat) => cat._id === categoryId);
+        return category ? category.name : "Unknown Category";
     };
 
     return (
@@ -191,7 +214,7 @@ const Expenses = () => {
                         {expenses.length > 0 ? (
                             expenses.map((expense) => (
                                 <tr key={expense._id}>
-                                    <td>{expense.category}</td>
+                                    <td>{getCategoryName(expense.category)}</td>
                                     <td>{new Date(expense.date).toLocaleDateString()}</td>
                                     <td>${expense.amount}</td>
                                     <td>${expense.tax}</td>
@@ -199,8 +222,10 @@ const Expenses = () => {
                                     <td>{expense.reference}</td>
                                     <td>{expense.description}</td>
                                     <td>
-                                        <Button color="warning" size="sm" onClick={() => handleEdit(expense)}>Edit</Button>
-                                        <Button color="danger" size="sm" className="ml-2" onClick={() => handleDelete(expense._id)}>Delete</Button>
+                                        <Button color="warning" size="sm"
+                                                onClick={() => handleEdit(expense)}>Edit</Button>
+                                        <Button color="danger" size="sm" className="ml-2"
+                                                onClick={() => handleDelete(expense._id)}>Delete</Button>
                                     </td>
                                 </tr>
                             ))
