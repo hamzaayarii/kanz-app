@@ -123,6 +123,7 @@ const routes = [
     category: 'Finance',
     showInSidebar: () => true, // Both should be able to view invoices
   },
+
   {
     path: '/financial-statements',
     name: 'Financial Reports',
