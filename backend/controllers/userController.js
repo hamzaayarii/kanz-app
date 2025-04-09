@@ -451,3 +451,26 @@ export const getUsersByRole = async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 };
+
+export const search= async (req, res) => {
+    try {
+      const query = req.query.query;
+      
+      // Search users by fullName, email, or phoneNumber
+      const users = await User.find({
+        $or: [
+          { fullName: { $regex: query, $options: 'i' } },
+          { email: { $regex: query, $options: 'i' } },
+          { phoneNumber: { $regex: query, $options: 'i' } }
+        ]
+      }).select('_id fullName email phoneNumber avatar');
+      
+      // Don't include the current user in results
+      const filteredUsers = users.filter(user => user._id.toString() !== req.user.id);
+      
+      res.json(filteredUsers);
+    } catch (err) {
+      console.error(err);
+      res.status(500).send('Server Error');
+    }
+  }

@@ -14,26 +14,27 @@ function initializeSocket(server) {
     transports: ['websocket', 'polling']
   });
   
-// In socketHandler.js
-io.use((socket, next) => {
-  try {
-    const token = socket.handshake.auth.token;
-    if (!token) {
-      return next(new Error('Authentication token missing'));
+  io.use((socket, next) => {
+    try {
+      const token = socket.handshake.auth.token;
+      if (!token) {
+        return next(new Error('Authentication token missing'));
+      }
+      
+      const decoded = jwt.verify(token, process.env.SECRET_KEY);
+      socket.userId = decoded._id;
+      next();
+    } catch (error) {
+      console.error('Socket authentication error:', error.message);
+      next(new Error('Authentication failed: ' + error.message));
     }
-    
-    // Change this line to use SECRET_KEY
-    const decoded = jwt.verify(token, process.env.SECRET_KEY);
-    socket.userId = decoded._id; // Note: you might need to use _id instead of id based on your token
-    next();
-  } catch (error) {
-    console.error('Socket authentication error:', error.message);
-    next(new Error('Authentication failed: ' + error.message));
-  }
-});
+  });
   
   io.on('connection', (socket) => {
     console.log(`User connected: ${socket.userId}`);
+    
+    // Store active users
+    socket.join(`user_${socket.userId}`);
     
     // Join a conversation room
     socket.on('join_conversation', (conversationId) => {
@@ -51,7 +52,7 @@ io.use((socket, next) => {
     socket.on('send_message', async (data) => {
       try {
         const { conversationId, content } = data;
-        const sender = socket.userId; // Use the authenticated user ID
+        const sender = socket.userId;
        
         // Create new message
         const newMessage = new Message({
@@ -66,15 +67,51 @@ io.use((socket, next) => {
         await Conversation.findByIdAndUpdate(conversationId, {
           lastMessage: savedMessage._id,
           updatedAt: Date.now()
-        });
+        }).populate('participants', '_id');
        
         // Populate the sender info
         await savedMessage.populate('sender', 'name avatar');
-       
+        
+        // Get conversation participants
+        const conversation = await Conversation.findById(conversationId).populate('participants', '_id');
+        
         // Emit to all participants in the conversation
         io.to(conversationId).emit('receive_message', savedMessage);
+        
+        // Notify participants who might not be in the conversation room
+        conversation.participants.forEach(participant => {
+          if (participant._id.toString() !== socket.userId) {
+            io.to(`user_${participant._id}`).emit('new_message_notification', {
+              conversationId,
+              message: savedMessage
+            });
+          }
+        });
       } catch (error) {
         console.error('Error handling message:', error);
+      }
+    });
+    
+    // Handle typing indicators
+    socket.on('typing', async (data) => {
+      try {
+        const { conversationId, isTyping } = data;
+        
+        // Get conversation participants
+        const conversation = await Conversation.findById(conversationId).select('participants');
+        
+        // Broadcast to all other participants
+        conversation.participants.forEach(participant => {
+          if (participant._id.toString() !== socket.userId) {
+            socket.to(`user_${participant._id}`).emit('user_typing', {
+              conversationId,
+              userId: socket.userId,
+              isTyping
+            });
+          }
+        });
+      } catch (error) {
+        console.error('Error handling typing event:', error);
       }
     });
     

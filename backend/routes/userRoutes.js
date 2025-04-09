@@ -1,7 +1,7 @@
 // src/routes/userRoutes.js
 const express = require('express');
 const router = express.Router();
-const { create, list, updateUser, deleteUser, googleAuth, googleAuthRequest, forgot_password, reset_password, toggleBan, login,assignAccountant,getUsersByRole  } = require('../controllers/userController');
+const { create, list, updateUser, deleteUser, googleAuth, googleAuthRequest, forgot_password, reset_password, toggleBan, login,assignAccountant,getUsersByRole,search  } = require('../controllers/userController');
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -145,5 +145,5 @@ router.get('/search', authenticate, async (req, res) => {
       res.status(500).json({ message: 'Server error' });
     }
   });
-  
+  router.get('/search', authenticate,search);
 module.exports = router;
