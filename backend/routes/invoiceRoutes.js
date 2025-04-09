@@ -317,7 +317,7 @@ const parseInvoiceText = (text) => {
 
     // Improved item parsing
     let itemSection = false;
-    const itemPattern = /-\s*([^:]+):\s*Quantité\s*=\s*(\d+),\s*Prix\s*unitaire\s*=\s*(\d+[.,]?\d*)\s*TND,\s*Taxe\s*=\s*(\d+[.,]?\d*)\s*TND,\s*Montant\s*=\s*(\d+[.,]?\d*)\s*TND/i;
+    const itemPattern = /details\s*:\s*-\s*([^:]+):\s*Quantité\s*=\s*(\d+),\s*Prix\s*unitaire\s*=\s*(\d+[.,]?\d*)\s*TND,\s*Taxe\s*=\s*(\d+[.,]?\d*)\s*TND,\s*Montant\s*=\s*(\d+[.,]?\d*)\s*TND/i;
 
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
@@ -511,7 +511,7 @@ router.get('/:id/pdf', authenticate, asyncHandler(async (req, res) => {
             doc.fillColor('#333333')
                 .fontSize(11)
                 .font('Helvetica')
-                .text(`- ${truncatedDescription}: Quantité = ${item.quantity}, Prix unitaire = ${formatCurrency(item.rate)}, Taxe = ${formatCurrency(taxAmount)}, Montant = ${formatCurrency(item.amount)}`, 50, y, { width: 500 });
+                .text(`details: - ${truncatedDescription}: Quantité = ${item.quantity}, Prix unitaire = ${formatCurrency(item.rate)}, Taxe = ${formatCurrency(taxAmount)}, Montant = ${formatCurrency(item.amount)}`, 50, y, { width: 500 });
 
             if (index < invoice.items.length - 1) {
                 doc.moveTo(50, y + 20).lineTo(562, y + 20).strokeColor('#ddd').dash(2, { space: 2 }).stroke();
