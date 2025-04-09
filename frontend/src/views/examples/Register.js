@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Button, Card, CardBody, FormGroup, Form,
@@ -21,8 +21,51 @@ const Register = () => {
     role: "business_owner"
   });
 
-  // Error state
-  const [error, setError] = useState(null);
+  // Validation state
+  const [errors, setErrors] = useState({
+    fullName: "",
+    email: "",
+    password: ""
+  });
+
+  // Form submission error state
+  const [submitError, setSubmitError] = useState(null);
+
+  // Validation rules
+  const validateField = (name, value) => {
+    switch (name) {
+      case "fullName":
+        if (!value.trim()) return "Full name is required";
+        if (value.length < 2) return "Full name must be at least 2 characters";
+        return "";
+      
+      case "email":
+        if (!value) return "Email is required";
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(value)) return "Please enter a valid email address";
+        return "";
+      
+      case "password":
+        if (!value) return "Password is required";
+        if (value.length < 8) return "Password must be at least 8 characters";
+        if (!/[A-Z]/.test(value)) return "Password must contain at least one uppercase letter";
+        if (!/[a-z]/.test(value)) return "Password must contain at least one lowercase letter";
+        if (!/[0-9]/.test(value)) return "Password must contain at least one number";
+        return "";
+      
+      default:
+        return "";
+    }
+  };
+
+  // Validate form on mount and when formData changes
+  useEffect(() => {
+    const newErrors = {};
+    Object.keys(errors).forEach(field => {
+      newErrors[field] = validateField(field, formData[field]);
+    });
+    setErrors(newErrors);
+  }, [formData]);
   const auth = async () => {
     try {
       const response = await fetch('http://localhost:5000/api/users/googleAuthRequest', {
@@ -64,16 +107,21 @@ const Register = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+    setErrors(prev => ({
+      ...prev,
+      [name]: validateField(name, value)
+    }));
   };
 
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(null); // Reset error state before making a request
+    setSubmitError(null);
 
-    // Basic validation for password length
-    if (formData.password.length < 6) {
-      setError("Password should be at least 6 characters long.");
+    // Check if there are any validation errors
+    const hasErrors = Object.values(errors).some(error => error !== "");
+    if (hasErrors) {
+      setSubmitError("Please fix all errors before submitting");
       return;
     }
 
@@ -99,7 +147,7 @@ const Register = () => {
 
     } catch (err) {
       // Handle any errors and show the message
-      setError(err.message);
+      setSubmitError(err.message);
     }
   };
 
@@ -113,7 +161,7 @@ const Register = () => {
           <Form role="form" onSubmit={handleSubmit}>
             {/* Full Name Input */}
             <FormGroup>
-              <InputGroup className="input-group-alternative mb-3">
+              <InputGroup className="input-group-alternative mb-1">
                 <InputGroupAddon addonType="prepend">
                   <InputGroupText><i className="ni ni-hat-3" /></InputGroupText>
                 </InputGroupAddon>
@@ -123,14 +171,19 @@ const Register = () => {
                   name="fullName"
                   value={formData.fullName}
                   onChange={handleChange}
-                  required
+                  invalid={!!errors.fullName}
                 />
               </InputGroup>
+              {errors.fullName && (
+                <div className="text-danger" style={{ fontSize: '0.8rem', marginTop: '0.25rem' }}>
+                  {errors.fullName}
+                </div>
+              )}
             </FormGroup>
 
             {/* Email Input */}
             <FormGroup>
-              <InputGroup className="input-group-alternative mb-3">
+              <InputGroup className="input-group-alternative mb-1">
                 <InputGroupAddon addonType="prepend">
                   <InputGroupText><i className="ni ni-email-83" /></InputGroupText>
                 </InputGroupAddon>
@@ -140,14 +193,19 @@ const Register = () => {
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  required
+                  invalid={!!errors.email}
                 />
               </InputGroup>
+              {errors.email && (
+                <div className="text-danger" style={{ fontSize: '0.8rem', marginTop: '0.25rem' }}>
+                  {errors.email}
+                </div>
+              )}
             </FormGroup>
 
             {/* Password Input */}
             <FormGroup>
-              <InputGroup className="input-group-alternative mb-3">
+              <InputGroup className="input-group-alternative mb-1">
                 <InputGroupAddon addonType="prepend">
                   <InputGroupText><i className="ni ni-lock-circle-open" /></InputGroupText>
                 </InputGroupAddon>
@@ -157,9 +215,14 @@ const Register = () => {
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
-                  required
+                  invalid={!!errors.password}
                 />
               </InputGroup>
+              {errors.password && (
+                <div className="text-danger" style={{ fontSize: '0.8rem', marginTop: '0.25rem' }}>
+                  {errors.password}
+                </div>
+              )}
             </FormGroup>
 
 
@@ -190,8 +253,12 @@ const Register = () => {
               </div>
             </FormGroup>
 
-            {/* Error Message */}
-            {error && <div className="text-danger text-center mb-3">{error}</div>}
+            {/* Submit Error Message */}
+            {submitError && (
+              <div className="text-danger text-center mb-3" style={{ fontSize: '0.9rem' }}>
+                {submitError}
+              </div>
+            )}
 
             {/* Submit Button */}
             <div className="text-center">

@@ -9,6 +9,38 @@ const Login = () => {
   const [errors, setErrors] = useState({ email: '', password: '' });
   const navigate = useNavigate();
 
+  const auth = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/users/googleAuthRequest', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ anything: "taktak" }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch data from the backend');
+      }
+
+      const data = await response.json();
+      console.log(data);
+
+      if (data.url) {
+        window.open(data.url, "_blank", "width=500,height=600");
+        window.addEventListener("message", (event) => {
+          if (event.origin !== "http://127.0.0.1:5000") return;
+          localStorage.setItem("authToken", event.data.token);
+          navigate('/admin/index');
+        }, { once: true });
+      } else {
+        console.error('No URL returned from the backend');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+
   const validateEmail = (value) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!value) return 'Email is required.';
@@ -134,10 +166,29 @@ const Login = () => {
                   </Button>
                 </div>
 
-                <div className="text-center">
+                <div className="text-center mt-4">
+                  <small className="text-muted">or login with Google account</small>
+                </div>
+                <div className="text-center mt-2">
+                  <Button
+                    className="btn-neutral btn-icon"
+                    color="default"
+                    onClick={auth}
+                  >
+                    <span className="btn-inner--icon">
+                      <img
+                        alt="..."
+                        src={require("../../assets/img/icons/common/google.svg").default}
+                      />
+                    </span>
+                    <span className="btn-inner--text">Google</span>
+                  </Button>
+                </div>
+
+                <div className="text-center mt-4">
                   <Link to="/auth/register">Don't have an account? Register</Link>
                 </div>
-                <div className="text-center">
+                <div className="text-center mt-2">
                   <Link to="/auth/password-reset">Forget the password? Click here</Link>
                 </div>
               </Form>
