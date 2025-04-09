@@ -5,7 +5,7 @@ import Register from 'views/examples/Register.js';
 import Login from 'views/examples/Login.js';
 import Tables from 'views/examples/Tables.js';
 import Icons from 'views/examples/Icons.js';
-import AuthRoute from 'components/AuthRoute.js';
+import AuthRoute, { AdminRoute, isUserAdmin } from 'components/AuthRoute.js';
 import PasswordReset from './views/examples/PasswordReset.js';
 import NewPassword from './views/examples/NewPassword.js';
 import Purchases from './views/examples/Purchases.js';
@@ -198,9 +198,10 @@ const routes = [
     name: 'User Directory',
     icon: 'ni ni-single-02 text-red',
     description: 'Manage all users',
-    component: <AuthRoute><UserList /></AuthRoute>,
+    component: <AdminRoute><UserList /></AdminRoute>,
     layout: '/admin',
     category: 'Users',
+    showInSidebar: isUserAdmin,
   },
 
   // Utility Pages

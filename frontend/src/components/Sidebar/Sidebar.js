@@ -54,7 +54,13 @@ const Sidebar = (props) => {
   // creates the links that appear in the left menu / Sidebar
   const createLinks = (routes) => {
     return routes
-      .filter(route => route.showInSidebar !== false) // Filter out routes that shouldn't show in sidebar
+      .filter(route => {
+        // Handle both boolean and function types for showInSidebar
+        if (typeof route.showInSidebar === 'function') {
+          return route.showInSidebar();
+        }
+        return route.showInSidebar !== false;
+      })
       .map((prop, key) => {
         return (
           <NavItem key={key}>
