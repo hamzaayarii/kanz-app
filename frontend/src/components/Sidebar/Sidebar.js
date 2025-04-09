@@ -1,8 +1,10 @@
 /*eslint-disable*/
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { NavLink as NavLinkRRD, Link } from "react-router-dom";
 // nodejs library to set properties for components
 import { PropTypes } from "prop-types";
+import axios from "axios";
+import {jwtDecode} from 'jwt-decode';
 
 // reactstrap components
 import {
@@ -39,6 +41,32 @@ var ps;
 
 const Sidebar = (props) => {
   const [collapseOpen, setCollapseOpen] = useState();
+  const [user, setUser] = useState(null);
+
+  // Fetch user data from the backend
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const token = localStorage.getItem("authToken");
+        if (!token) return;
+
+        const decoded = jwtDecode(token);
+        const userId = decoded._id;
+
+        const response = await axios.get(`http://localhost:5000/api/users/${userId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (response.data && response.data.user) {
+          setUser(response.data.user);
+        }
+      } catch (err) {
+        console.error("Error fetching user data:", err);
+      }
+    };
+
+    fetchUserData();
+  }, []);
   // verifies if routeName is the one active (in browser input)
   const activeRoute = (routeName) => {
     return props.location.pathname.indexOf(routeName) > -1 ? "active" : "";
@@ -138,8 +166,8 @@ const Sidebar = (props) => {
               <Media className="align-items-center">
                 <span className="avatar avatar-sm rounded-circle">
                   <img
-                    alt="..."
-                    src={require("../../assets/img/theme/team-1-800x800.jpg")}
+                    alt="Profile"
+                    src={user?.avatar || require("../../assets/img/theme/team-1-800x800.jpg")}
                   />
                 </span>
               </Media>

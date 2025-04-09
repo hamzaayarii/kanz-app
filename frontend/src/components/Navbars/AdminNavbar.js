@@ -18,11 +18,39 @@ import {
   Button,
 } from "reactstrap";
 import { useState, useEffect } from "react";
+import axios from "axios";
+import {jwtDecode} from 'jwt-decode';
 
 const AdminNavbar = (props) => {
   const navigate = useNavigate();
   const [business, setBusiness] = useState(null);
   const [showBusinessDropdown, setShowBusinessDropdown] = useState(false);
+  const [user, setUser] = useState(null);
+
+  // Fetch user data from the backend
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const token = localStorage.getItem("authToken");
+        if (!token) return;
+
+        const decoded = jwtDecode(token);
+        const userId = decoded._id;
+
+        const response = await axios.get(`http://localhost:5000/api/users/${userId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (response.data && response.data.user) {
+          setUser(response.data.user);
+        }
+      } catch (err) {
+        console.error("Error fetching user data:", err);
+      }
+    };
+
+    fetchUserData();
+  }, []);
 
   // Fetch business data - update this according to your API structure
   useEffect(() => {
@@ -142,8 +170,8 @@ const AdminNavbar = (props) => {
                 <Media className="align-items-center">
                   <span className="avatar avatar-sm rounded-circle">
                     <img
-                      alt="..."
-                      src={props.profilePic}
+                      alt="Profile"
+                      src={user?.avatar || require("../../assets/img/theme/team-1-800x800.jpg")}
                     />
                   </span>
                   <Media className="ml-2 d-none d-lg-block">
