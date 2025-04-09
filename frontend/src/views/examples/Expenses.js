@@ -59,7 +59,17 @@ const Expenses = () => {
 
     const fetchCategories = async () => {
         try {
-            const response = await axios.get("http://localhost:5000/api/categories");
+            const token = localStorage.getItem('authToken');
+
+            if (!token) {
+                navigate('/auth/login');
+                return;
+            }
+            const response = await axios.get("http://localhost:5000/api/categories",{
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
             setCategories(response.data);
         } catch (error) {
             console.error("Error fetching categories", error);
@@ -68,7 +78,17 @@ const Expenses = () => {
 
     const fetchExpenses = async (businessId) => {
         try {
-            const response = await axios.get(`http://localhost:5000/api/expenses?business=${businessId}`);
+            const token = localStorage.getItem('authToken');
+
+            if (!token) {
+                navigate('/auth/login');
+                return;
+            }
+            const response = await axios.get(`http://localhost:5000/api/expenses?business=${businessId}`,{
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
             setExpenses(response.data);
         } catch (error) {
             console.error("Error fetching expenses", error);
