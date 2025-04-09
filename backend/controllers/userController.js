@@ -356,10 +356,48 @@ export const googleAuth = async (req, res) => {
             });
             await user.save();
         }
-        user.token = jwt.sign({ id: user._id, email: user.email }, SECRET_KEY, { expiresIn: JWT_EXPIRES_IN });
+        const token = jwt.sign(
+            {
+                _id: user._id,
+                email: user.email,
+                role: user.role,
+                isBanned: user.isBanned
+            },
+            process.env.SECRET_KEY,
+            { expiresIn: process.env.JWT_EXPIRES_IN || '1h' }
+        );
+
+        console.log('Token generated:', token);
+
+        // 🔹 Store token in a **secure** HTTP-only cookie
+
+        res.cookie('token', token, {
+            httpOnly: true, // Prevents access via JavaScript (for security)
+            secure: process.env.NODE_ENV === 'production', // Only use `secure` in production (HTTPS)
+            sameSite: 'strict', // Helps prevent CSRF attacks
+            maxAge: 60 * 60 * 1000 // 1 hour expiration
+        });
+
+        const loggedUser = {
+            success: true,
+            message: "Login successful",
+            token,
+            user: {
+                _id: user._id,
+                fullName: user.fullName,
+                email: user.email,
+                phoneNumber: user.phoneNumber,
+                governorate: user.governorate,
+                avatar: user.avatar,
+                gender: user.gender,
+                createdAt: user.createdAt,
+                role: user.role,
+                isBanned: user.isBanned
+            }
+        }
         res.send(`
             <script>
-              window.opener.postMessage(${JSON.stringify(user)}, "http://localhost:3000");
+              window.opener.postMessage(${JSON.stringify(loggedUser)}, "http://localhost:3000");
               window.close();
             </script>
         `);
