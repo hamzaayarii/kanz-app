@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const Expense = require('../models/Expense');
+const {authenticate, authorizeBusinessOwner} = require("../middlewares/authMiddleware");
 
 // Create an expense
-router.post('/', async (req, res) => {
+router.post('/', authenticate, authorizeBusinessOwner,async (req, res) => {
     try {
         const expense = new Expense(req.body);
         await expense.save();
@@ -15,7 +16,7 @@ router.post('/', async (req, res) => {
 });
 
 // Get all expenses or filter by business
-router.get('/', async (req, res) => {
+router.get('/', authenticate, async (req, res) => {
     const { business } = req.query;
     try {
         const query = business ? { business } : {};
@@ -27,7 +28,7 @@ router.get('/', async (req, res) => {
 });
 
 // Get single expense
-router.get('/:id', async (req, res) => {
+router.get('/:id', authenticate,async (req, res) => {
     try {
         const expense = await Expense.findById(req.params.id);
         if (!expense) return res.status(404).json({ message: 'Expense not found' });
@@ -39,7 +40,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // Update an expense
-router.put('/:id', async (req, res) => {
+router.put('/:id', authenticate, authorizeBusinessOwner,async (req, res) => {
     try {
         const expense = await Expense.findByIdAndUpdate(req.params.id, req.body, { new: true });
         if (!expense) return res.status(404).json({ message: 'Expense not found' });
@@ -51,7 +52,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // Delete an expense
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authenticate, authorizeBusinessOwner,async (req, res) => {
     try {
         const expense = await Expense.findByIdAndDelete(req.params.id);
         if (!expense) return res.status(404).json({ message: 'Expense not found' });
