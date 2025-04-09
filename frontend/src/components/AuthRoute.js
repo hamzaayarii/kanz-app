@@ -42,6 +42,12 @@ export const isUserBusinessOwner = () => {
   return user && user.role === 'business_owner';
 };
 
+// Helper function to check if user is accountant
+export const isUserAccountant = () => {
+  const user = getUser();
+  return user && user.role === 'accountant';
+};
+
 // Business owner only route
 export const BusinessOwnerRoute = ({ children }) => {
   const isAuthenticated = !!localStorage.getItem('authToken');

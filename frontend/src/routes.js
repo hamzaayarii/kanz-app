@@ -5,7 +5,7 @@ import Register from 'views/examples/Register.js';
 import Login from 'views/examples/Login.js';
 import Tables from 'views/examples/Tables.js';
 import Icons from 'views/examples/Icons.js';
-import AuthRoute, { AdminRoute, isUserAdmin, BusinessOwnerRoute } from 'components/AuthRoute.js';
+import AuthRoute, { AdminRoute, isUserAdmin, BusinessOwnerRoute, isUserAccountant, isUserBusinessOwner } from 'components/AuthRoute.js';
 import PasswordReset from './views/examples/PasswordReset.js';
 import NewPassword from './views/examples/NewPassword.js';
 import Purchases from './views/examples/Purchases.js';
@@ -38,6 +38,7 @@ const routes = [
     component: <AuthRoute><Index /></AuthRoute>,
     layout: '/admin',
     category: 'Overview',
+    showInSidebar: () => true, // Visible to all authenticated users
   },
   {
     path: '/daily-revenue',
@@ -47,6 +48,7 @@ const routes = [
     component: <AuthRoute><DailyRevenue /></AuthRoute>,
     layout: '/admin',
     category: 'Overview',
+    showInSidebar: () => true, // Both BO and accountant should see revenue
   },
 
   // Financial Management
@@ -58,6 +60,7 @@ const routes = [
     component: <AuthRoute><Journal /></AuthRoute>,
     layout: '/admin',
     category: 'Finance',
+    showInSidebar: isUserAccountant,
   },
   {
     path: '/purchases',
@@ -67,6 +70,7 @@ const routes = [
     component: <AuthRoute><Purchases /></AuthRoute>,
     layout: '/admin',
     category: 'Finance',
+    showInSidebar: isUserAccountant,
   },
   {
     path: '/expenses',
@@ -76,6 +80,7 @@ const routes = [
     component: <AuthRoute><Expenses /></AuthRoute>,
     layout: '/admin',
     category: 'Finance',
+    showInSidebar: isUserAccountant,
   },
   {
     path: '/invoices1',
@@ -85,6 +90,7 @@ const routes = [
     component: <AuthRoute><Invoices /></AuthRoute>,
     layout: '/admin',
     category: 'Finance',
+    showInSidebar: () => true, // Both should be able to track invoices
   },
   {
     path: '/create-invoice',
@@ -94,6 +100,7 @@ const routes = [
     component: <AuthRoute><CreateInvoice /></AuthRoute>,
     layout: '/admin',
     category: 'Finance',
+    showInSidebar: isUserAccountant,
   },
   {
     path: '/invoices',
@@ -103,6 +110,7 @@ const routes = [
     component: <AuthRoute><InvoiceList /></AuthRoute>,
     layout: '/admin',
     category: 'Finance',
+    showInSidebar: () => true, // Both should be able to view invoices
   },
   {
     path: '/financial-statements',
@@ -112,6 +120,7 @@ const routes = [
     component: <AuthRoute><FinancialStatements /></AuthRoute>,
     layout: '/admin',
     category: 'Finance',
+    showInSidebar: () => true, // Visible to both BO and Accountant
   },
 
   // Tax Management
@@ -123,6 +132,7 @@ const routes = [
     component: <AuthRoute><TaxReportForm /></AuthRoute>,
     layout: '/admin',
     category: 'Taxes',
+    showInSidebar: isUserAccountant,
   },
   {
     path: '/tax-reports',
@@ -132,6 +142,7 @@ const routes = [
     component: <AuthRoute><TaxReportsList /></AuthRoute>,
     layout: '/admin',
     category: 'Taxes',
+    showInSidebar: isUserAccountant,
   },
 
   // Business & Employee Management
@@ -143,15 +154,17 @@ const routes = [
     component: <AuthRoute><BusinessManagement /></AuthRoute>,
     layout: '/admin',
     category: 'Business',
+    showInSidebar: isUserBusinessOwner,
   },
   {
     path: '/employee-management',
-    name: 'employee-management',
+    name: 'Employee Management',
     icon: 'ni ni-badge text-yellow',
     description: 'Oversee your employees',
     component: <AuthRoute><EmployeeManagement /></AuthRoute>,
     layout: '/admin',
     category: 'Business',
+    showInSidebar: isUserBusinessOwner,
   },
   {
     path: '/payroll-management',
@@ -161,6 +174,7 @@ const routes = [
     component: <AuthRoute><PayrollManagement /></AuthRoute>,
     layout: '/admin',
     category: 'Business',
+    showInSidebar: isUserBusinessOwner,
   },
   {
     path: '/assign-accountant',
@@ -170,6 +184,7 @@ const routes = [
     component: <AuthRoute><AssignAccountant /></AuthRoute>,
     layout: '/admin',
     category: 'Business',
+    showInSidebar: isUserBusinessOwner,
   },
 
   // Inventory & Assets
@@ -181,6 +196,7 @@ const routes = [
     component: <AuthRoute><Items /></AuthRoute>,
     layout: '/admin',
     category: 'Inventory',
+    showInSidebar: isUserBusinessOwner,
   },
 
   // User Management
@@ -205,24 +221,8 @@ const routes = [
   },
 
   // Utility Pages
-  {
-    path: '/tables',
-    name: 'Data Tables',
-    icon: 'ni ni-bullet-list-67 text-red',
-    description: 'View structured data',
-    component: <AuthRoute><Tables /></AuthRoute>,
-    layout: '/admin',
-    category: 'Utilities',
-  },
-  {
-    path: '/icons',
-    name: 'Icon Gallery',
-    icon: 'ni ni-planet text-blue',
-    description: 'Explore icons',
-    component: <AuthRoute><Icons /></AuthRoute>,
-    layout: '/admin',
-    category: 'Utilities',
-  },
+  // Removed Data Tables as it's not needed for production
+  // Removed Icon Gallery as it's not needed for production
 
   // Authentication Routes (Hidden from Sidebar)
   {
@@ -276,6 +276,7 @@ const routes = [
         </AuthRoute>
     ),
     layout: '/admin',
+    showInSidebar: isUserAccountant,
   },
 ];
 
