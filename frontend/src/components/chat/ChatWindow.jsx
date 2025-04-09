@@ -146,6 +146,32 @@ const ChatWindow = ({ currentUser }) => {
       console.error('Error sending message:', err);
     }
   };
+  const handleDeleteConversation = async (conversationId) => {
+    if (!window.confirm("Are you sure you want to delete this conversation?")) return;
+  
+    try {
+      const res = await fetch(`http://localhost:5000/api/chat/conversations/${conversationId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        }
+      });
+  
+      if (res.ok) {
+        setConversations(prev => prev.filter(c => c._id !== conversationId));
+        if (conversationId === currentConversationId) {
+          setSelectedContact(null);
+          setCurrentConversationId(null);
+          setMessages([]);
+        }
+      } else {
+        console.error("Failed to delete conversation");
+      }
+    } catch (err) {
+      console.error("Error deleting conversation:", err);
+    }
+  };
+  
 
   const chatHeight = isExpanded ? '500px' : '40px';
 
@@ -223,41 +249,45 @@ const ChatWindow = ({ currentUser }) => {
                     backgroundColor: '#f3f6f8'
                   }}
                 >
-                  {messages.map((msg, index) => {
-                    if (!msg || !msg.sender) return null;
-                    
-                    const isCurrentUser = currentUser && msg.sender._id === currentUser._id;
-                    
-                    return (
-                      <div 
-                        key={index} 
-                        className={`d-flex mb-3 ${isCurrentUser ? 'justify-content-end' : 'justify-content-start'}`}
-                      >
-                        <div 
-                          style={{
-                            maxWidth: '80%',
-                            padding: '8px 12px',
-                            borderRadius: isCurrentUser ? '18px 18px 0 18px' : '18px 18px 18px 0',
-                            backgroundColor: isCurrentUser ? '#0A66C2' : '#e1e9ee',
-                            color: isCurrentUser ? 'white' : 'black',
-                            boxShadow: '0 1px 1px rgba(0,0,0,0.1)'
-                          }}
-                        >
-                          {msg.content}
-                          <div 
-                            className="text-right" 
-                            style={{
-                              fontSize: '0.75rem',
-                              color: isCurrentUser ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.4)',
-                              marginTop: '4px'
-                            }}
-                          >
-                            {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
+                {messages.map((msg, index) => {
+  if (!msg || !msg.sender) return null;
+  const isCurrentUser = currentUser && msg.sender._id === currentUser._id;
+
+  return (
+    <div key={index} className={`d-flex mb-3 ${isCurrentUser ? 'justify-content-end' : 'justify-content-start'}`}>
+      {!isCurrentUser && (
+        <div className="d-flex flex-column align-items-start mr-2">
+          <img 
+            src={msg.sender.avatar || 'default-avatar.jpg'} 
+            alt="avatar" 
+            className="rounded-circle" 
+            style={{ width: '32px', height: '32px', objectFit: 'cover' }}
+          />
+          <small className="text-muted">{msg.sender.name}</small>
+        </div>
+      )}
+
+      <div style={{
+        maxWidth: '80%',
+        padding: '8px 12px',
+        borderRadius: isCurrentUser ? '18px 18px 0 18px' : '18px 18px 18px 0',
+        backgroundColor: isCurrentUser ? '#0A66C2' : '#e1e9ee',
+        color: isCurrentUser ? 'white' : 'black',
+        boxShadow: '0 1px 1px rgba(0,0,0,0.1)'
+      }}>
+        {msg.content}
+        <div className="text-right" style={{
+          fontSize: '0.75rem',
+          color: isCurrentUser ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.4)',
+          marginTop: '4px'
+        }}>
+          {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+        </div>
+      </div>
+    </div>
+  );
+})}
+
                   <div ref={messagesEndRef} />
                 </div>
 
@@ -311,45 +341,60 @@ const ChatWindow = ({ currentUser }) => {
 
                     return (
                       <div
-                        key={conv._id}
-                        className="contact-item d-flex p-2 border-bottom align-items-center"
-                        style={{ 
-                          cursor: 'pointer',
-                          transition: 'background-color 0.2s',
-                          ':hover': {
-                            backgroundColor: '#f3f6f8'
-                          }
-                        }}
-                        onClick={() => selectContact(conv.participant)}
-                      >
-                        <img
-                          src={conv.participant.avatar || 'default-avatar.jpg'}
-                          className="rounded-circle"
-                          alt={conv.participant.name || 'User'}
-                          style={{ width: '40px', height: '40px', objectFit: 'cover' }}
-                        />
-                        <div className="ml-2" style={{ flex: 1 }}>
-                          <div className="d-flex justify-content-between">
-                            <strong>{conv.participant.name || 'Unknown'}</strong>
-                            <small className="text-muted">
-                              {conv.lastMessage?.createdAt 
-                                ? new Date(conv.lastMessage.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                                : ''}
-                            </small>
-                          </div>
-                          <p 
-                            className="mb-0 text-muted" 
-                            style={{
-                              whiteSpace: 'nowrap',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              maxWidth: '200px'
-                            }}
-                          >
-                            {conv.lastMessage?.content || 'No messages yet'}
-                          </p>
-                        </div>
-                      </div>
+  key={conv._id}
+  className="contact-item d-flex p-2 border-bottom align-items-center justify-content-between"
+  style={{ 
+    cursor: 'pointer',
+    transition: 'background-color 0.2s',
+    ':hover': {
+      backgroundColor: '#f3f6f8'
+    }
+  }}
+>
+  {/* Left part: image + contact info */}
+  <div className="d-flex align-items-center" onClick={() => selectContact(conv.participant)}>
+    <img
+      src={conv.participant.avatar || 'default-avatar.jpg'}
+      className="rounded-circle"
+      alt={conv.participant.name || 'User'}
+      style={{ width: '40px', height: '40px', objectFit: 'cover' }}
+    />
+    <div className="ml-2" style={{ flex: 1 }}>
+      <div className="d-flex justify-content-between">
+        <strong>{conv.participant.name || 'Unknown'}</strong>
+        <small className="text-muted">
+          {conv.lastMessage?.createdAt 
+            ? new Date(conv.lastMessage.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            : ''}
+        </small>
+      </div>
+      <p 
+        className="mb-0 text-muted" 
+        style={{
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          maxWidth: '200px'
+        }}
+      >
+        {conv.lastMessage?.content || 'No messages yet'}
+      </p>
+    </div>
+  </div>
+
+  {/* Right part: delete button */}
+  <button 
+    className="btn btn-sm btn-outline-danger ml-2"
+    onClick={(e) => {
+      e.stopPropagation(); // prevents opening the chat
+      handleDeleteConversation(conv._id);
+    }}
+  >
+    🗑
+  </button>
+</div>
+
+                      
                     );
                   }).filter(Boolean)
                 ) : (
