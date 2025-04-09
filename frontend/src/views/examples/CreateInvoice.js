@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useForm, useFieldArray } from 'react-hook-form';
-import { Alert } from 'reactstrap';
+import { Alert, Modal, ModalHeader, ModalBody, Input, Table, Spinner } from 'reactstrap';
+import { FaSearch } from 'react-icons/fa';
 import styles from '../../assets/css/CreateInvoice.module.css';
 
 const CreateInvoice = () => {
@@ -10,6 +11,10 @@ const CreateInvoice = () => {
     const [success, setSuccess] = useState('');
     const [businesses, setBusinesses] = useState([]);
     const [selectedBusiness, setSelectedBusiness] = useState(null);
+    const [itemModal, setItemModal] = useState(false);
+    const [items, setItems] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [loadingItems, setLoadingItems] = useState(false);
 
     const { register, control, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm({
         defaultValues: {
@@ -67,6 +72,41 @@ const CreateInvoice = () => {
         const business = businesses.find(b => b._id === watchBusinessId);
         setSelectedBusiness(business || null);
     }, [watchBusinessId, businesses]);
+
+    const fetchItems = async (search = '') => {
+        try {
+            setLoadingItems(true);
+            const response = await axios.get(`http://localhost:5000/api/products`, {
+                params: { search }
+            });
+            if (Array.isArray(response.data)) {
+                setItems(response.data);
+            } else if (response.data.products) {
+                setItems(response.data.products);
+            }
+        } catch (error) {
+            console.error('Error fetching items:', error);
+            setError('Failed to load items');
+        } finally {
+            setLoadingItems(false);
+        }
+    };
+
+    const handleSearchChange = (e) => {
+        setSearchTerm(e.target.value);
+        fetchItems(e.target.value);
+    };
+
+    const handleItemSelect = (item) => {
+        const newItem = {
+            itemDetails: item.name,
+            quantity: 1,
+            rate: item.salesInfo.sellingPrice,
+            taxPercentage: item.salesInfo.tax
+        };
+        append(newItem);
+        setItemModal(false);
+    };
 
     const calculateAmount = (item) => {
         const qty = Number(item.quantity) || 0;
@@ -431,14 +471,80 @@ const CreateInvoice = () => {
                                 </button>
                             </div>
                         ))}
-                        <button
-                            type="button"
-                            onClick={() => append({ itemDetails: '', quantity: 1, rate: 0, taxPercentage: 0 })}
-                            disabled={loading}
-                            className={styles.addButton}
-                        >
-                            + Add an item
-                        </button>
+                        <div className={styles.itemButtons}>
+                            <button
+                                type="button"
+                                onClick={() => setItemModal(true)}
+                                disabled={loading}
+                                className={`${styles.addButton} ${styles.selectItem}`}
+                            >
+                                + Select Existing Item
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => append({ itemDetails: '', quantity: 1, rate: 0, taxPercentage: 0 })}
+                                disabled={loading}
+                                className={styles.addButton}
+                            >
+                                + Add Custom Item
+                            </button>
+                        </div>
+
+                        <Modal isOpen={itemModal} toggle={() => setItemModal(!itemModal)} size="lg">
+                            <ModalHeader toggle={() => setItemModal(!itemModal)}>
+                                Select Item
+                            </ModalHeader>
+                            <ModalBody>
+                                <div className={styles.searchContainer}>
+                                    <div className={styles.searchBox}>
+                                        <FaSearch className={styles.searchIcon} />
+                                        <Input
+                                            type="text"
+                                            placeholder="Search items..."
+                                            value={searchTerm}
+                                            onChange={handleSearchChange}
+                                            className={styles.searchInput}
+                                        />
+                                    </div>
+                                </div>
+
+                                {loadingItems ? (
+                                    <div className={styles.spinnerContainer}>
+                                        <Spinner />
+                                    </div>
+                                ) : (
+                                    <Table hover responsive className={styles.itemsTable}>
+                                        <thead>
+                                            <tr>
+                                                <th>Name</th>
+                                                <th>Unit</th>
+                                                <th>Price</th>
+                                                <th>Tax Rate</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {items.map((item) => (
+                                                <tr key={item._id}>
+                                                    <td>{item.name}</td>
+                                                    <td>{item.unit}</td>
+                                                    <td>{item.salesInfo.sellingPrice}</td>
+                                                    <td>{item.salesInfo.tax}%</td>
+                                                    <td>
+                                                        <button
+                                                            onClick={() => handleItemSelect(item)}
+                                                            className={styles.selectButton}
+                                                        >
+                                                            Select
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </Table>
+                                )}
+                            </ModalBody>
+                        </Modal>
 
                         <div className={styles.totalsSection}>
                             <h4>Totals</h4>
