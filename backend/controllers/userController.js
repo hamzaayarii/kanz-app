@@ -480,3 +480,52 @@ export const getUsersByRole = async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 };
+
+export const search= async (req, res) => {
+    try {
+      const query = req.query.query;
+      
+      // Search users by fullName, email, or phoneNumber
+      const users = await User.find({
+        $or: [
+          { fullName: { $regex: query, $options: 'i' } },
+          { email: { $regex: query, $options: 'i' } },
+          { phoneNumber: { $regex: query, $options: 'i' } }
+        ]
+      }).select('_id fullName email phoneNumber avatar');
+      
+      // Don't include the current user in results
+      const filteredUsers = users.filter(user => user._id.toString() !== req.user.id);
+      
+      res.json(filteredUsers);
+    } catch (err) {
+      console.error(err);
+      res.status(500).send('Server Error');
+    }
+  };
+
+  export const removeAssignment= async (req, res) => {
+    const { accountantId } = req.body;
+    const userId = req.user._id; // Assuming authenticate middleware adds the user info
+
+    try {
+        const user = await User.findById(userId);
+        if (!user) return res.status(404).send("User not found");
+
+        if (!user.assignedTo) {
+            return res.status(400).send("No accountant assigned to your business");
+        }
+
+        if (user.assignedTo.toString() !== accountantId) {
+            return res.status(400).send("This accountant is not assigned to your business");
+        }
+
+        user.assignedTo = null; // Remove the assignment
+        await user.save();
+
+        res.status(200).send("Assignment removed successfully");
+    } catch (err) {
+        console.error("Error removing assignment:", err);
+        res.status(500).send("Server error");
+    }
+};

@@ -1,7 +1,7 @@
 // src/routes/userRoutes.js
 const express = require('express');
 const router = express.Router();
-const { create, list, updateUser, deleteUser, googleAuth, googleAuthRequest, forgot_password, reset_password, toggleBan, login,assignAccountant,getUsersByRole  } = require('../controllers/userController');
+const { create, list, updateUser, deleteUser, googleAuth, googleAuthRequest, forgot_password, reset_password, toggleBan, login,assignAccountant,getUsersByRole,search,removeAssignment  } = require('../controllers/userController');
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -117,4 +117,35 @@ router.get("/me", authenticate, async (req, res) => {
     if (!user) return res.status(404).json({ message: "User not found" });
     res.json(user);
 });
+
+// 📌 Rechercher des utilisateurs par requête (nom, email, etc.)
+router.get('/search', authenticate, async (req, res) => {
+    const { query } = req.query; // 'query' is the search term sent from the client
+  
+    if (!query) {
+      return res.status(400).json({ message: 'Search query is required' });
+    }
+  
+    try {
+      // Search users by name or email (you can add more fields here as needed)
+      const users = await User.find({
+        $or: [
+          { fullName: { $regex: query, $options: 'i' } },
+          { email: { $regex: query, $options: 'i' } }
+        ]
+      });
+  
+      if (users.length === 0) {
+        return res.status(404).json({ message: 'No users found' });
+      }
+  
+      res.status(200).json({ users });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  });
+  router.get('/search', authenticate,search);
+  router.post('/removeAssignment', authenticate, removeAssignment);
+
 module.exports = router;

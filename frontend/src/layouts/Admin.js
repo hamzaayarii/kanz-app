@@ -4,6 +4,7 @@ import { Container } from 'reactstrap';
 import AdminNavbar from 'components/Navbars/AdminNavbar.js';
 import AdminFooter from 'components/Footers/AdminFooter.js';
 import Sidebar from 'components/Sidebar/Sidebar.js';
+import ChatWindow from 'components/chat/ChatWindow.jsx'; // Import the ChatWindow component
 import routes from 'routes.js';
 
 const Admin = (props) => {
@@ -54,6 +55,9 @@ const Admin = (props) => {
         <Container fluid>
           <AdminFooter />
         </Container>
+        
+        {/* Add the ChatWindow component here */}
+        {isAuthenticated && <ChatWindow />}
       </div>
     </>
   );

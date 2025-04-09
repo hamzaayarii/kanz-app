@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const http = require('http');
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 const dbConfig = require('./config/db.json'); // MongoDB connection config
@@ -22,6 +23,11 @@ const journalRoutes = require('./routes/journalRoutes');
 const dailyRevenueRoutes = require('./routes/dailyRevenueRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const app = express();
+const initializeSocket = require('./middlewares/socketHandler');
+const server = http.createServer(app);
+const io = initializeSocket(server);
+
+const chatRoutes= require('./routes/chatRoutes.js');
 
 // MongoDB connection
 mongoose.connect(dbConfig.mongodb.url, { useNewUrlParser: true, useUnifiedTopology: true })
@@ -69,7 +75,12 @@ app.get('/api/users/:id', authenticate, async (req, res) => {
     }
 });
 
-
+app.use((req, res, next) => {
+    req.io = io;
+    next();
+  });
+  
+app.use('/api/chat', chatRoutes);
 
 // Base route
 app.get('/', (req, res) => {
@@ -78,6 +89,6 @@ app.get('/', (req, res) => {
 
 // Start the server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
-});
+  });

@@ -6,6 +6,7 @@ import Header from 'components/Headers/Header';
 const AssignAccountant = () => {
     const [accountants, setAccountants] = useState([]);
     const [assigningId, setAssigningId] = useState(null);
+    const [removingId, setRemovingId] = useState(null); // For removing assignment
     const [currentUser, setCurrentUser] = useState(null);
     const [assignedId, setAssignedId] = useState(null);
 
@@ -32,6 +33,7 @@ const AssignAccountant = () => {
         .catch(err => console.error("Error fetching accountants:", err));
     }, [token]);
 
+    // Handle the assignment of an accountant
     const handleAssign = (accountantId) => {
         setAssigningId(accountantId);
 
@@ -40,13 +42,36 @@ const AssignAccountant = () => {
         })
         .then(() => {
             alert("Accountant assigned successfully!");
-            setAssignedId(accountantId); // update the assigned accountant
+            setAssignedId(accountantId); // Update the assigned accountant
         })
         .catch(error => {
             console.error("Error assigning accountant:", error);
             alert("Failed to assign accountant.");
         })
         .finally(() => setAssigningId(null));
+    };
+
+    // Handle removing the assignment of an accountant
+    const handleRemoveAssignment = () => {
+        if (!assignedId) {
+            alert("No accountant assigned to your business.");
+            return;
+        }
+
+        setRemovingId(assignedId);
+
+        axios.post("http://localhost:5000/api/users/removeAssignment", { accountantId: assignedId }, {
+            headers: { Authorization: `Bearer ${token}` }
+        })
+        .then(() => {
+            alert("Accountant unassigned successfully!");
+            setAssignedId(null); // Update the assigned accountant to null
+        })
+        .catch(error => {
+            console.error("Error removing assignment:", error);
+            alert("Failed to remove accountant assignment.");
+        })
+        .finally(() => setRemovingId(null));
     };
 
     // Show nothing if user is not a business owner
@@ -82,7 +107,17 @@ const AssignAccountant = () => {
                                             <td>{acc.email}</td>
                                             <td>
                                                 {assignedId === acc._id ? (
-                                                    <span className="text-success fw-bold">Assigned</span>
+                                                    <>
+                                                        <span className="text-success fw-bold">Assigned</span>
+                                                        <Button
+                                                            color="danger"
+                                                            size="sm"
+                                                            onClick={handleRemoveAssignment}
+                                                            disabled={removingId === acc._id}
+                                                        >
+                                                            {removingId === acc._id ? <Spinner size="sm" /> : "Remove Assignment"}
+                                                        </Button>
+                                                    </>
                                                 ) : (
                                                     <Button
                                                         color="primary"
