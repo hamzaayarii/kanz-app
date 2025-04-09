@@ -25,6 +25,7 @@ import BusinessRegistrationPage from './views/buisness/BusinessRegistrationPage.
 import BusinessManagement from './views/buisness/BusinessManagement.js';
 import AssignAccountant from './views/accountant/AssignAccountant.js';
 import DailyRevenue from './views/examples/DailyRevenue';
+import DailyRevenueList from './views/examples/DailyRevenueList';
 import Categories from "./views/examples/Categories";
 
 // Grouped and enhanced routes for better UX
@@ -49,6 +50,16 @@ const routes = [
     layout: '/admin',
     category: 'Overview',
     showInSidebar: () => true, // Both BO and accountant should see revenue
+  },
+  {
+    path: '/daily-revenue-list',
+    name: 'Earnings History',
+    icon: 'ni ni-chart-pie-35 text-info',
+    description: 'View all daily revenue entries',
+    component: <AuthRoute><DailyRevenueList /></AuthRoute>,
+    layout: '/admin',
+    category: 'Overview',
+    showInSidebar: () => true, // Both BO and accountant should see revenue history
   },
 
   // Financial Management
