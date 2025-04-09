@@ -91,6 +91,7 @@ const Register = () => {
         window.addEventListener("message", (event) => {
           if (event.origin !== "http://127.0.0.1:5000") return; // Security check
           localStorage.setItem("authToken", event.data.token);
+          localStorage.setItem('user', JSON.stringify(event.data.user));
           navigate('/admin/index');
         }, { once: true });
       } else {
