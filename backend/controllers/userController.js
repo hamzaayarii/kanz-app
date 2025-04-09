@@ -134,16 +134,31 @@ export const create = async (req, res) => {
 export const updateUser = async (req, res) => {
     try {
         const userId = req.params.id;
-        const updateData = req.body;
+        const { currentPassword, newPassword, ...updateData } = req.body;
 
         // Validate required fields
         if (!userId) {
             return res.status(400).json({ message: "User ID is required" });
         }
 
-        // Hash password if provided
-        if (updateData.password) {
-            const hashedPassword = await bcrypt.hash(updateData.password, 10);
+        // Get current user data
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        // Handle password update if requested
+        if (newPassword && currentPassword) {
+            // Verify current password
+            const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
+            if (!isPasswordValid) {
+                return res.status(400).json({
+                    message: "Current password is incorrect"
+                });
+            }
+
+            // Hash new password
+            const hashedPassword = await bcrypt.hash(newPassword, 10);
             updateData.password = hashedPassword;
         }
 
@@ -153,10 +168,6 @@ export const updateUser = async (req, res) => {
             updateData,
             { new: true, runValidators: true }
         );
-
-        if (!updatedUser) {
-            return res.status(404).json({ message: "User not found" });
-        }
 
         // Exclude sensitive fields from the response
         const sanitizedUser = updatedUser.toObject();
@@ -345,10 +356,48 @@ export const googleAuth = async (req, res) => {
             });
             await user.save();
         }
-        user.token = jwt.sign({ id: user._id, email: user.email }, SECRET_KEY, { expiresIn: JWT_EXPIRES_IN });
+        const token = jwt.sign(
+            {
+                _id: user._id,
+                email: user.email,
+                role: user.role,
+                isBanned: user.isBanned
+            },
+            process.env.SECRET_KEY,
+            { expiresIn: process.env.JWT_EXPIRES_IN || '1h' }
+        );
+
+        console.log('Token generated:', token);
+
+        // 🔹 Store token in a **secure** HTTP-only cookie
+
+        res.cookie('token', token, {
+            httpOnly: true, // Prevents access via JavaScript (for security)
+            secure: process.env.NODE_ENV === 'production', // Only use `secure` in production (HTTPS)
+            sameSite: 'strict', // Helps prevent CSRF attacks
+            maxAge: 60 * 60 * 1000 // 1 hour expiration
+        });
+
+        const loggedUser = {
+            success: true,
+            message: "Login successful",
+            token,
+            user: {
+                _id: user._id,
+                fullName: user.fullName,
+                email: user.email,
+                phoneNumber: user.phoneNumber,
+                governorate: user.governorate,
+                avatar: user.avatar,
+                gender: user.gender,
+                createdAt: user.createdAt,
+                role: user.role,
+                isBanned: user.isBanned
+            }
+        }
         res.send(`
             <script>
-              window.opener.postMessage(${JSON.stringify(user)}, "http://localhost:3000");
+              window.opener.postMessage(${JSON.stringify(loggedUser)}, "http://localhost:3000");
               window.close();
             </script>
         `);
