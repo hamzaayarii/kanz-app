@@ -475,15 +475,19 @@ export const search= async (req, res) => {
     }
   };
 
-  export const removeAssignment=  async (req, res) => {
+  export const removeAssignment= async (req, res) => {
     const { accountantId } = req.body;
-    const userId = req.user._id; // Assuming you have middleware to get the logged-in user
+    const userId = req.user._id; // Assuming authenticate middleware adds the user info
 
     try {
         const user = await User.findById(userId);
         if (!user) return res.status(404).send("User not found");
 
-        if (user.assignedTo !== accountantId) {
+        if (!user.assignedTo) {
+            return res.status(400).send("No accountant assigned to your business");
+        }
+
+        if (user.assignedTo.toString() !== accountantId) {
             return res.status(400).send("This accountant is not assigned to your business");
         }
 
@@ -495,4 +499,4 @@ export const search= async (req, res) => {
         console.error("Error removing assignment:", err);
         res.status(500).send("Server error");
     }
-}
+};
