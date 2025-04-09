@@ -8,7 +8,6 @@ const userRoutes = require('./routes/userRoutes'); // User routes
 const User = require('./models/User'); // Import the User model
 const purchaseRoutes = require('./routes/purchaseRoutes');
 const productRoutes = require('./routes/productRoutes'); // Product routes
-const salesReceiptsRoutes = require('./routes/salesReceipts'); // Sales Receipts routes
 const invoiceRoutes = require('./routes/invoiceRoutes');
 const Product = require('./models/Product'); // Import the Product model
 const expenseRoutes = require('./routes/expenseRoutes');
@@ -46,7 +45,6 @@ app.use(cookieParser());
 // Routes
 app.use('/api/users', userRoutes);  // User routes
 app.use('/api/products', productRoutes);  // Products routes
-app.use('/api/salesReceipts', salesReceiptsRoutes);  // Sales Receipts routes
 app.use('/api/purchases', purchaseRoutes);
 app.use('/api/invoices', invoiceRoutes);
 app.use('/api/invoices1', invoice1Routes);
