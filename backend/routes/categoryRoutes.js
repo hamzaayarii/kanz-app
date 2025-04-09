@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const Category = require('../models/Category');
+const {authorizeAdmin, authenticate} = require("../middlewares/authMiddleware");
 
 // Create a new category
-router.post('/', async (req, res) => {
+router.post('/', authenticate, authorizeAdmin, async (req, res) => {
     const { name } = req.body;
     if (!name) {
         return res.status(400).json({ error: 'Category name is required' });
@@ -20,7 +21,7 @@ router.post('/', async (req, res) => {
 });
 
 // Get all categories
-router.get('/', async (req, res) => {
+router.get('/', authenticate,async (req, res) => {
     try {
         const categories = await Category.find();
         res.json(categories);
@@ -31,7 +32,7 @@ router.get('/', async (req, res) => {
 });
 
 // Update a category
-router.put('/:id', async (req, res) => {
+router.put('/:id',  authenticate,authorizeAdmin, async (req, res) => {
     const { name } = req.body;
 
     try {
@@ -49,7 +50,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // Delete a category
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authenticate, authorizeAdmin, async (req, res) => {
     try {
         const category = await Category.findByIdAndDelete(req.params.id);
         if (!category) return res.status(404).json({ error: 'Category not found' });
