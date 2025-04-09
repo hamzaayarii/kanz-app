@@ -309,6 +309,7 @@ const TaxReportsList = () => {
                     <Form>
                         <FormGroup>
                             <Label style={{ fontSize: '14px', color: '#555', fontWeight: '500' }}>Year</Label>
+                            <Label style={{ fontSize: '14px', color: '#555', fontWeight: '500' }}>Year</Label>
                             <Input
                                 type="number"
                                 name="year"
@@ -408,6 +409,7 @@ const TaxReportsList = () => {
                 </ModalFooter>
             </Modal>
         </div>
+        
     );
 };
 
