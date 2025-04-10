@@ -64,23 +64,73 @@ router.get('/generate-financial-statement', authenticate, async (req, res) => {
         const writeStream = fs.createWriteStream(filePath);
         doc.pipe(writeStream);
 
-        doc.fontSize(18).text('Financial Statement', { align: 'center' });
-        doc.moveDown();
+        // Add header
+        doc.fontSize(18).font('Helvetica-Bold').text('Financial Statement', { align: 'center' });
+        doc.moveDown(1);
 
-        doc.fontSize(14).text(`Business ID: ${businessId}`);
-        doc.text(`Period: ${from} to ${to}`);
-        doc.text(`Total Revenue: ${totalRevenue} USD`);
-        doc.text(`Total Expenses: ${totalExpenses} USD`);
-        doc.text(`Profit/Loss: ${profitLoss} USD`);
-        doc.moveDown().text('---');
+        // Business Info Section
+        doc.fontSize(12).text(`Business ID: ${businessId}`, { align: 'center' });
+        doc.text(`Period: ${from} to ${to}`, { align: 'center' });
+        doc.moveDown(2);
 
+        // Financial Overview Section
+        doc.fontSize(14).font('Helvetica-Bold').text('Financial Overview', { underline: true });
+        doc.moveDown(0.5);
+
+        // Financial Table
+        const tableStartX = 50;
+        let tableStartY = doc.y;
+
+        // Add Column Titles
+        doc.fontSize(12).font('Helvetica').text('Description', tableStartX, tableStartY);
+        doc.text('Amount (USD)', tableStartX + 300, tableStartY);
+        tableStartY += 20;
+
+        // Add Data Rows
+        doc.text('Total Revenue', tableStartX, tableStartY);
+        doc.text(`${totalRevenue} USD`, tableStartX + 300, tableStartY);
+        tableStartY += 20;
+
+        doc.text('Total Expenses', tableStartX, tableStartY);
+        doc.text(`${totalExpenses} USD`, tableStartX + 300, tableStartY);
+        tableStartY += 20;
+
+        doc.text('Profit/Loss', tableStartX, tableStartY);
+        doc.text(`${profitLoss} USD`, tableStartX + 300, tableStartY);
+        tableStartY += 30; // add some space after financial overview section
+
+        doc.moveDown(1).text('---');
+
+        // Tax Report Section
+        doc.fontSize(14).font('Helvetica-Bold').text('Tax Reports', { underline: true });
+        doc.moveDown(0.5);
+
+        // Add Column Titles for Tax Reports
+        const taxTableStartX = 50;
+        let taxTableStartY = doc.y;
+        doc.text('Year', taxTableStartX, taxTableStartY);
+        doc.text('Income (USD)', taxTableStartX + 100, taxTableStartY);
+        doc.text('Expenses (USD)', taxTableStartX + 250, taxTableStartY);
+        doc.text('Calculated Tax (USD)', taxTableStartX + 400, taxTableStartY);
+        taxTableStartY += 20;
+
+        // Add Tax Report Rows
         taxReports.forEach((report) => {
-            doc.text(`Tax Report - Year: ${report.year}`);
-            doc.text(`Income: ${report.income} USD`);
-            doc.text(`Expenses: ${report.expenses} USD`);
-            doc.text(`Calculated Tax: ${report.calculatedTax} USD`);
-            doc.moveDown().text('---');
+            doc.text(report.year, taxTableStartX, taxTableStartY);
+            doc.text(`${report.income} USD`, taxTableStartX + 100, taxTableStartY);
+            doc.text(`${report.expenses} USD`, taxTableStartX + 250, taxTableStartY);
+            doc.text(`${report.calculatedTax} USD`, taxTableStartX + 400, taxTableStartY);
+            taxTableStartY += 20;
         });
+
+        const footerYPosition = 750;
+        if (doc.y > footerYPosition - 20) {
+            doc.addPage();
+        }
+
+        // Footer
+        doc.fontSize(8).text('Generated on: ' + new Date().toLocaleDateString(), 50, 750, { align: 'left' });
+        doc.text('Page 1 of 1', 450, 750, { align: 'right' });
 
         doc.end();
 
@@ -96,7 +146,6 @@ router.get('/generate-financial-statement', authenticate, async (req, res) => {
                 fileName,
                 createdAt: new Date(),
             });
-
 
             await statement.save();
 
