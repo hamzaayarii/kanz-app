@@ -188,10 +188,10 @@ const InvoiceList = () => {
                         textAlign: 'center'
                     }}>
                         <h2 style={{ fontSize: '36px', fontWeight: 'bold', margin: '0' }}>
-                            Liste des Factures
+                            List of Invoices
                         </h2>
                         <p style={{ margin: '10px 0 0', fontSize: '18px', opacity: '0.9' }}>
-                            Visualisez et gérez toutes vos factures
+                            View and manage all your invoices
                         </p>
                     </div>
 
@@ -199,7 +199,7 @@ const InvoiceList = () => {
                         <div style={{ marginBottom: '20px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                             <input
                                 type="text"
-                                placeholder="Rechercher par client ou numéro..."
+                                placeholder="Search by customer or number..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 style={{
@@ -216,15 +216,15 @@ const InvoiceList = () => {
                                 style={{ padding: '10px', borderRadius: '5px' }}
                             >
                                 <option value="invoiceDate">Date</option>
-                                <option value="customerName">Client</option>
-                                <option value="total">Montant</option>
+                                <option value="customerName">Customer</option>
+                                <option value="total">Amount</option>
                             </select>
                             <select
                                 value={sortOrder}
                                 onChange={(e) => setSortOrder(e.target.value)}
                                 style={{ padding: '10px', borderRadius: '5px' }}
                             >
-                                <option value="desc">Décroissant</option>
+                                <option value="desc">Descending</option>
                                 <option value="asc">Croissant</option>
                             </select>
                         </div>
@@ -245,12 +245,12 @@ const InvoiceList = () => {
                                         cursor: 'pointer'
                                     }}
                                 >
-                                    Réessayer
+                                    Try again
                                 </button>
                             </p>
                         ) : filteredInvoices.length === 0 ? (
                             <p style={{ textAlign: 'center', fontSize: '18px', color: '#666' }}>
-                                Aucune facture trouvée
+                                No invoices found
                             </p>
                         ) : (
                             <>
@@ -306,7 +306,7 @@ const InvoiceList = () => {
                                                     onMouseEnter={(e) => !loading && (e.target.style.transform = 'scale(1.05)')}
                                                     onMouseLeave={(e) => !loading && (e.target.style.transform = 'scale(1)')}
                                                 >
-                                                    Télécharger PDF
+                                                    Download PDF
                                                 </button>
                                                 <button
                                                     onClick={() => deleteInvoice(invoice._id)}
@@ -326,7 +326,7 @@ const InvoiceList = () => {
                                                     onMouseEnter={(e) => !loading && (e.target.style.transform = 'scale(1.05)')}
                                                     onMouseLeave={(e) => !loading && (e.target.style.transform = 'scale(1)')}
                                                 >
-                                                    Supprimer
+                                                    DELETE
                                                 </button>
                                             </div>
                                         </div>

@@ -1,83 +1,261 @@
+/* Modern container with centered content */
 .container {
-    padding: 20px;
-    max-width: 900px;
+    padding: 30px;
+    max-width: 1000px;
     margin: 0 auto;
+    background: linear-gradient(135deg, #f5f7fa 0%, #e4e7eb 100%);
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    min-height: 100vh;
 }
 
+/* Stylish title with gradient text */
 .title {
     text-align: center;
-    margin-bottom: 20px;
+    margin-bottom: 30px;
+    font-size: 2.5rem;
+    font-weight: 700;
+    background: linear-gradient(45deg, #007bff, #00d4ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
+/* Alerts with smooth transitions */
 .alert {
     margin-bottom: 20px;
+    border-radius: 8px;
+    padding: 15px;
+    font-weight: 500;
+    transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
+/* Spinner with modern animation */
 .spinner {
     text-align: center;
-    margin: 20px 0;
+    margin: 30px 0;
+    font-size: 1.2rem;
+    color: #007bff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
 }
 
+/* Card with hover effect */
 .card {
-    margin-bottom: 20px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+    border: none;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+/* Card title with modern styling */
 .cardTitle {
-    padding: 10px;
-    background-color: #f8f9fa;
-    border-bottom: 1px solid #dee2e6;
-}
-
-.form {
     padding: 15px;
+    background: #007bff;
+    color: white;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    font-size: 1.5rem;
+    font-weight: 600;
 }
 
+/* Form styling with consistent spacing */
+.form {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* Form field with modern input styling */
 .field {
-    margin-bottom: 15px;
+    margin-bottom: 20px;
 }
 
+.field label {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.field input,
+.field select {
+    border-radius: 8px;
+    border: 1px solid #d1d3e2;
+    padding: 12px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.field input:focus,
+.field select:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 8px rgba(0, 123, 255, 0.2);
+    outline: none;
+}
+
+/* Button group with responsive layout */
 .buttonGroup {
     display: flex;
-    gap: 10px;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+/* Modern buttons with hover effects */
+.buttonGroup button,
+.form button {
+    border-radius: 8px;
+    padding: 12px 24px;
+    font-weight: 600;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.buttonGroup button:hover,
+.form button:hover {
+    transform: translateY(-2px);
 }
 
 .cancelButton {
-    margin-left: 10px;
+    background: #6c757d;
+    color: white;
 }
 
+.cancelButton:hover {
+    background: #5a6268;
+}
+
+/* CNSS Declaration Section */
 .cnssDeclaration {
-    margin-top: 20px;
+    margin-top: 25px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #007bff;
 }
 
 .cnssEmployee {
-    border-bottom: 1px solid #eee;
-    padding: 10px 0;
+    border-bottom: 1px solid #e9ecef;
+    padding: 15px 0;
+    font-size: 0.95rem;
 }
 
+.cnssEmployee p {
+    margin: 5px 0;
+}
+
+/* Payroll List */
 .payrollList {
-    margin-top: 30px;
+    margin-top: 40px;
 }
 
 .subtitle {
-    margin-bottom: 15px;
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 20px;
 }
 
+/* Payroll Card with grid layout */
 .payrollCard {
-    margin-bottom: 15px;
+    margin-bottom: 20px;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transition: transform 0.3s ease;
 }
 
-.payrollInfo {
-    flex: 1;
+.payrollCard:hover {
+    transform: translateY(-5px);
 }
 
+/* Payroll Info and Actions in a grid */
+.payrollCard > div {
+    display: grid;
+    grid-template-columns: 3fr 1fr;
+    gap: 20px;
+    padding: 20px;
+}
+
+.payrollInfo p {
+    margin: 8px 0;
+    font-size: 0.95rem;
+}
+
+.payrollInfo p strong {
+    color: #333;
+}
+
+/* Payroll Actions */
 .payrollActions {
     display: flex;
+    flex-direction: column;
     gap: 10px;
+    align-items: flex-end;
 }
 
-.editButton, .deleteButton {
+.editButton,
+.deleteButton {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 8px;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-weight: 500;
+    width: 100%;
+    justify-content: center;
+}
+
+.editButton {
+    background: #28a745;
+    color: white;
+}
+
+.editButton:hover {
+    background: #218838;
+}
+
+.deleteButton {
+    background: #dc3545;
+    color: white;
+}
+
+.deleteButton:hover {
+    background: #c82333;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .container {
+        padding: 20px;
+    }
+
+    .title {
+        font-size: 2rem;
+    }
+
+    .cardTitle {
+        font-size: 1.3rem;
+    }
+
+    .payrollCard > div {
+        grid-template-columns: 1fr;
+    }
+
+    .payrollActions {
+        flex-direction: row;
+        justify-content: flex-start;
+    }
+
+    .buttonGroup {
+        flex-direction: column;
+    }
 }

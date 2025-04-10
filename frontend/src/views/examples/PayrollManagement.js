@@ -13,11 +13,11 @@ const PATTERNS = {
 
 // Messages d'erreur personnalisés
 const ERROR_MESSAGES = {
-    required: 'Ce champ est requis',
-    invalidPeriod: 'Format attendu : YYYY-MM (ex: 2025-04)',
-    invalidEmployee: 'Veuillez sélectionner un employé valide',
-    futurePeriod: 'La période ne peut pas être dans le futur',
-    pastLimit: 'La période ne peut pas être antérieure à 2000',
+    required: 'This field is required',
+    invalidPeriod: 'Expected format: YYYY-MM (e.g., 2025-04)',
+    invalidEmployee: 'Please select a valid employee',
+    futurePeriod: 'Period cannot be in the future',
+    pastLimit: 'Period cannot be earlier than 2000',
 };
 
 const PayrollManagement = () => {
@@ -174,8 +174,7 @@ const PayrollManagement = () => {
     };
 
     const handleDeletePayroll = async (id) => {
-        if (!window.confirm('Êtes-vous sûr de vouloir supprimer cette paie ?')) return;
-        setLoading(prev => ({ ...prev, submit: true }));
+        if (!window.confirm('Are you sure you want to delete this payroll?')) return;        setLoading(prev => ({ ...prev, submit: true }));
         setError('');
         setSuccess('');
         try {
@@ -218,24 +217,24 @@ const PayrollManagement = () => {
 
     return (
         <div className={styles.container}>
-            <h2 className={styles.title}><FaMoneyCheckAlt /> Centre de Paie</h2>
-            {error && <Alert color="danger" className={styles.alert}>{error}</Alert>}
+            <h2 className={styles.title}><FaMoneyCheckAlt/> Payroll Center</h2>            {error &&
+            <Alert color="danger" className={styles.alert}>{error}</Alert>}
             {success && <Alert color="success" className={styles.alert}>{success}</Alert>}
             {(loading.fetch || loading.submit) && (
                 <div className={styles.spinner}>
-                    <FaSpinner className="fa-spin" /> Chargement...
+                    <FaSpinner className="fa-spin" /> Loading...
                 </div>
             )}
 
             {/* Formulaire de paie */}
             <Card className={styles.card}>
                 <CardTitle tag="h3" className={styles.cardTitle}>
-                    {editPayroll ? 'Modifier la Paie' : 'Générer une Paie'}
+                    {editPayroll ? 'Edit Payroll' : 'Generate Payroll'}
                 </CardTitle>
                 <CardBody>
                     <FormGroup className={styles.form}>
                         <FormGroup className={styles.field}>
-                            <Label>Employé</Label>
+                            <Label>Employee</Label>
                             <Input
                                 type="select"
                                 name="employeeId"
@@ -245,7 +244,7 @@ const PayrollManagement = () => {
                                 invalid={!!formErrors.employeeId}
                                 required
                             >
-                                <option value="">Sélectionnez un employé</option>
+                                <option value="">Select an employee</option>
                                 {employees.map(employee => (
                                     <option key={employee._id} value={employee._id}>
                                         {employee.firstName} {employee.lastName}
@@ -256,7 +255,7 @@ const PayrollManagement = () => {
                         </FormGroup>
 
                         <FormGroup className={styles.field}>
-                            <Label>Période (YYYY-MM)</Label>
+                            <Label>Period (YYYY-MM)</Label>
                             <Input
                                 type="month"
                                 name="period"
@@ -276,20 +275,21 @@ const PayrollManagement = () => {
                                 onClick={() => handleSubmit(!!editPayroll)}
                                 disabled={loading.submit || Object.values(formErrors).some(err => !!err)}
                             >
-                                {loading.submit ? <FaSpinner className="fa-spin" /> : editPayroll ? 'Mettre à jour' : 'Générer'}
+                                {loading.submit ?
+                                    <FaSpinner className="fa-spin"/> : editPayroll ? 'Update' : 'Generate'}
                             </Button>
                             {editPayroll && (
                                 <Button
                                     color="secondary"
                                     onClick={() => {
                                         setEditPayroll(null);
-                                        setFormData({ employeeId: '', period: '' });
-                                        setFormErrors({ employeeId: '', period: '' });
+                                        setFormData({employeeId: '', period: ''});
+                                        setFormErrors({employeeId: '', period: ''});
                                     }}
                                     disabled={loading.submit}
                                     className={styles.cancelButton}
                                 >
-                                    Annuler
+                                    Cancel
                                 </Button>
                             )}
                         </div>
@@ -300,12 +300,12 @@ const PayrollManagement = () => {
             {/* Déclaration CNSS */}
             <Card className={styles.card}>
                 <CardTitle tag="h3" className={styles.cardTitle}>
-                    <FaFileInvoice /> Générer une Déclaration CNSS
+                    <FaFileInvoice/> Generate CNSS Declaration
                 </CardTitle>
                 <CardBody>
                     <div className={styles.form}>
                         <FormGroup className={styles.field}>
-                            <Label>Période (YYYY-MM)</Label>
+                            <Label>Period (YYYY-MM)</Label>
                             <Input
                                 type="month"
                                 value={cnssPeriod}
@@ -322,19 +322,19 @@ const PayrollManagement = () => {
                             onClick={handleGenerateCnssDeclaration}
                             disabled={loading.submit || !!cnssPeriodError}
                         >
-                            {loading.submit ? <FaSpinner className="fa-spin" /> : 'Générer la Déclaration CNSS'}
+                            {loading.submit ? <FaSpinner className="fa-spin"/> : 'Generate CNSS Declaration'}
                         </Button>
                     </div>
                     {cnssDeclaration && (
                         <div className={styles.cnssDeclaration}>
-                            <h4>Déclaration CNSS ({cnssDeclaration.period})</h4>
+                            <h4>CNSS Declaration ({cnssDeclaration.period})</h4>
                             <p><strong>Total CNSS:</strong> {cnssDeclaration.totalCnss.toFixed(2)} TND</p>
-                            <h5>Employés:</h5>
+                            <h5>Employees:</h5>
                             {cnssDeclaration.employees.map(emp => (
                                 <div key={emp.employeeId} className={styles.cnssEmployee}>
-                                    <p><strong>Nom:</strong> {emp.employeeName}</p>
-                                    <p><strong>Salaire brut:</strong> {emp.grossSalary.toFixed(2)} TND</p>
-                                    <p><strong>Contribution CNSS:</strong> {emp.cnssContribution.toFixed(2)} TND</p>
+                                    <p><strong>Name:</strong> {emp.employeeName}</p>
+                                    <p><strong>Gross Salary:</strong> {emp.grossSalary.toFixed(2)} TND</p>
+                                    <p><strong>CNSS Contribution:</strong> {emp.cnssContribution.toFixed(2)} TND</p>
                                 </div>
                             ))}
                         </div>
@@ -344,21 +344,26 @@ const PayrollManagement = () => {
 
             {/* Liste des paies */}
             <div className={styles.payrollList}>
-                <h3 className={styles.subtitle}>Liste des Paies</h3>
+                <h3 className={styles.subtitle}>Payroll List</h3>
                 {payrolls.length === 0 && !loading.fetch && !error && (
-                    <Alert color="warning">Aucune paie trouvée.</Alert>
+                    <Alert color="warning">No payrolls found.</Alert>
                 )}
                 {payrolls.map(payroll => (
                     <Card key={payroll._id} className={styles.payrollCard}>
                         <CardBody>
                             <div className={styles.payrollInfo}>
-                                <p><strong>Employé:</strong> {payroll.employeeId ? `${payroll.employeeId.firstName} ${payroll.employeeId.lastName}` : 'Inconnu'}</p>
-                                <p><strong>Entreprise:</strong> {payroll.businessId?.name || 'Inconnu'}</p>
-                                <p><strong>Période:</strong> {new Date(payroll.period).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long' })}</p>
-                                <p><strong>Salaire brut:</strong> {payroll.grossSalary.toFixed(2)} TND</p>
-                                <p><strong>Contribution CNSS:</strong> {payroll.cnssContribution.toFixed(2)} TND</p>
+                                <p>
+                                    <strong>Employee:</strong> {payroll.employeeId ? `${payroll.employeeId.firstName} ${payroll.employeeId.lastName}` : 'Unknown'}
+                                </p>
+                                <p><strong>Business:</strong> {payroll.businessId?.name || 'Unknown'}</p>
+                                <p><strong>Period:</strong> {new Date(payroll.period).toLocaleDateString('en-US', {
+                                    year: 'numeric',
+                                    month: 'long'
+                                })}</p>
+                                <p><strong>Gross Salary:</strong> {payroll.grossSalary.toFixed(2)} TND</p>
+                                <p><strong>CNSS Contribution:</strong> {payroll.cnssContribution.toFixed(2)} TND</p>
                                 <p><strong>IRPP:</strong> {payroll.irpp.toFixed(2)} TND</p>
-                                <p><strong>Salaire net:</strong> {payroll.netSalary.toFixed(2)} TND</p>
+                                <p><strong>Net Salary:</strong> {payroll.netSalary.toFixed(2)} TND</p>
                             </div>
                             <div className={styles.payrollActions}>
                                 <Button
@@ -367,7 +372,7 @@ const PayrollManagement = () => {
                                     disabled={loading.submit}
                                     className={styles.editButton}
                                 >
-                                    <FaEdit /> Modifier
+                                    <FaEdit/> Edit
                                 </Button>
                                 <Button
                                     color="danger"
@@ -375,7 +380,7 @@ const PayrollManagement = () => {
                                     disabled={loading.submit}
                                     className={styles.deleteButton}
                                 >
-                                    <FaTrash /> Supprimer
+                                    <FaTrash/> Delete
                                 </Button>
                             </div>
                         </CardBody>

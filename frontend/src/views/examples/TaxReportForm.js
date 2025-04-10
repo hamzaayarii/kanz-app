@@ -129,9 +129,9 @@ const TaxReportForm = () => {
                     borderRadius: '20px 20px 0 0'
                 }}>
                     <h2 style={{ fontSize: '36px', fontWeight: 'bold', margin: '0', textShadow: '2px 2px 4px rgba(0,0,0,0.2)' }}>
-                        Générer un Rapport Fiscal
+                        Generate a Tax Report
                     </h2>
-                    <p style={{ margin: '10px 0 0', fontSize: '18px' }}>Créez votre rapport fiscal facilement</p>
+                    <p style={{ margin: '10px 0 0', fontSize: '18px' }}>Create your tax report easily</p>
                 </div>
 
                 <div style={{ padding: '40px' }}>
@@ -164,7 +164,7 @@ const TaxReportForm = () => {
                     )}
 
                     <FormGroup>
-                        <Label style={{ fontSize: '14px', color: '#555', fontWeight: '500' }}>Revenus (TND)</Label>
+                        <Label style={{ fontSize: '14px', color: '#555', fontWeight: '500' }}>Income(TND)</Label>
                         <Input
                             type="number"
                             name="income"
@@ -175,7 +175,7 @@ const TaxReportForm = () => {
                             required
                             min="0"
                             step="0.01"
-                            placeholder="Entrez vos revenus"
+                            placeholder="Enter your income"
                             style={{
                                 padding: '12px 16px',
                                 border: '2px solid #ddd',
@@ -190,7 +190,7 @@ const TaxReportForm = () => {
                     </FormGroup>
 
                     <FormGroup>
-                        <Label style={{ fontSize: '14px', color: '#555', fontWeight: '500' }}>Dépenses (TND)</Label>
+                        <Label style={{ fontSize: '14px', color: '#555', fontWeight: '500' }}>Expenses(TND)</Label>
                         <Input
                             type="number"
                             name="expenses"
@@ -201,7 +201,7 @@ const TaxReportForm = () => {
                             required
                             min="0"
                             step="0.01"
-                            placeholder="Entrez vos dépenses"
+                            placeholder="Enter your expenses"
                             style={{
                                 padding: '12px 16px',
                                 border: '2px solid #ddd',
@@ -216,7 +216,7 @@ const TaxReportForm = () => {
                     </FormGroup>
 
                     <FormGroup>
-                        <Label style={{ fontSize: '14px', color: '#555', fontWeight: '500' }}>Année</Label>
+                        <Label style={{ fontSize: '14px', color: '#555', fontWeight: '500' }}>Year</Label>
                         <Input
                             type="number"
                             name="year"
@@ -227,7 +227,7 @@ const TaxReportForm = () => {
                             required
                             min="2000"
                             max={currentYear}
-                            placeholder="Entrez l'année"
+                            placeholder="Enter the year"
                             style={{
                                 padding: '12px 16px',
                                 border: '2px solid #ddd',
@@ -261,7 +261,7 @@ const TaxReportForm = () => {
                         onMouseEnter={e => e.target.style.transform = 'scale(1.05)'}
                         onMouseLeave={e => e.target.style.transform = 'scale(1)'}
                     >
-                        {loading ? 'Génération...' : 'Générer le Rapport'}
+                        {loading ? 'Génération...' : 'Generate Report'}
                     </Button>
                 </div>
             </Container>

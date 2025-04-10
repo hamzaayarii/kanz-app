@@ -83,9 +83,13 @@ const Sidebar = (props) => {
   const createLinks = (routes) => {
     return routes
       .filter(route => {
-        // Handle both boolean and function types for showInSidebar
+        // If user is admin, show all routes
+        if (user && user.role === 'admin') {
+          return true;
+        }
+        // For non-admin users, handle both boolean and function types for showInSidebar
         if (typeof route.showInSidebar === 'function') {
-          return route.showInSidebar();
+          return route.showInSidebar(user);
         }
         return route.showInSidebar !== false;
       })

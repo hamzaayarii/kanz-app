@@ -36,4 +36,33 @@ export const isUserAdmin = () => {
   return user && user.role === 'admin' && !user.isBanned;
 };
 
+// Helper function to check if user is business owner
+export const isUserBusinessOwner = () => {
+  const user = getUser();
+  return user && user.role === 'business_owner';
+};
+
+// Helper function to check if user is accountant
+export const isUserAccountant = () => {
+  const user = getUser();
+  return user && user.role === 'accountant';
+};
+
+// Business owner only route
+export const BusinessOwnerRoute = ({ children }) => {
+  const isAuthenticated = !!localStorage.getItem('authToken');
+  const user = getUser();
+  
+  if (!isAuthenticated) {
+    return <Navigate to="/auth/login" />;
+  }
+  
+  // Check if user is business owner
+  if (!user || user.role !== 'business_owner') {
+    return <Navigate to="/admin/index" />;
+  }
+  
+  return children;
+};
+
 export default AuthRoute;

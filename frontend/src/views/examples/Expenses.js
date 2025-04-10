@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Card, Container, Row, Button, Form, FormGroup, Label, Input, Table } from "reactstrap";
+import { useNavigate } from 'react-router-dom';
 
 const Expenses = () => {
     const [expenses, setExpenses] = useState([]);
@@ -9,6 +10,8 @@ const Expenses = () => {
     const [selectedBusiness, setSelectedBusiness] = useState("");
     const [showForm, setShowForm] = useState(false);
     const [editingExpense, setEditingExpense] = useState(null);
+    const [formErrors, setFormErrors] = useState({});
+    const navigate = useNavigate();
 
     const [formData, setFormData] = useState({
         business: "",
@@ -18,10 +21,9 @@ const Expenses = () => {
         tax: "",
         vendor: "",
         reference: "",
-        description: "", // added description for expense
+        description: "",
     });
 
-    // Fetch businesses and categories when the component loads
     useEffect(() => {
         fetchBusinesses();
         fetchCategories();
@@ -35,10 +37,17 @@ const Expenses = () => {
 
     const fetchBusinesses = async () => {
         try {
-            const response = await axios.get("http://localhost:5000/api/businesses");
-            setBusinesses(response.data);
-            if (response.data.length > 0) {
-                setSelectedBusiness(response.data[0]._id);
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                navigate('/auth/login');
+                return;
+            }
+            const response = await axios.get("http://localhost:5000/api/business/buisnessowner", {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            setBusinesses(response.data.businesses);
+            if (response.data.businesses.length > 0) {
+                setSelectedBusiness(response.data.businesses[0]._id);
             }
         } catch (error) {
             console.error("Error fetching businesses", error);
@@ -47,7 +56,14 @@ const Expenses = () => {
 
     const fetchCategories = async () => {
         try {
-            const response = await axios.get("http://localhost:5000/api/categories");
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                navigate('/auth/login');
+                return;
+            }
+            const response = await axios.get("http://localhost:5000/api/categories", {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
             setCategories(response.data);
         } catch (error) {
             console.error("Error fetching categories", error);
@@ -56,11 +72,29 @@ const Expenses = () => {
 
     const fetchExpenses = async (businessId) => {
         try {
-            const response = await axios.get(`http://localhost:5000/api/expenses?business=${businessId}`);
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                navigate('/auth/login');
+                return;
+            }
+            const response = await axios.get(`http://localhost:5000/api/expenses?business=${businessId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
             setExpenses(response.data);
         } catch (error) {
             console.error("Error fetching expenses", error);
         }
+    };
+
+    const validateForm = () => {
+        const errors = {};
+        if (!formData.category) errors.category = "Category is required";
+        if (!formData.date) errors.date = "Date is required";
+        if (!formData.amount || Number(formData.amount) <= 0) errors.amount = "Amount must be greater than 0";
+        if (!formData.tax && formData.tax !== 0) errors.tax = "Tax is required";
+        if (!formData.vendor) errors.vendor = "Vendor is required";
+        if (!formData.reference) errors.reference = "Reference is required";
+        return errors;
     };
 
     const handleChange = (e) => {
@@ -72,6 +106,12 @@ const Expenses = () => {
     // Handle form submission (Create or Update)
     const handleSubmit = async (e) => {
         e.preventDefault();
+        const errors = validateForm();
+        if (Object.keys(errors).length > 0) {
+            setFormErrors(errors);
+            return;
+        }
+
         try {
             if (editingExpense) {
                 await axios.put(`http://localhost:5000/api/expenses/${editingExpense._id}`, formData);
@@ -86,7 +126,8 @@ const Expenses = () => {
     };
 
     const handleEdit = (expense) => {
-        setFormData(expense);
+        const formattedDate = new Date(expense.date).toISOString().split('T')[0];
+        setFormData({ ...expense, date: formattedDate });
         setEditingExpense(expense);
         setShowForm(true);
     };
@@ -105,7 +146,13 @@ const Expenses = () => {
     const resetForm = () => {
         setFormData({ business: "", category: "", date: "", amount: "", tax: "", vendor: "", reference: "", description: "" });
         setEditingExpense(null);
+        setFormErrors({});
         setShowForm(false);
+    };
+
+    const getCategoryName = (categoryId) => {
+        const category = categories.find((cat) => cat._id === categoryId);
+        return category ? category.name : "Unknown Category";
     };
 
     return (
@@ -114,7 +161,6 @@ const Expenses = () => {
                 <Card className="shadow p-4">
                     <h3>Manage Expenses</h3>
 
-                    {/* Business Selector */}
                     <FormGroup>
                         <Label>Select Business</Label>
                         <Input type="select" value={selectedBusiness} onChange={(e) => setSelectedBusiness(e.target.value)}>
@@ -137,6 +183,7 @@ const Expenses = () => {
                                     name="category"
                                     value={formData.category}
                                     onChange={handleChange}
+                                    invalid={!!formErrors.category}
                                     required
                                 >
                                     <option value="">Select a category</option>
@@ -144,26 +191,32 @@ const Expenses = () => {
                                         <option key={category._id} value={category._id}>{category.name}</option>
                                     ))}
                                 </Input>
+                                {formErrors.category && <div className="text-danger">{formErrors.category}</div>}
                             </FormGroup>
                             <FormGroup>
                                 <Label>Date</Label>
-                                <Input type="date" name="date" value={formData.date} onChange={handleChange} required />
+                                <Input type="date" name="date" value={formData.date} onChange={handleChange} invalid={!!formErrors.date} required />
+                                {formErrors.date && <div className="text-danger">{formErrors.date}</div>}
                             </FormGroup>
                             <FormGroup>
                                 <Label>Amount</Label>
-                                <Input type="number" name="amount" value={formData.amount} onChange={handleChange} required />
+                                <Input type="number" name="amount" value={formData.amount} onChange={handleChange} invalid={!!formErrors.amount} required />
+                                {formErrors.amount && <div className="text-danger">{formErrors.amount}</div>}
                             </FormGroup>
                             <FormGroup>
                                 <Label>Tax</Label>
-                                <Input type="number" name="tax" value={formData.tax} onChange={handleChange} required />
+                                <Input type="number" name="tax" value={formData.tax} onChange={handleChange} invalid={!!formErrors.tax} required />
+                                {formErrors.tax && <div className="text-danger">{formErrors.tax}</div>}
                             </FormGroup>
                             <FormGroup>
                                 <Label>Vendor</Label>
-                                <Input type="text" name="vendor" value={formData.vendor} onChange={handleChange} required />
+                                <Input type="text" name="vendor" value={formData.vendor} onChange={handleChange} invalid={!!formErrors.vendor} required />
+                                {formErrors.vendor && <div className="text-danger">{formErrors.vendor}</div>}
                             </FormGroup>
                             <FormGroup>
                                 <Label>Reference</Label>
-                                <Input type="text" name="reference" value={formData.reference} onChange={handleChange} required />
+                                <Input type="text" name="reference" value={formData.reference} onChange={handleChange} invalid={!!formErrors.reference} required />
+                                {formErrors.reference && <div className="text-danger">{formErrors.reference}</div>}
                             </FormGroup>
                             <FormGroup>
                                 <Label>Description</Label>
@@ -194,7 +247,7 @@ const Expenses = () => {
                         {expenses.length > 0 ? (
                             expenses.map((expense) => (
                                 <tr key={expense._id}>
-                                    <td>{expense.category}</td>
+                                    <td>{getCategoryName(expense.category)}</td>
                                     <td>{new Date(expense.date).toLocaleDateString()}</td>
                                     <td>${expense.amount}</td>
                                     <td>${expense.tax}</td>
@@ -221,5 +274,6 @@ const Expenses = () => {
 };
 
 export default Expenses;
+
 
 

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useForm, useFieldArray } from 'react-hook-form';
-import { Alert } from 'reactstrap';
+import { Alert, Modal, ModalHeader, ModalBody, Input, Table, Spinner } from 'reactstrap';
+import { FaSearch } from 'react-icons/fa';
 import styles from '../../assets/css/CreateInvoice.module.css';
 
 const CreateInvoice = () => {
@@ -10,6 +11,10 @@ const CreateInvoice = () => {
     const [success, setSuccess] = useState('');
     const [businesses, setBusinesses] = useState([]);
     const [selectedBusiness, setSelectedBusiness] = useState(null);
+    const [itemModal, setItemModal] = useState(false);
+    const [items, setItems] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [loadingItems, setLoadingItems] = useState(false);
 
     const { register, control, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm({
         defaultValues: {
@@ -42,7 +47,7 @@ const CreateInvoice = () => {
             try {
                 const token = localStorage.getItem('authToken');
                 console.log('FetchBusinesses - Token:', token); // Debug token
-                if (!token) throw new Error('Vous devez être connecté pour récupérer les sociétés');
+                if (!token) throw new Error('You must be logged in to retrieve companies');
 
                 const response = await axios.get('http://localhost:5000/api/business/buisnessowner', {
                     headers: { Authorization: `Bearer ${token}` },
@@ -55,7 +60,7 @@ const CreateInvoice = () => {
                     setValue('businessId', response.data.businesses[0]._id);
                 }
             } catch (err) {
-                setError(err.response?.data?.message || 'Erreur lors de la récupération des sociétés');
+                setError(err.response?.data?.message || 'Error retrieving companies');
                 console.error('FetchBusinesses - Error:', err.response?.data || err); // Debug error
             }
         };
@@ -67,6 +72,41 @@ const CreateInvoice = () => {
         const business = businesses.find(b => b._id === watchBusinessId);
         setSelectedBusiness(business || null);
     }, [watchBusinessId, businesses]);
+
+    const fetchItems = async (search = '') => {
+        try {
+            setLoadingItems(true);
+            const response = await axios.get(`http://localhost:5000/api/products`, {
+                params: { search }
+            });
+            if (Array.isArray(response.data)) {
+                setItems(response.data);
+            } else if (response.data.products) {
+                setItems(response.data.products);
+            }
+        } catch (error) {
+            console.error('Error fetching items:', error);
+            setError('Failed to load items');
+        } finally {
+            setLoadingItems(false);
+        }
+    };
+
+    const handleSearchChange = (e) => {
+        setSearchTerm(e.target.value);
+        fetchItems(e.target.value);
+    };
+
+    const handleItemSelect = (item) => {
+        const newItem = {
+            itemDetails: item.name,
+            quantity: 1,
+            rate: item.salesInfo.sellingPrice,
+            taxPercentage: item.salesInfo.tax
+        };
+        append(newItem);
+        setItemModal(false);
+    };
 
     const calculateAmount = (item) => {
         const qty = Number(item.quantity) || 0;
@@ -138,7 +178,7 @@ const CreateInvoice = () => {
             return;
         }
         if (!watchBusinessId) {
-            setError('Veuillez sélectionner une société avant d\'uploader un document');
+            setError('Please select a company before uploading a document');
             return;
         }
 
@@ -149,7 +189,7 @@ const CreateInvoice = () => {
         try {
             const token = localStorage.getItem('authToken');
             if (!token) {
-                throw new Error('Vous devez être connecté pour extraire des données');
+                throw new Error('You must be logged in to retrieve data');
             }
 
             const formData = new FormData();
@@ -176,7 +216,7 @@ const CreateInvoice = () => {
             console.log('Extracted invoiceData:', invoiceData);
 
             if (!invoiceData.items || !Array.isArray(invoiceData.items)) {
-                throw new Error('Les données des articles sont invalides');
+                throw new Error('The item data is invalid');
             }
 
             const calculatedSubTotal = invoiceData.items.reduce((sum, item) => {
@@ -213,9 +253,9 @@ const CreateInvoice = () => {
                 items: cleanedItems.length > 0 ? cleanedItems : [{ itemDetails: '', quantity: 1, rate: 0, taxPercentage: 0 }]
             });
 
-            setSuccess('Informations extraites avec succès');
+            setSuccess('Information successfully extracted');
         } catch (err) {
-            let errorMessage = 'Erreur lors de l\'extraction des données';
+            let errorMessage = 'Error while extracting data';
             if (err.response?.data?.message) {
                 errorMessage = err.response.data.message;
             } else if (err.message) {
@@ -277,15 +317,15 @@ const CreateInvoice = () => {
                         replace([{ itemDetails: '', quantity: 1, rate: 0, taxPercentage: 0 }]);
                     }
 
-                    setSuccess('Données importées avec succès');
+                    setSuccess('Data imported successfully');
                 } catch (jsonErr) {
                     setError('Erreur de parsing JSON : ' + jsonErr.message);
                 }
             };
-            reader.onerror = () => setError('Erreur lors de la lecture du fichier');
+            reader.onerror = () => setError('Error reading file');
             reader.readAsText(file);
         } catch (err) {
-            setError('Erreur lors de l\'importation des données');
+            setError('Error importing data');
             console.error('Import error:', err);
         }
     };
@@ -294,15 +334,15 @@ const CreateInvoice = () => {
         <div className={styles.container}>
             <div className={styles.formWrapper}>
                 <div className={styles.header}>
-                    <h2>Création de Facture</h2>
-                    <p>Gérez vos factures avec style</p>
+                    <h2>Invoice Creation</h2>
+                    <p>Manage your bills in style</p>
                 </div>
                 <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
                     {error && <Alert color="danger">{error}</Alert>}
                     {success && <Alert color="success">{success}</Alert>}
 
                     <div className={styles.field}>
-                        <label className={styles.label}>Extraire depuis un document (PDF/Image)</label>
+                        <label className={styles.label}>Extract from a document (PDF/Image)</label>
                         <input
                             type="file"
                             accept="application/pdf,image/png,image/jpeg"
@@ -315,13 +355,13 @@ const CreateInvoice = () => {
 
                     <div className={styles.inputGrid}>
                         <div className={styles.field}>
-                            <label className={styles.label}>Société</label>
+                            <label className={styles.label}>Company</label>
                             <select
-                                {...register('businessId', { required: 'Veuillez sélectionner une société' })}
+                                {...register('businessId', { required: 'Please select a company' })}
                                 disabled={loading || businesses.length === 0}
                                 className={styles.input}
                             >
-                                <option value="">Sélectionner une société</option>
+                                <option value="">Select a company</option>
                                 {businesses.map(business => (
                                     <option key={business._id} value={business._id}>
                                         {business.name}
@@ -333,21 +373,21 @@ const CreateInvoice = () => {
 
                         {selectedBusiness && (
                             <div className={styles.field}>
-                                <label className={styles.label}>Détails de la société</label>
+                                <label className={styles.label}>Company Details</label>
                                 <div className={styles.businessDetails}>
-                                    <p><strong>Nom:</strong> {selectedBusiness.name}</p>
-                                    <p><strong>Adresse:</strong> {selectedBusiness.address}</p>
+                                    <p><strong>Name:</strong> {selectedBusiness.name}</p>
+                                    <p><strong>Address:</strong> {selectedBusiness.address}</p>
                                     <p><strong>N° Taxe:</strong> {selectedBusiness.taxNumber}</p>
                                 </div>
                             </div>
                         )}
 
                         {[
-                            { name: 'customerName', label: 'Nom du client', required: 'Ce champ est requis', maxLength: { value: 100, message: 'Maximum 100 caractères' } },
-                            { name: 'invoiceNumber', label: 'Numéro de facture', required: 'Ce champ est requis', pattern: { value: /^[A-Za-z0-9-]+$/, message: 'Alphanumérique avec tirets uniquement' } },
-                            { name: 'orderNumber', label: 'Numéro de commande' },
-                            { name: 'invoiceDate', label: 'Date de facture', type: 'date', required: 'Ce champ est requis' },
-                            { name: 'dueDate', label: 'Date d\'échéance', type: 'date', required: 'Ce champ est requis', validate: value => new Date(value) >= new Date(watch('invoiceDate')) || 'Doit être postérieure à la date de facture' }
+                            { name: 'customerName', label: 'Customer Name', required: 'This field is required', maxLength: { value: 100, message: 'Maximum 100 caractères' } },
+                            { name: 'invoiceNumber', label: 'Invoice number', required: 'This field is required', pattern: { value: /^[A-Za-z0-9-]+$/, message: 'Alphanumérique avec tirets uniquement' } },
+                            { name: 'orderNumber', label: 'Order number' },
+                            { name: 'invoiceDate', label: 'Invoice date', type: 'date', required: 'This field is required' },
+                            { name: 'dueDate', label: 'Due date', type: 'date', required: 'This field is required', validate: value => new Date(value) >= new Date(watch('invoiceDate')) || 'Must be later than the invoice date' }
                         ].map(field => (
                             <div key={field.name} className={styles.field}>
                                 <label className={styles.label}>{field.label}</label>
@@ -363,11 +403,11 @@ const CreateInvoice = () => {
                     </div>
 
                     <div className={styles.itemsSection}>
-                        <h3>Articles</h3>
+                        <h3>Items</h3>
                         {fields.map((item, index) => (
                             <div key={item.id} className={styles.itemRow}>
                                 <div>
-                                    <label className={styles.label}>Détails</label>
+                                    <label className={styles.label}>Details</label>
                                     <input
                                         {...register(`items.${index}.itemDetails`, { required: 'Requis', maxLength: { value: 200, message: 'Maximum 200 caractères' } })}
                                         disabled={loading}
@@ -376,7 +416,7 @@ const CreateInvoice = () => {
                                     {errors.items?.[index]?.itemDetails && <span className={styles.error}>{errors.items[index].itemDetails.message}</span>}
                                 </div>
                                 <div>
-                                    <label className={styles.label}>Quantité</label>
+                                    <label className={styles.label}>Quantity</label>
                                     <input
                                         type="number"
                                         step="1"
@@ -387,7 +427,7 @@ const CreateInvoice = () => {
                                     {errors.items?.[index]?.quantity && <span className={styles.error}>{errors.items[index].quantity.message}</span>}
                                 </div>
                                 <div>
-                                    <label className={styles.label}>Prix unitaire</label>
+                                    <label className={styles.label}>Unit price</label>
                                     <input
                                         type="number"
                                         step="0.01"
@@ -413,7 +453,7 @@ const CreateInvoice = () => {
                                     {errors.items?.[index]?.taxPercentage && <span className={styles.error}>{errors.items[index].taxPercentage.message}</span>}
                                 </div>
                                 <div>
-                                    <label className={styles.label}>Montant</label>
+                                    <label className={styles.label}>Amount</label>
                                     <input
                                         type="number"
                                         value={calculateAmount(watchItems[index]).toFixed(2)}
@@ -427,28 +467,94 @@ const CreateInvoice = () => {
                                     disabled={fields.length === 1 || loading}
                                     className={styles.removeButton}
                                 >
-                                    Supprimer
+                                    Delete
                                 </button>
                             </div>
                         ))}
-                        <button
-                            type="button"
-                            onClick={() => append({ itemDetails: '', quantity: 1, rate: 0, taxPercentage: 0 })}
-                            disabled={loading}
-                            className={styles.addButton}
-                        >
-                            + Ajouter un article
-                        </button>
+                        <div className={styles.itemButtons}>
+                            <button
+                                type="button"
+                                onClick={() => setItemModal(true)}
+                                disabled={loading}
+                                className={`${styles.addButton} ${styles.selectItem}`}
+                            >
+                                + Select Existing Item
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => append({ itemDetails: '', quantity: 1, rate: 0, taxPercentage: 0 })}
+                                disabled={loading}
+                                className={styles.addButton}
+                            >
+                                + Add Custom Item
+                            </button>
+                        </div>
+
+                        <Modal isOpen={itemModal} toggle={() => setItemModal(!itemModal)} size="lg">
+                            <ModalHeader toggle={() => setItemModal(!itemModal)}>
+                                Select Item
+                            </ModalHeader>
+                            <ModalBody>
+                                <div className={styles.searchContainer}>
+                                    <div className={styles.searchBox}>
+                                        <FaSearch className={styles.searchIcon} />
+                                        <Input
+                                            type="text"
+                                            placeholder="Search items..."
+                                            value={searchTerm}
+                                            onChange={handleSearchChange}
+                                            className={styles.searchInput}
+                                        />
+                                    </div>
+                                </div>
+
+                                {loadingItems ? (
+                                    <div className={styles.spinnerContainer}>
+                                        <Spinner />
+                                    </div>
+                                ) : (
+                                    <Table hover responsive className={styles.itemsTable}>
+                                        <thead>
+                                            <tr>
+                                                <th>Name</th>
+                                                <th>Unit</th>
+                                                <th>Price</th>
+                                                <th>Tax Rate</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {items.map((item) => (
+                                                <tr key={item._id}>
+                                                    <td>{item.name}</td>
+                                                    <td>{item.unit}</td>
+                                                    <td>{item.salesInfo.sellingPrice}</td>
+                                                    <td>{item.salesInfo.tax}%</td>
+                                                    <td>
+                                                        <button
+                                                            onClick={() => handleItemSelect(item)}
+                                                            className={styles.selectButton}
+                                                        >
+                                                            Select
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </Table>
+                                )}
+                            </ModalBody>
+                        </Modal>
 
                         <div className={styles.totalsSection}>
-                            <h4>Totaux</h4>
+                            <h4>Totals</h4>
                             <div className={styles.totalsGrid}>
                                 <div className={styles.field}>
-                                    <label className={styles.label}>Sous-total</label>
+                                    <label className={styles.label}>Subtotal</label>
                                     <input value={subTotal} disabled className={`${styles.input} ${styles.totalInput}`} />
                                 </div>
                                 <div className={styles.field}>
-                                    <label className={styles.label}>Remise</label>
+                                    <label className={styles.label}>Discount</label>
                                     <input
                                         type="number"
                                         step="0.01"
@@ -459,7 +565,7 @@ const CreateInvoice = () => {
                                     {errors.discount && <span className={styles.error}>{errors.discount.message}</span>}
                                 </div>
                                 <div className={styles.field}>
-                                    <label className={styles.label}>Frais de livraison</label>
+                                    <label className={styles.label}>Delivery costs</label>
                                     <input
                                         type="number"
                                         step="0.01"
@@ -479,7 +585,7 @@ const CreateInvoice = () => {
 
                     <div className={styles.notesSection}>
                         <div style={{ flex: 1 }}>
-                            <label className={styles.label}>Notes client</label>
+                            <label className={styles.label}>Customer ratings</label>
                             <textarea
                                 {...register('customerNotes', { maxLength: { value: 500, message: 'Maximum 500 caractères' } })}
                                 disabled={loading}
@@ -492,7 +598,7 @@ const CreateInvoice = () => {
                             disabled={loading || Object.keys(errors).length > 0}
                             className={styles.submitButton}
                         >
-                            {loading ? 'Création...' : 'Créer la Facture'}
+                            {loading ? 'Création...' : 'Create the Invoice'}
                         </button>
                     </div>
                 </form>

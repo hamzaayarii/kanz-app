@@ -93,8 +93,9 @@ const UsersList = () => {
                         fontWeight: 'bold',
                         margin: '0',
                         textShadow: '2px 2px 4px rgba(0,0,0,0.2)'
-                    }}>Liste des Utilisateurs</h2>
-                    <p style={{ margin: '10px 0 0', fontSize: '18px' }}>Gérez vos utilisateurs avec style</p>
+                    }}>List of Users
+                    </h2>
+                    <p style={{ margin: '10px 0 0', fontSize: '18px' }}>Manage your users </p>
                 </div>
 
                 <div style={{ padding: '40px' }}>
@@ -120,8 +121,7 @@ const UsersList = () => {
                             color: 'white',
                             border: 'none'
                         }}>
-                            Accès refusé : Vous n'êtes pas un administrateur.
-                        </Alert>
+                            Access denied: You are not an administrator.                        </Alert>
                     )}
 
                     {loading ? (
@@ -137,7 +137,7 @@ const UsersList = () => {
                                 fontSize: '1.2rem',
                                 color: '#4facfe',
                                 fontWeight: '500'
-                            }}>Chargement des utilisateurs...</p>
+                            }}>Loading users...</p>
                         </div>
                     ) : (
                         <Table bordered hover style={{
@@ -152,9 +152,9 @@ const UsersList = () => {
                                 color: 'white',
                                 fontWeight: '600'
                             }}>
-                                <th style={{ padding: '15px' }}>Nom</th>
-                                <th style={{ padding: '15px' }}>Email</th>
-                                <th style={{ padding: '15px' }}>Statut</th>
+                                <th style={{ padding: '15px' }}>Name</th>
+                                <th style={{ padding: '15px' }}>E-mail</th>
+                                <th style={{ padding: '15px' }}>Status</th>
                                 <th style={{ padding: '15px' }}>Actions</th>
                             </tr>
                             </thead>
@@ -182,7 +182,7 @@ const UsersList = () => {
                                                 size="sm"
                                                 onClick={() => toggleBan(user._id, user.isBanned)}
                                             >
-                                                {user.isBanned ? 'Débannir' : 'Bannir'}
+                                                {user.isBanned ? 'Unban' : 'Ban'}
                                             </Button>
                                         </td>
                                     </tr>
