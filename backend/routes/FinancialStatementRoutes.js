@@ -93,8 +93,10 @@ router.get('/generate-financial-statement', authenticate, async (req, res) => {
                 periodEnd,
                 data: financialData,
                 fileUrl: `/uploads/${fileName}`,
+                fileName,
                 createdAt: new Date(),
             });
+
 
             await statement.save();
 
@@ -126,20 +128,49 @@ router.get('/list', authenticate, async (req, res) => {
     }
 });
 
+router.get('/download/:reportId', async (req, res) => {
+    try {
+        const reportId = req.params.reportId;
+
+        const report = await FinancialStatement.findById(reportId);
+        console.log(report);
+        if (!report) return res.status(404).json({ message: "Report not found." });
+
+        const filePath = path.resolve(__dirname, '..', 'uploads', report.fileName);
+
+        // Check if file exists
+        if (!fs.existsSync(filePath)) {
+            return res.status(404).json({ message: "File not found on server." });
+        }
+        // Set headers and send file
+        res.download(filePath, `financial-statement-${reportId}.pdf`);
+    } catch (err) {
+        console.error('Error in download:', err);
+        res.status(500).json({ message: "Internal server error." });
+    }
+});
+
 router.delete('/:id', authenticate, async (req, res) => {
     try {
         const { id } = req.params;
         const userId = req.user._id || req.user.id;
 
         const report = await FinancialStatement.findOneAndDelete({ _id: id, userId });
-
         if (!report) {
             return res.status(404).json({ message: 'Financial report not found or not authorized.' });
         }
 
-        // Optionally delete the associated PDF file from the file system
-        const filePath = path.join(__dirname, '../uploads', report.fileUrl?.split('/uploads/')[1]);
-        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+        // Ensure fileUrl exists before attempting to delete the file
+        if (report.fileUrl) {
+            const filePath = path.join(__dirname, '../uploads', report.fileUrl.split('/uploads/')[1]);
+            if (fs.existsSync(filePath)) {
+                fs.unlinkSync(filePath);
+            } else {
+                console.log("File not found:", filePath);  // Log if file doesn't exist
+            }
+        } else {
+            console.log("No file URL associated with this report.");
+        }
 
         return res.status(200).json({ message: 'Report deleted successfully.' });
     } catch (error) {

@@ -28,6 +28,7 @@ const financialStatementSchema = new mongoose.Schema({
         type: Object, // Stocke les données du bilan, compte de résultat, ou flux de trésorerie
         required: true
     },
+    fileName: { type: String, required: true },
     createdAt: {
         type: Date,
         default: Date.now
