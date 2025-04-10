@@ -1,102 +1,211 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { Alert } from 'reactstrap';
-import styles from '../../assets/css/FinancialStatements.module.css';
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import {
+    Container,
+    Row,
+    Card,
+    FormGroup,
+    Label,
+    Input,
+    Button,
+    Table,
+} from "reactstrap";
+import { useNavigate } from "react-router-dom";
 
-const FinancialStatements = () => {
-    const [statements, setStatements] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
+const FinancialReports = () => {
     const [businesses, setBusinesses] = useState([]);
-    const [formData, setFormData] = useState({
-        businessId: '',
-        periodStart: '',
-        periodEnd: ''
-    });
+    const [selectedBusiness, setSelectedBusiness] = useState("");
+    const [fromDate, setFromDate] = useState("");
+    const [toDate, setToDate] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
+    const [financialReports, setFinancialReports] = useState([]);
+    const navigate = useNavigate();
 
     useEffect(() => {
-        const fetchBusinesses = async () => {
-            try {
-                const token = localStorage.getItem('authToken');
-                const response = await axios.get('http://localhost:5000/api/business/buisnessowner', {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                setBusinesses(response.data.businesses || []);
-            } catch (err) {
-                setError('Erreur lors de la récupération des sociétés');
-            }
-        };
-
         fetchBusinesses();
     }, []);
 
-    const handleGenerateBalanceSheet = async () => {
-        setError('');
-        setLoading(true);
-
+    const fetchBusinesses = async () => {
         try {
-            const token = localStorage.getItem('authToken');
-            const response = await axios.post(
-                'http://localhost:5000/api/financial-statements/generate-balance-sheet',
-                formData,
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
+            const token = localStorage.getItem("authToken");
+            if (!token) return navigate("/auth/login");
 
-            setStatements([...statements, response.data.financialStatement]);
+            const res = await axios.get("http://localhost:5000/api/business/buisnessowner", {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+
+            setBusinesses(res.data.businesses);
+            if (res.data.businesses.length > 0) {
+                setSelectedBusiness(res.data.businesses[0]._id);
+                fetchFinancialReports(res.data.businesses[0]._id);
+            }
         } catch (err) {
-            setError(err.response?.data?.message || 'Erreur lors de la génération du bilan');
+            console.error("Failed to load businesses", err);
+            setError("Failed to load businesses.");
+        }
+    };
+
+    const fetchFinancialReports = async (businessId) => {
+        try {
+            const token = localStorage.getItem("authToken");
+            const res = await axios.get(`http://localhost:5000/api/financial-Statement/list?businessId=${businessId}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            setFinancialReports(res.data);
+        } catch (err) {
+            console.error("Failed to load reports", err);
+        }
+    };
+
+    const generateFinancialReport = async () => {
+        try {
+            const token = localStorage.getItem("authToken");
+            if (!token) return navigate("/auth/login");
+
+            setLoading(true);
+            const query = `?businessId=${selectedBusiness}&from=${fromDate}&to=${toDate}`;
+            console.log(query);
+            await axios.get(`http://localhost:5000/api/financial-Statement/generate-financial-statement${query}`, {
+                headers: { Authorization: `Bearer ${token}` },
+                responseType: 'blob',
+            });
+
+            // Reload list after generation
+            await fetchFinancialReports(selectedBusiness);
+        } catch (err) {
+            console.error("Generation failed", err);
+            alert("Failed to generate financial report.");
         } finally {
             setLoading(false);
         }
     };
 
-    const handleInputChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+    const downloadReport = async (reportId) => {
+        try {
+            const token = localStorage.getItem("authToken");
+            const res = await axios.get(`http://localhost:5000/api/financial-Statement/download/${reportId}`, {
+                headers: { Authorization: `Bearer ${token}` },
+                responseType: 'blob',
+            });
+
+            const url = window.URL.createObjectURL(res.data);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `financial-statement-${reportId}.pdf`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        } catch (err) {
+            console.error("Download failed", err);
+            alert("Failed to download report.");
+        }
+    };
+
+    const deleteReport = async (reportId) => {
+        const confirmDelete = window.confirm("Are you sure you want to delete this report?");
+        if (!confirmDelete) return;
+
+        try {
+            const token = localStorage.getItem("authToken");
+            await axios.delete(`http://localhost:5000/api/financial-Statement/${reportId}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+
+            // Refresh list
+            await fetchFinancialReports(selectedBusiness);
+        } catch (err) {
+            console.error("Delete failed", err);
+            alert("Failed to delete report.");
+        }
     };
 
     return (
-        <div className={styles.container}>
-            <h2>États Financiers</h2>
-            {error && <Alert color="danger">{error}</Alert>}
+        <Container className="mt-5">
+            <Row className="justify-content-center">
+                <Card className="p-4 shadow">
+                    <h3>Financial Reports</h3>
 
-            <div className={styles.form}>
-                <div className={styles.field}>
-                    <label>Société</label>
-                    <select name="businessId" onChange={handleInputChange} value={formData.businessId}>
-                        <option value="">Sélectionner une société</option>
-                        {businesses.map(business => (
-                            <option key={business._id} value={business._id}>{business.name}</option>
+                    {error && <div className="alert alert-danger">{error}</div>}
+
+                    <FormGroup>
+                        <Label>Select Business</Label>
+                        <Input
+                            type="select"
+                            value={selectedBusiness}
+                            onChange={(e) => {
+                                setSelectedBusiness(e.target.value);
+                                fetchFinancialReports(e.target.value);
+                            }}
+                        >
+                            {businesses.map((biz) => (
+                                <option key={biz._id} value={biz._id}>{biz.name}</option>
+                            ))}
+                        </Input>
+                    </FormGroup>
+
+                    <Row className="mb-3">
+                        <FormGroup className="col-md-6">
+                            <Label>From Date</Label>
+                            <Input
+                                type="date"
+                                value={fromDate}
+                                onChange={(e) => setFromDate(e.target.value)}
+                            />
+                        </FormGroup>
+                        <FormGroup className="col-md-6">
+                            <Label>To Date</Label>
+                            <Input
+                                type="date"
+                                value={toDate}
+                                onChange={(e) => setToDate(e.target.value)}
+                            />
+                        </FormGroup>
+                    </Row>
+
+                    <Button color="primary" onClick={generateFinancialReport} disabled={loading}>
+                        {loading ? "Generating..." : "Generate New Report"}
+                    </Button>
+
+                    <h5 className="mt-4">Available Reports</h5>
+                    <Table bordered responsive>
+                        <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Type</th>
+                            <th>Period Start</th>
+                            <th>Period End</th>
+                            <th>Action</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {financialReports.map((report, idx) => (
+                            <tr key={report._id}>
+                                <td>{idx + 1}</td>
+                                <td>{report.type}</td>
+                                <td>{new Date(report.periodStart).toLocaleDateString()}</td>
+                                <td>{new Date(report.periodEnd).toLocaleDateString()}</td>
+                                <td className="d-flex gap-2">
+                                    <Button size="sm" color="success" onClick={() => downloadReport(report._id)}>
+                                        Download
+                                    </Button>
+                                    <Button size="sm" color="danger" onClick={() => deleteReport(report._id)}>
+                                        Delete
+                                    </Button>
+                                </td>
+                            </tr>
                         ))}
-                    </select>
-                </div>
-                <div className={styles.field}>
-                    <label>Début de période</label>
-                    <input type="date" name="periodStart" onChange={handleInputChange} value={formData.periodStart} />
-                </div>
-                <div className={styles.field}>
-                    <label>Fin de période</label>
-                    <input type="date" name="periodEnd" onChange={handleInputChange} value={formData.periodEnd} />
-                </div>
-                <button onClick={handleGenerateBalanceSheet} disabled={loading}>
-                    {loading ? 'Génération...' : 'Générer un bilan'}
-                </button>
-            </div>
-
-            <div className={styles.statements}>
-                {statements.map(statement => (
-                    <div key={statement._id} className={styles.statement}>
-                        <h3>Bilan ({new Date(statement.periodStart).toLocaleDateString()} - {new Date(statement.periodEnd).toLocaleDateString()})</h3>
-                        <p><strong>Actifs :</strong></p>
-                        <p>Créances clients : {statement.data.assets.receivables} TND</p>
-                        <p>Trésorerie : {statement.data.assets.cash} TND</p>
-                        <p><strong>Passifs :</strong></p>
-                        <p>Dettes fournisseurs : {statement.data.liabilities.payables} TND</p>
-                        <p><strong>Capitaux propres :</strong> {statement.data.equity} TND</p>
-                    </div>
-                ))}
-            </div>
-        </div>
+                        {financialReports.length === 0 && (
+                            <tr><td colSpan="5">No reports found.</td></tr>
+                        )}
+                        </tbody>
+                    </Table>
+                </Card>
+            </Row>
+        </Container>
     );
 };
 
-export default FinancialStatements;
+export default FinancialReports;
+
+
+
