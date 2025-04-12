@@ -34,21 +34,19 @@ const addBusiness = async (req, res) => {
             });
         }
 
-        // 2. Validate formats
-        if (!/^\d{11}$/.test(rneNumber)) {
-            return res.status(400).json({
-                success: false,
-                message: "RNE number must be exactly 11 digits"
-            });
-        }
-
-        if (!/^\d{8}[A-Z](\/[A-Z])?\/\d{3}$/.test(taxNumber)) {
-            return res.status(400).json({
-                success: false,
-                message: "Tax number should be in format 12345678A/M/000"
-            });
-        }
-
+       // ✅ Correct validation for RNE: 1 uppercase letter + 7 to 10 digits
+if (!/^[A-Z]\d{7,10}$/.test(rneNumber)) {
+    return res.status(400).json({
+        success: false,
+        message: "RNE number must start with a letter (A-Z) followed by 7 to 10 digits (e.g., B12345678)"
+    });
+}
+if (!/^\d{8}[A-Z](\/M\/\d{3})?$/.test(taxNumber)) {
+    return res.status(400).json({
+        success: false,
+        message: "Tax number must be in the format 12345678A or 12345678A/M/000"
+    });
+}
         // 3. Check for existing identifiers (RNE and tax number)
         const existingBusiness = await Business.findOne({ 
             $or: [
@@ -132,11 +130,45 @@ const addBusiness = async (req, res) => {
     }
 };
 
-// New function to get businesses for the logged-in user
+// Get businesses for the logged-in user (owner or accountant)
 const getUserBusinesses = async (req, res) => {
     try {
         const userId = req.user._id || req.user.id;
-        const businesses = await Business.find({ owner: userId });
+        const userRole = req.user.role;
+
+        console.log('User ID:', userId);
+        console.log('User role:', userRole);
+        console.log('Full user object:', req.user);
+
+        let query;
+        if (userRole === 'accountant') {
+            query = { accountant: userId };
+            console.log('Searching as accountant');
+        } else if (userRole === 'business_owner') {
+            query = { owner: userId };
+            console.log('Searching as business owner');
+        } else {
+            console.log('Invalid role detected');
+            return res.status(400).json({ 
+                status: false,
+                message: `Invalid user role: ${userRole}. Expected accountant or business_owner.` 
+            });
+        }
+
+        console.log('MongoDB query:', query);
+
+        const businesses = await Business.find(query);
+        console.log('Found businesses:', JSON.stringify(businesses, null, 2));
+
+        // If no businesses found, return empty array with 200 status
+        if (!businesses || businesses.length === 0) {
+            console.log('No businesses found for user');
+            return res.status(200).json({
+                status: true,
+                businesses: []
+            });
+        }
+
         res.status(200).json({
             status: true,
             businesses
@@ -144,8 +176,8 @@ const getUserBusinesses = async (req, res) => {
     } catch (error) {
         console.error('Error getting user businesses:', error);
         res.status(500).json({
-            errorMessage: "Something went wrong!",
             status: false,
+            message: "Something went wrong!",
             error: error.message,
         });
     }
@@ -154,7 +186,16 @@ const getUserBusinesses = async (req, res) => {
 const checkUserBusiness = async (req, res) => {
     try {
         const userId = req.user._id || req.user.id;
-        const businesses = await Business.find({ owner: userId });
+        const userRole = req.user.role;
+
+        let query;
+        if (userRole === 'accountant') {
+            query = { accountant: userId };
+        } else {
+            query = { owner: userId };
+        }
+
+        const businesses = await Business.find(query);
 
         res.json({
             hasBusiness: businesses.length > 0,
@@ -188,26 +229,54 @@ const getAccountant = async (req, res) => {
 
 const assignAccountant = async (req, res) => {
     try {
-        const { accountantId } = req.body;
+        const { accountantId, businessId } = req.body;
         const userId = req.user._id || req.user.id;
+        const userRole = req.user.role;
 
-        if (!accountantId) {
-            return res.status(400).json({ message: "Accountant ID is required." });
+        // Validate required fields
+        if (!accountantId || !businessId) {
+            return res.status(400).json({ 
+                message: "Both accountant ID and business ID are required." 
+            });
         }
 
-        // Update business with assigned accountant
-        const business = await Business.findOne({ owner: userId });
+        // Find the business
+        const business = await Business.findById(businessId);
         if (!business) {
             return res.status(404).json({ message: "Business not found." });
         }
 
+        // Check if user has permission to assign accountant
+        if (userRole !== 'business_owner' || business.owner.toString() !== userId) {
+            return res.status(403).json({ 
+                message: "Only the business owner can assign an accountant." 
+            });
+        }
+
+        // Verify if the accountant exists and has the correct role
+        const accountant = await User.findById(accountantId);
+        if (!accountant || accountant.role !== 'accountant') {
+            return res.status(400).json({ 
+                message: "Invalid accountant ID or user is not an accountant." 
+            });
+        }
+
+        // Update business with assigned accountant
         business.accountant = accountantId;
         await business.save();
 
-        res.json({ message: "Accountant assigned successfully.", business });
+        res.json({ 
+            success: true,
+            message: "Accountant assigned successfully.", 
+            business 
+        });
     } catch (error) {
         console.error('Error assigning accountant:', error);
-        res.status(500).json({ message: "Server error", error: error.message });
+        res.status(500).json({ 
+            success: false,
+            message: "Server error", 
+            error: error.message 
+        });
     }
 };
 

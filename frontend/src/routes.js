@@ -166,7 +166,7 @@ const routes = [
     component: <AuthRoute><BusinessManagement /></AuthRoute>,
     layout: '/admin',
     category: 'Business',
-    showInSidebar: isUserBusinessOwner,
+    showInSidebar: isUserAdmin,
   },
   {
     path: '/employee-management',
@@ -277,8 +277,18 @@ const routes = [
     icon: 'ni ni-briefcase-24 text-primary',
     component: <BusinessOwnerRoute><BusinessRegistrationPage /></BusinessOwnerRoute>,
     layout: '/standalone',
-    showInSidebar: false,
+    showInSidebar: isUserBusinessOwner,
   },
+   {
+    path: '/create-invoice',
+    name: 'New Invoice',
+    icon: 'ni ni-fat-add text-teal',
+    description: 'Create a fresh invoice',
+    component: <AuthRoute><CreateInvoice /></AuthRoute>,
+    layout: '/admin',
+    category: 'Finance',
+    showInSidebar: isUserBusinessOwner,
+  }, 
   {
     path: '/category',
     name: 'Category Management',
