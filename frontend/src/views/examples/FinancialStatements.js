@@ -31,7 +31,7 @@ const FinancialReports = () => {
             const token = localStorage.getItem("authToken");
             if (!token) return navigate("/auth/login");
 
-            const res = await axios.get("http://localhost:5000/api/business/buisnessowner", {
+            const res = await axios.get("http://localhost:5000/api/business/user-businesses", {
                 headers: { Authorization: `Bearer ${token}` },
             });
 
