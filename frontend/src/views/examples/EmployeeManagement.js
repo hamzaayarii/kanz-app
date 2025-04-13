@@ -126,7 +126,7 @@ const EmployeeManagement = () => {
         setLoading(prev => ({ ...prev, fetch: true }));
         try {
             const token = localStorage.getItem('authToken');
-            const response = await axios.get(`${API_URL}/business/buisnessowner`, {
+            const response = await axios.get(`${API_URL}/business/user-businesses`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setBusinesses(response.data.businesses || []);

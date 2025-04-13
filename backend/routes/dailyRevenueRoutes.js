@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const dailyRevenueController = require('../controllers/dailyRevenueController');
-const auth = require('../middlewares/auth');
+const { authenticate} = require('../middlewares/authMiddleware');
 
 // Apply authentication middleware to all routes
-router.use(auth);
+router.use(authenticate);
 
 // Create a new daily revenue entry
 router.post('/', dailyRevenueController.create);
