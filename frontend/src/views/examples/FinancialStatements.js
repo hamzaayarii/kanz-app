@@ -13,15 +13,15 @@ import {
 import { useNavigate } from "react-router-dom";
 
 const FinancialReports = () => {
-    const [owners, setOwners] = useState([]);
+    const [owners, setOwners] = useState([]);  // Default to empty array
     const [selectedOwner, setSelectedOwner] = useState("");
-    const [businesses, setBusinesses] = useState([]);
+    const [businesses, setBusinesses] = useState([]);  // Default to empty array
     const [selectedBusiness, setSelectedBusiness] = useState("");
     const [fromDate, setFromDate] = useState("");
     const [toDate, setToDate] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
-    const [financialReports, setFinancialReports] = useState([]);
+    const [financialReports, setFinancialReports] = useState([]);  // Default to empty array
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -36,8 +36,9 @@ const FinancialReports = () => {
             const res = await axios.get("http://localhost:5000/api/users/assigned-business-owners", {
                 headers: { Authorization: `Bearer ${token}` },
             });
-
-            setOwners(res.data.owners);
+            const owners = res.data;
+            setOwners(owners || []);  // Ensure owners is always an array
+            console.log(owners);
         } catch (err) {
             console.error("Failed to load owners", err);
             setError("Failed to load business owners.");
@@ -48,12 +49,11 @@ const FinancialReports = () => {
         try {
             const token = localStorage.getItem("authToken");
             if (!token) return navigate("/auth/login");
-
-            const res = await axios.get(`http://localhost:5000/api/business/user-businesses?ownerId=${ownerId}`, {
+            const res = await axios.get(`http://localhost:5000/api/business/getUserBusinessesByAccountant?ownerId=${ownerId}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
 
-            setBusinesses(res.data.businesses);
+            setBusinesses(res.data.businesses || []);  // Ensure businesses is always an array
             if (res.data.businesses.length > 0) {
                 setSelectedBusiness(res.data.businesses[0]._id);
                 fetchFinancialReports(res.data.businesses[0]._id);
@@ -72,7 +72,7 @@ const FinancialReports = () => {
             const res = await axios.get(`http://localhost:5000/api/financial-Statement/list?businessId=${businessId}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
-            setFinancialReports(res.data);
+            setFinancialReports(res.data || []);  // Ensure financialReports is always an array
         } catch (err) {
             console.error("Failed to load reports", err);
         }
@@ -156,9 +156,13 @@ const FinancialReports = () => {
                             }}
                         >
                             <option value="">-- Select Owner --</option>
-                            {owners.map((owner) => (
-                                <option key={owner._id} value={owner._id}>{owner.fullName}</option>
-                            ))}
+                            {owners.length > 0 ? (
+                                owners.map((owner) => (
+                                    <option key={owner._id} value={owner._id}>{owner.fullName}</option>
+                                ))
+                            ) : (
+                                <option>No business owners found</option>
+                            )}
                         </Input>
                     </FormGroup>
 
@@ -173,9 +177,13 @@ const FinancialReports = () => {
                             }}
                             disabled={!selectedOwner}
                         >
-                            {businesses.map((biz) => (
-                                <option key={biz._id} value={biz._id}>{biz.name}</option>
-                            ))}
+                            {businesses.length > 0 ? (
+                                businesses.map((biz) => (
+                                    <option key={biz._id} value={biz._id}>{biz.name}</option>
+                                ))
+                            ) : (
+                                <option>No businesses found</option>
+                            )}
                         </Input>
                     </FormGroup>
 
@@ -214,23 +222,24 @@ const FinancialReports = () => {
                         </tr>
                         </thead>
                         <tbody>
-                        {financialReports.map((report, idx) => (
-                            <tr key={report._id}>
-                                <td>{idx + 1}</td>
-                                <td>{report.type}</td>
-                                <td>{new Date(report.periodStart).toLocaleDateString()}</td>
-                                <td>{new Date(report.periodEnd).toLocaleDateString()}</td>
-                                <td className="d-flex gap-2">
-                                    <Button size="sm" color="success" onClick={() => downloadReport(report._id)}>
-                                        Download
-                                    </Button>
-                                    <Button size="sm" color="danger" onClick={() => deleteReport(report._id)}>
-                                        Delete
-                                    </Button>
-                                </td>
-                            </tr>
-                        ))}
-                        {financialReports.length === 0 && (
+                        {financialReports.length > 0 ? (
+                            financialReports.map((report, idx) => (
+                                <tr key={report._id}>
+                                    <td>{idx + 1}</td>
+                                    <td>{report.type}</td>
+                                    <td>{new Date(report.periodStart).toLocaleDateString()}</td>
+                                    <td>{new Date(report.periodEnd).toLocaleDateString()}</td>
+                                    <td className="d-flex gap-2">
+                                        <Button size="sm" color="success" onClick={() => downloadReport(report._id)}>
+                                            Download
+                                        </Button>
+                                        <Button size="sm" color="danger" onClick={() => deleteReport(report._id)}>
+                                            Delete
+                                        </Button>
+                                    </td>
+                                </tr>
+                            ))
+                        ) : (
                             <tr><td colSpan="5">No reports found.</td></tr>
                         )}
                         </tbody>
@@ -242,6 +251,7 @@ const FinancialReports = () => {
 };
 
 export default FinancialReports;
+
 
 
 

@@ -143,7 +143,7 @@ const routes = [
     component: <AuthRoute><FinancialStatements /></AuthRoute>,
     layout: '/admin',
     category: 'Finance',
-    showInSidebar: () => true, // Visible to both BO and Accountant
+    showInSidebar: isUserAccountant,
   },
 
   // Tax Management

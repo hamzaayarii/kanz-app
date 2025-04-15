@@ -5,7 +5,7 @@ const { create, list, updateUser, deleteUser, googleAuth, googleAuthRequest, for
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { authenticate } = require('../middlewares/authMiddleware');
+const { authenticate, authorizeAccountant} = require('../middlewares/authMiddleware');
 const mongoose = require('mongoose');
 require('dotenv').config();
 
@@ -152,21 +152,21 @@ router.get('/search', authenticate, async (req, res) => {
 router.get('/verify/:token', verifyEmail);
 router.post('/resend-verification', resendVerification);
 
-router.get('/assigned-business-owners', authenticate, async (req, res) => {
+router.get('/assigned-business-owners', authenticate, authorizeAccountant, async (req, res) => {
     try {
         const accountantId = req.user._id;  // Get accountantId from the decoded token
 
         // Fetch all business owners assigned to the specified accountant
-        const assignedOwners = await User.find({
+        const owners = await User.find({
             role: 'business_owner',
             assignedTo: accountantId, // Filter by the accountant's ID
         });
 
-        if (assignedOwners.length === 0) {
+        if (owners.length === 0) {
             return res.status(404).json({ message: 'No business owners assigned to this accountant.' });
         }
 
-        res.json(assignedOwners);
+        res.json(owners);
     } catch (err) {
         console.error('Error fetching assigned business owners:', err);
         res.status(500).json({ error: 'Failed to fetch assigned business owners.' });

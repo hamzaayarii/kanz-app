@@ -311,4 +311,35 @@ const updateBusiness = async (req, res) => {
     }
 };
 
-module.exports = { deleteBusiness, updateBusiness, assignAccountant, getAccountant, addBusiness, getUserBusinesses, checkUserBusiness };
+
+const getUserBusinessesByAccountant = async (req, res) => {
+    try {
+        const {ownerId} = req.query;
+
+        const businesses = await Business.find({owner: ownerId});
+        console.log('Found businesses:', JSON.stringify(businesses, null, 2));
+
+        // If no businesses found, return empty array with 200 status
+        if (!businesses || businesses.length === 0) {
+            console.log('No businesses found for user');
+            return res.status(200).json({
+                status: true,
+                businesses: []
+            });
+        }
+
+        res.status(200).json({
+            status: true,
+            businesses
+        });
+    } catch (error) {
+        console.error('Error getting user businesses:', error);
+        res.status(500).json({
+            status: false,
+            message: "Something went wrong!",
+            error: error.message,
+        });
+    }
+};
+
+module.exports = { deleteBusiness, updateBusiness, assignAccountant, getAccountant, addBusiness, getUserBusinesses, checkUserBusiness, getUserBusinessesByAccountant };
