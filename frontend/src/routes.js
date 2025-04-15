@@ -28,6 +28,7 @@ import DailyRevenue from './views/examples/DailyRevenue';
 import DailyRevenueList from './views/examples/DailyRevenueList';
 import Categories from "./views/examples/Categories";
 import EmailVerification from './views/examples/EmailVerification.js';
+import OwnerFinancialReports from "./views/examples/OwnerFinancialReports.js";
 
 // Grouped and enhanced routes for better UX
 const routes = [
@@ -144,6 +145,17 @@ const routes = [
     layout: '/admin',
     category: 'Finance',
     showInSidebar: isUserAccountant,
+  },
+
+  {
+    path: '/financial-statements-list',
+    name: 'Financial Reports',
+    icon: 'ni ni-chart-bar-32 text-purple',
+    description: 'Detailed financial insights',
+    component: <AuthRoute><OwnerFinancialReports /></AuthRoute>,
+    layout: '/admin',
+    category: 'Finance',
+    showInSidebar: isUserBusinessOwner,
   },
 
   // Tax Management
