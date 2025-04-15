@@ -29,6 +29,7 @@ import DailyRevenueList from './views/examples/DailyRevenueList';
 import Categories from "./views/examples/Categories";
 import EmailVerification from './views/examples/EmailVerification.js';
 import AccountantBusinessOwners from './views/examples/AccountantBusinessOwners.js';
+import OwnerFinancialReports from "./views/examples/OwnerFinancialReports.js";
 
 // Grouped and enhanced routes for better UX
 const routes = [
@@ -55,23 +56,33 @@ const routes = [
   },
   {
     path: '/daily-revenue',
-    name: 'Daily Earnings',
+    name: 'Daily Money Flow',
     icon: 'ni ni-money-coins text-success',
     description: 'Track your daily revenue flow',
     component: <AuthRoute><DailyRevenue /></AuthRoute>,
     layout: '/admin',
     category: 'Overview',
-    showInSidebar: () => true, // Both BO and accountant should see revenue
+    showInSidebar: () => true,
+  },
+  {
+    path: '/daily-revenue/edit/:id',
+    name: 'Edit Daily Money Flow',
+    icon: 'ni ni-money-coins text-success',
+    description: 'Edit daily revenue entry',
+    component: <AuthRoute><DailyRevenue /></AuthRoute>,
+    layout: '/admin',
+    category: 'Overview',
+    showInSidebar: () => false, // Hide from sidebar
   },
   {
     path: '/daily-revenue-list',
-    name: 'Earnings History',
+    name: 'Daily Money Flow History',
     icon: 'ni ni-chart-pie-35 text-info',
     description: 'View all daily revenue entries',
     component: <AuthRoute><DailyRevenueList /></AuthRoute>,
     layout: '/admin',
     category: 'Overview',
-    showInSidebar: () => true, // Both BO and accountant should see revenue history
+    showInSidebar: () => true,
   },
 
   // Financial Management
@@ -144,7 +155,18 @@ const routes = [
     component: <AuthRoute><FinancialStatements /></AuthRoute>,
     layout: '/admin',
     category: 'Finance',
-    showInSidebar: () => true, // Visible to both BO and Accountant
+    showInSidebar: isUserAccountant,
+  },
+
+  {
+    path: '/financial-statements-list',
+    name: 'Financial Reports',
+    icon: 'ni ni-chart-bar-32 text-purple',
+    description: 'Detailed financial insights',
+    component: <AuthRoute><OwnerFinancialReports /></AuthRoute>,
+    layout: '/admin',
+    category: 'Finance',
+    showInSidebar: isUserBusinessOwner,
   },
 
   // Tax Management

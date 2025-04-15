@@ -13,32 +13,52 @@ import {
 import { useNavigate } from "react-router-dom";
 
 const FinancialReports = () => {
-    const [businesses, setBusinesses] = useState([]);
+    const [owners, setOwners] = useState([]);  // Default to empty array
+    const [selectedOwner, setSelectedOwner] = useState("");
+    const [businesses, setBusinesses] = useState([]);  // Default to empty array
     const [selectedBusiness, setSelectedBusiness] = useState("");
     const [fromDate, setFromDate] = useState("");
     const [toDate, setToDate] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
-    const [financialReports, setFinancialReports] = useState([]);
+    const [financialReports, setFinancialReports] = useState([]);  // Default to empty array
     const navigate = useNavigate();
 
     useEffect(() => {
-        fetchBusinesses();
+        fetchBusinessOwners();
     }, []);
 
-    const fetchBusinesses = async () => {
+    const fetchBusinessOwners = async () => {
         try {
             const token = localStorage.getItem("authToken");
             if (!token) return navigate("/auth/login");
 
-            const res = await axios.get("http://localhost:5000/api/business/user-businesses", {
+            const res = await axios.get("http://localhost:5000/api/users/assigned-business-owners", {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const owners = res.data;
+            setOwners(owners || []);  // Ensure owners is always an array
+            console.log(owners);
+        } catch (err) {
+            console.error("Failed to load owners", err);
+            setError("Failed to load business owners.");
+        }
+    };
+
+    const fetchBusinesses = async (ownerId) => {
+        try {
+            const token = localStorage.getItem("authToken");
+            if (!token) return navigate("/auth/login");
+            const res = await axios.get(`http://localhost:5000/api/business/getUserBusinessesByAccountant?ownerId=${ownerId}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
 
-            setBusinesses(res.data.businesses);
+            setBusinesses(res.data.businesses || []);  // Ensure businesses is always an array
             if (res.data.businesses.length > 0) {
                 setSelectedBusiness(res.data.businesses[0]._id);
                 fetchFinancialReports(res.data.businesses[0]._id);
+            } else {
+                setFinancialReports([]);
             }
         } catch (err) {
             console.error("Failed to load businesses", err);
@@ -52,7 +72,7 @@ const FinancialReports = () => {
             const res = await axios.get(`http://localhost:5000/api/financial-Statement/list?businessId=${businessId}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
-            setFinancialReports(res.data);
+            setFinancialReports(res.data || []);  // Ensure financialReports is always an array
         } catch (err) {
             console.error("Failed to load reports", err);
         }
@@ -65,13 +85,11 @@ const FinancialReports = () => {
 
             setLoading(true);
             const query = `?businessId=${selectedBusiness}&from=${fromDate}&to=${toDate}`;
-            console.log(query);
             await axios.get(`http://localhost:5000/api/financial-Statement/generate-financial-statement${query}`, {
                 headers: { Authorization: `Bearer ${token}` },
                 responseType: 'blob',
             });
 
-            // Reload list after generation
             await fetchFinancialReports(selectedBusiness);
         } catch (err) {
             console.error("Generation failed", err);
@@ -111,7 +129,6 @@ const FinancialReports = () => {
                 headers: { Authorization: `Bearer ${token}` },
             });
 
-            // Refresh list
             await fetchFinancialReports(selectedBusiness);
         } catch (err) {
             console.error("Delete failed", err);
@@ -128,6 +145,28 @@ const FinancialReports = () => {
                     {error && <div className="alert alert-danger">{error}</div>}
 
                     <FormGroup>
+                        <Label>Select Business Owner</Label>
+                        <Input
+                            type="select"
+                            value={selectedOwner}
+                            onChange={(e) => {
+                                const ownerId = e.target.value;
+                                setSelectedOwner(ownerId);
+                                fetchBusinesses(ownerId);
+                            }}
+                        >
+                            <option value="">-- Select Owner --</option>
+                            {owners.length > 0 ? (
+                                owners.map((owner) => (
+                                    <option key={owner._id} value={owner._id}>{owner.fullName}</option>
+                                ))
+                            ) : (
+                                <option>No business owners found</option>
+                            )}
+                        </Input>
+                    </FormGroup>
+
+                    <FormGroup>
                         <Label>Select Business</Label>
                         <Input
                             type="select"
@@ -136,10 +175,15 @@ const FinancialReports = () => {
                                 setSelectedBusiness(e.target.value);
                                 fetchFinancialReports(e.target.value);
                             }}
+                            disabled={!selectedOwner}
                         >
-                            {businesses.map((biz) => (
-                                <option key={biz._id} value={biz._id}>{biz.name}</option>
-                            ))}
+                            {businesses.length > 0 ? (
+                                businesses.map((biz) => (
+                                    <option key={biz._id} value={biz._id}>{biz.name}</option>
+                                ))
+                            ) : (
+                                <option>No businesses found</option>
+                            )}
                         </Input>
                     </FormGroup>
 
@@ -162,7 +206,7 @@ const FinancialReports = () => {
                         </FormGroup>
                     </Row>
 
-                    <Button color="primary" onClick={generateFinancialReport} disabled={loading}>
+                    <Button color="primary" onClick={generateFinancialReport} disabled={loading || !selectedBusiness}>
                         {loading ? "Generating..." : "Generate New Report"}
                     </Button>
 
@@ -178,23 +222,24 @@ const FinancialReports = () => {
                         </tr>
                         </thead>
                         <tbody>
-                        {financialReports.map((report, idx) => (
-                            <tr key={report._id}>
-                                <td>{idx + 1}</td>
-                                <td>{report.type}</td>
-                                <td>{new Date(report.periodStart).toLocaleDateString()}</td>
-                                <td>{new Date(report.periodEnd).toLocaleDateString()}</td>
-                                <td className="d-flex gap-2">
-                                    <Button size="sm" color="success" onClick={() => downloadReport(report._id)}>
-                                        Download
-                                    </Button>
-                                    <Button size="sm" color="danger" onClick={() => deleteReport(report._id)}>
-                                        Delete
-                                    </Button>
-                                </td>
-                            </tr>
-                        ))}
-                        {financialReports.length === 0 && (
+                        {financialReports.length > 0 ? (
+                            financialReports.map((report, idx) => (
+                                <tr key={report._id}>
+                                    <td>{idx + 1}</td>
+                                    <td>{report.type}</td>
+                                    <td>{new Date(report.periodStart).toLocaleDateString()}</td>
+                                    <td>{new Date(report.periodEnd).toLocaleDateString()}</td>
+                                    <td className="d-flex gap-2">
+                                        <Button size="sm" color="success" onClick={() => downloadReport(report._id)}>
+                                            Download
+                                        </Button>
+                                        <Button size="sm" color="danger" onClick={() => deleteReport(report._id)}>
+                                            Delete
+                                        </Button>
+                                    </td>
+                                </tr>
+                            ))
+                        ) : (
                             <tr><td colSpan="5">No reports found.</td></tr>
                         )}
                         </tbody>
@@ -206,6 +251,8 @@ const FinancialReports = () => {
 };
 
 export default FinancialReports;
+
+
 
 
 

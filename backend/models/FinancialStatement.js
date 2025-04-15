@@ -13,7 +13,7 @@ const financialStatementSchema = new mongoose.Schema({
     },
     type: {
         type: String,
-        enum: ['balance_sheet', 'income_statement', 'cash_flow'],
+        enum: ['complete_financial_statement','balance_sheet', 'income_statement', 'cash_flow'],
         required: true
     },
     periodStart: {

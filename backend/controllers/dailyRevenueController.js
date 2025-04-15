@@ -246,28 +246,31 @@ exports.delete = async (req, res) => {
             });
         }
 
-        if (dailyRevenue.status !== 'DRAFT') {
+        // Check if the entry is verified
+        if (dailyRevenue.status === 'VERIFIED') {
             return res.status(400).json({
                 success: false,
-                message: 'Can only delete draft entries'
+                message: 'Cannot delete a verified entry'
             });
         }
 
-        // Delete associated journal entry if it exists
+        // If there's an associated journal entry, delete it first
         if (dailyRevenue.journalEntry) {
             await JournalEntry.findByIdAndDelete(dailyRevenue.journalEntry);
         }
 
-        await dailyRevenue.delete();
+        // Delete the daily revenue entry
+        await DailyRevenue.findByIdAndDelete(req.params.id);
 
         res.json({
             success: true,
             message: 'Daily revenue entry deleted successfully'
         });
     } catch (error) {
-        res.status(400).json({
+        console.error('Error deleting daily revenue:', error);
+        res.status(500).json({
             success: false,
-            message: error.message
+            message: error.message || 'Error deleting daily revenue entry'
         });
     }
 };
