@@ -44,23 +44,33 @@ const routes = [
   },
   {
     path: '/daily-revenue',
-    name: 'Daily Earnings',
+    name: 'Daily Money Flow',
     icon: 'ni ni-money-coins text-success',
     description: 'Track your daily revenue flow',
     component: <AuthRoute><DailyRevenue /></AuthRoute>,
     layout: '/admin',
     category: 'Overview',
-    showInSidebar: () => true, // Both BO and accountant should see revenue
+    showInSidebar: () => true,
+  },
+  {
+    path: '/daily-revenue/edit/:id',
+    name: 'Edit Daily Money Flow',
+    icon: 'ni ni-money-coins text-success',
+    description: 'Edit daily revenue entry',
+    component: <AuthRoute><DailyRevenue /></AuthRoute>,
+    layout: '/admin',
+    category: 'Overview',
+    showInSidebar: () => false, // Hide from sidebar
   },
   {
     path: '/daily-revenue-list',
-    name: 'Earnings History',
+    name: 'Daily Money Flow History',
     icon: 'ni ni-chart-pie-35 text-info',
     description: 'View all daily revenue entries',
     component: <AuthRoute><DailyRevenueList /></AuthRoute>,
     layout: '/admin',
     category: 'Overview',
-    showInSidebar: () => true, // Both BO and accountant should see revenue history
+    showInSidebar: () => true,
   },
 
   // Financial Management

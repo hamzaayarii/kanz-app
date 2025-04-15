@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
     Card,
     CardHeader,
@@ -14,6 +15,7 @@ import axios from 'axios';
 import Header from "components/Headers/Header.js";
 
 const DailyRevenueList = () => {
+    const navigate = useNavigate();
     const [entries, setEntries] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -29,7 +31,6 @@ const DailyRevenueList = () => {
                 headers: { Authorization: `Bearer ${token}` }
             });
             
-            // Initialize entries as an empty array if response.data.data is undefined
             setEntries(response.data.data || []);
             setIsLoading(false);
         } catch (err) {
@@ -37,6 +38,33 @@ const DailyRevenueList = () => {
             setIsLoading(false);
             console.error('Error fetching daily revenue:', err);
         }
+    };
+
+    const handleDelete = async (id) => {
+        if (window.confirm('Are you sure you want to delete this entry?')) {
+            try {
+                const token = localStorage.getItem('authToken');
+                const response = await axios.delete(`http://localhost:5000/api/daily-revenue/${id}`, {
+                    headers: { 
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.status === 200) {
+                    await fetchEntries();
+                } else {
+                    setError('Failed to delete entry');
+                }
+            } catch (err) {
+                console.error('Error deleting entry:', err);
+                setError(err.response?.data?.message || 'Failed to delete entry');
+            }
+        }
+    };
+
+    const handleUpdate = (id) => {
+        navigate(`/admin/daily-revenue/edit/${id}`);
     };
 
     const calculateTotalRevenue = (entry) => {
@@ -81,16 +109,12 @@ const DailyRevenueList = () => {
                             <CardHeader className="border-0">
                                 <Row className="align-items-center">
                                     <Col xs="8">
-                                        <h3 className="mb-0">Daily Revenue List</h3>
+                                        <h3 className="mb-0">Daily Money Flow History</h3>
                                     </Col>
                                     <Col className="text-right" xs="4">
                                         <Button
                                             color="primary"
-                                            href="#pablo"
-                                            onClick={(e) => {
-                                                e.preventDefault();
-                                                window.location.href = '/admin/daily-revenue';
-                                            }}
+                                            onClick={() => navigate('/admin/daily-revenue')}
                                             size="sm"
                                         >
                                             Add New Entry
@@ -109,6 +133,7 @@ const DailyRevenueList = () => {
                                             <th>Total Revenue</th>
                                             <th>Total Expenses</th>
                                             <th>Net Amount</th>
+                                            <th>Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -139,6 +164,25 @@ const DailyRevenueList = () => {
                                                         <Badge color={netAmount >= 0 ? "success" : "danger"}>
                                                             {formatCurrency(netAmount)}
                                                         </Badge>
+                                                    </td>
+                                                    <td>
+                                                        <Button
+                                                            color="info"
+                                                            size="sm"
+                                                            className="mr-2"
+                                                            onClick={() => handleUpdate(entry._id)}
+                                                        >
+                                                            <i className="fas fa-edit mr-1"></i>
+                                                            Edit
+                                                        </Button>
+                                                        <Button
+                                                            color="danger"
+                                                            size="sm"
+                                                            onClick={() => handleDelete(entry._id)}
+                                                        >
+                                                            <i className="fas fa-trash mr-1"></i>
+                                                            Delete
+                                                        </Button>
                                                     </td>
                                                 </tr>
                                             );
