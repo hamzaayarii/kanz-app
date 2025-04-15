@@ -112,7 +112,7 @@ const routes = [
     component: <AuthRoute><CreateInvoice /></AuthRoute>,
     layout: '/admin',
     category: 'Finance',
-    showInSidebar: isUserAccountant,
+    showInSidebar: () => true, // Changed to allow both roles to create invoices
   },
   {
     path: '/invoices',
@@ -288,16 +288,6 @@ const routes = [
     layout: '/standalone',
     showInSidebar: isUserBusinessOwner,
   },
-   {
-    path: '/create-invoice',
-    name: 'New Invoice',
-    icon: 'ni ni-fat-add text-teal',
-    description: 'Create a fresh invoice',
-    component: <AuthRoute><CreateInvoice /></AuthRoute>,
-    layout: '/admin',
-    category: 'Finance',
-    showInSidebar: isUserBusinessOwner,
-  }, 
   {
     path: '/category',
     name: 'Category Management',
