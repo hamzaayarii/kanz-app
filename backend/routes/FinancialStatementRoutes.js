@@ -2,12 +2,17 @@ const express = require('express');
 const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const path = require('path');
+const { authenticate } = require('../middlewares/authMiddleware');
 const TaxReport = require('../models/TaxReport');
 const DailyRevenue = require('../models/DailyRevenue');
+const Expense = require('../models/Expense');
+const Invoice = require('../models/Invoice');
+const Payroll = require('../models/Payroll');
 const FinancialStatement = require('../models/FinancialStatement');
-const { authenticate } = require('../middlewares/authMiddleware');
 
 const router = express.Router();
+
+
 
 router.get('/generate-financial-statement', authenticate, async (req, res) => {
     const userId = req.user._id;
@@ -20,117 +25,127 @@ router.get('/generate-financial-statement', authenticate, async (req, res) => {
     const startDate = new Date(from);
     const endDate = new Date(to);
 
-    const reports = await TaxReport.find({
-        userId,
-        businessId,
-        createdAt: { $gte: startDate, $lte: endDate }
-    });
+    try {
+        const [taxReports, revenues, expenses, invoices, payrolls] = await Promise.all([
+            TaxReport.find({ userId, businessId, createdAt: { $gte: startDate, $lte: endDate } }),
+            DailyRevenue.find({ userId, businessId, date: { $gte: startDate, $lte: endDate } }),
+            Expense.find({ userId, businessId, date: { $gte: startDate, $lte: endDate } }),
+            Invoice.find({ userId, businessId, date: { $gte: startDate, $lte: endDate } }),
+            Payroll.find({ userId, businessId, createdAt: { $gte: startDate, $lte: endDate } })
+        ]);
 
-    const revenues = await DailyRevenue.find({
-        userId,
-        businessId,
-        date: { $gte: startDate, $lte: endDate }
-    });
+        const totalRevenue = revenues.reduce((acc, r) => acc + r.amount, 0);
+        const totalExpenses = expenses.reduce((acc, e) => acc + e.amount, 0);
+        const totalPayroll = payrolls.reduce((acc, p) => acc + p.totalAmount, 0);
+        const totalInvoices = invoices.reduce((acc, inv) => acc + inv.total, 0);
+        const totalTax = taxReports.reduce((acc, r) => acc + r.calculatedTax, 0);
 
-    const totalRevenue = revenues.reduce((acc, rev) => acc + rev.amount, 0);
-    const totalExpenses = revenues.reduce((acc, rev) => acc + rev.expenses, 0);
-    const profit = totalRevenue - totalExpenses;
+        const profit = totalRevenue - (totalExpenses + totalPayroll + totalTax);
 
-    // Generate PDF
-    const doc = new PDFDocument({ size: 'A4', margin: 50, bufferPages: true });
+        const doc = new PDFDocument({ size: 'A4', margin: 50, bufferPages: true });
+        const reportsDir = path.join(__dirname, '..', 'uploads', 'financial-reports');
+        if (!fs.existsSync(reportsDir)) fs.mkdirSync(reportsDir, { recursive: true });
 
-    const reportsDir = path.join(__dirname, '..', 'uploads', 'financial-reports');
-    if (!fs.existsSync(reportsDir)) fs.mkdirSync(reportsDir, { recursive: true });
+        const fileName = `financial-statement-${Date.now()}.pdf`;
+        const filePath = path.join(reportsDir, fileName);
+        const writeStream = fs.createWriteStream(filePath);
+        doc.pipe(writeStream);
 
-    const fileName = `income-statement-${Date.now()}.pdf`;
-    const filePath = path.join(reportsDir, fileName);
-    const writeStream = fs.createWriteStream(filePath);
-    doc.pipe(writeStream);
+        // Replace 'fr-FR' by 'en-GB' or use default 'en-US' if needed
+        const formatDate = (d) => new Date(d).toLocaleDateString('en-GB');
+        const formatCurrency = (n) => `${Number(n).toFixed(2)} TND`;
 
-    const formatDate = (date) => new Date(date).toLocaleDateString('fr-FR');
-    const formatCurrency = (val) => `${Number(val).toFixed(2)} TND`;
-
-    const addHeader = () => {
+// Header
         doc.rect(0, 0, 612, 90).fill('#4facfe');
-        doc.fillColor('white').fontSize(24).font('Helvetica-Bold').text('Rapport Financier', 50, 30);
+        doc.fillColor('white').fontSize(24).font('Helvetica-Bold').text('Complete Financial Report', 50, 30);
         doc.fontSize(10).font('Helvetica')
-            .text(`Période: ${formatDate(startDate)} au ${formatDate(endDate)}`, 400, 65, { align: 'right' });
-    };
+            .text(`Period: ${formatDate(startDate)} to ${formatDate(endDate)}`, 400, 65, { align: 'right' });
+        doc.moveDown(4);
 
-    const addFooter = (page, totalPages) => {
-        doc.moveTo(50, 750).lineTo(562, 750).strokeColor('#ddd').stroke();
-        doc.fillColor('#666').fontSize(10).font('Helvetica')
-            .text('Document généré automatiquement.', 306, 760, { align: 'center' })
-            .text(`Page ${page} de ${totalPages}`, 562, 775, { align: 'right' });
-    };
+// Summary
+        doc.fillColor('#333').fontSize(14).font('Helvetica-Bold').text('Overall Summary:', 50);
+        doc.moveDown(0.5).fontSize(12).font('Helvetica').fillColor('#000')
+            .text(`Total Revenue (Daily): ${formatCurrency(totalRevenue)}`)
+            .text(`Total Invoices: ${formatCurrency(totalInvoices)}`)
+            .text(`Total Expenses: ${formatCurrency(totalExpenses)}`)
+            .text(`Payroll: ${formatCurrency(totalPayroll)}`)
+            .text(`Taxes: ${formatCurrency(totalTax)}`)
+            .text(`Net Profit: ${formatCurrency(profit)}`);
+        doc.moveDown(2);
 
-    let currentPage = 1;
-    let itemsPerPage = 10;
-    let totalPages = Math.ceil(reports.length / itemsPerPage) || 1;
-
-    addHeader();
-    doc.moveDown(4).fontSize(14).font('Helvetica-Bold').fillColor('#333').text('Vue d’ensemble:', 50);
-    doc.moveDown(0.5).font('Helvetica').fontSize(12)
-        .text(`Revenu total: ${formatCurrency(totalRevenue)}`)
-        .text(`Dépenses totales: ${formatCurrency(totalExpenses)}`)
-        .text(`Profit: ${formatCurrency(profit)}`)
-        .moveDown(2);
-
-    doc.fontSize(14).font('Helvetica-Bold').text('Rapports fiscaux:', 50);
-    doc.moveDown(1);
-
-    const startY = doc.y;
-    reports.forEach((r, index) => {
-        const y = startY + (index % itemsPerPage) * 25;
-        if (index > 0 && index % itemsPerPage === 0) {
-            addFooter(currentPage, totalPages);
+// Detailed Sections
+        const addSection = (title, items, formatter) => {
             doc.addPage();
-            currentPage++;
-            addHeader();
-            doc.moveDown(2);
-        }
-        doc.fontSize(12).font('Helvetica').fillColor('#000')
-            .text(`Année: ${r.year} | Revenu: ${formatCurrency(r.income)} | Dépenses: ${formatCurrency(r.expenses)} | Taxe: ${formatCurrency(r.calculatedTax)}`, 50, y);
-    });
-
-    addFooter(currentPage, totalPages);
-    doc.end();
-
-    writeStream.on('finish', async () => {
-        try {
-            // Save to MongoDB (FinancialStatement)
-            const statement = await FinancialStatement.create({
-                userId,
-                businessId,
-                type: 'income_statement',
-                periodStart: startDate,
-                periodEnd: endDate,
-                fileName,
-                data: {
-                    totalRevenue,
-                    totalExpenses,
-                    profit,
-                    taxReports: reports.length,
-                    dailyRevenues: revenues.length
-                }
+            doc.fontSize(14).font('Helvetica-Bold').fillColor('#333').text(title, 50);
+            doc.moveDown(1);
+            items.forEach((item, i) => {
+                doc.fontSize(11).font('Helvetica').fillColor('#000')
+                    .text(`${i + 1}. ${formatter(item)}`, { continued: false });
             });
+        };
 
-            res.status(200).json({
-                message: 'Rapport généré et sauvegardé avec succès.',
-                statementId: statement._id,
-                downloadUrl: `/uploads/financial-reports/${fileName}`
-            });
-        } catch (err) {
-            console.error('Erreur DB:', err);
-            res.status(500).json({ message: 'Erreur lors de la sauvegarde du rapport.', error: err.message });
-        }
-    });
+        if (expenses.length)
+            addSection('Expenses', expenses, e => `${formatDate(e.date)} - ${e.category}: ${formatCurrency(e.amount)}`);
 
-    writeStream.on('error', (err) => {
-        console.error('Erreur PDF:', err);
-        res.status(500).json({ message: 'Erreur lors de la génération du PDF', error: err.message });
-    });
+        if (invoices.length)
+            addSection('Invoices', invoices, i => `${formatDate(i.date)} - Client: ${i.clientName || 'N/A'}, Total: ${formatCurrency(i.total)}`);
 
+        if (payrolls.length)
+            addSection('Payrolls', payrolls, p => `Period: ${formatDate(p.createdAt)} - Employees Paid: ${p.employees.length}, Total: ${formatCurrency(p.totalAmount)}`);
+
+        if (taxReports.length)
+            addSection('Tax Reports', taxReports, r => `Year ${r.year} - Income: ${formatCurrency(r.income)}, Expenses: ${formatCurrency(r.expenses)}, Tax: ${formatCurrency(r.calculatedTax)}`);
+
+        doc.moveDown(2);
+        doc.fontSize(10).fillColor('#888').text('Document generated automatically.', 50, 750, { align: 'center' });
+
+        doc.end();
+
+        writeStream.on('finish', async () => {
+            try {
+                const statement = await FinancialStatement.create({
+                    userId,
+                    businessId,
+                    periodStart: startDate,
+                    periodEnd: endDate,
+                    type: 'complete_financial_statement',
+                    fileName,
+                    data: {
+                        totalRevenue,
+                        totalExpenses,
+                        totalInvoices,
+                        totalPayroll,
+                        totalTax,
+                        profit,
+                        counts: {
+                            expenses: expenses.length,
+                            invoices: invoices.length,
+                            payrolls: payrolls.length,
+                            taxReports: taxReports.length
+                        }
+                    }
+                });
+
+                res.status(200).json({
+                    message: 'Rapport généré et sauvegardé avec succès.',
+                    statementId: statement._id,
+                    downloadUrl: `/uploads/financial-reports/${fileName}`
+                });
+            } catch (err) {
+                console.error('Erreur DB:', err);
+                res.status(500).json({ message: 'Erreur lors de la sauvegarde du rapport.', error: err.message });
+            }
+        });
+
+        writeStream.on('error', (err) => {
+            console.error('Erreur PDF:', err);
+            res.status(500).json({ message: 'Erreur lors de la génération du PDF', error: err.message });
+        });
+
+    } catch (error) {
+        console.error('Erreur lors de la récupération des données:', error);
+        res.status(500).json({ message: 'Erreur serveur', error: error.message });
+    }
 });
 
 
