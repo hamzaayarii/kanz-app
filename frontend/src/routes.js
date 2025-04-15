@@ -28,6 +28,7 @@ import DailyRevenue from './views/examples/DailyRevenue';
 import DailyRevenueList from './views/examples/DailyRevenueList';
 import Categories from "./views/examples/Categories";
 import EmailVerification from './views/examples/EmailVerification.js';
+import AccountantBusinessOwners from './views/examples/AccountantBusinessOwners.js';
 
 // Grouped and enhanced routes for better UX
 const routes = [
@@ -41,6 +42,16 @@ const routes = [
     layout: '/admin',
     category: 'Overview',
     showInSidebar: () => true, // Visible to all authenticated users
+  },
+  {
+    path: '/buisness asigned to',
+    name: '/buisness asigned',
+    icon: 'ni ni-money-coins text-success',
+    description: 'Track your daily revenue flow',
+    component: <AuthRoute><AccountantBusinessOwners /></AuthRoute>,
+    layout: '/admin',
+    category: 'Overview',
+    showInSidebar: () => true, // Both BO and accountant should see revenue
   },
   {
     path: '/daily-revenue',

@@ -718,3 +718,19 @@ export const resendVerification = async (req, res) => {
         });
     }
 };
+export const getAssignedBusinessOwners = async (req, res) => {
+    try {
+      const accountantId = req.user._id;
+  
+      // Find all users with role 'business_owner' that are assigned to this accountant
+      const businessOwners = await User.find({
+        role: 'business_owner',
+        assignedTo: accountantId,
+      }).select('-password');
+  
+      res.status(200).json(businessOwners);
+    } catch (err) {
+      console.error("Error fetching assigned business owners:", err);
+      res.status(500).json({ message: "Server error" });
+    }
+  };
