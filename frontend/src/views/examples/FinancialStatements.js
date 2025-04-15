@@ -13,6 +13,8 @@ import {
 import { useNavigate } from "react-router-dom";
 
 const FinancialReports = () => {
+    const [owners, setOwners] = useState([]);
+    const [selectedOwner, setSelectedOwner] = useState("");
     const [businesses, setBusinesses] = useState([]);
     const [selectedBusiness, setSelectedBusiness] = useState("");
     const [fromDate, setFromDate] = useState("");
@@ -23,15 +25,31 @@ const FinancialReports = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        fetchBusinesses();
+        fetchBusinessOwners();
     }, []);
 
-    const fetchBusinesses = async () => {
+    const fetchBusinessOwners = async () => {
         try {
             const token = localStorage.getItem("authToken");
             if (!token) return navigate("/auth/login");
 
-            const res = await axios.get("http://localhost:5000/api/business/user-businesses", {
+            const res = await axios.get("http://localhost:5000/api/users/assigned-business-owners", {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+
+            setOwners(res.data.owners);
+        } catch (err) {
+            console.error("Failed to load owners", err);
+            setError("Failed to load business owners.");
+        }
+    };
+
+    const fetchBusinesses = async (ownerId) => {
+        try {
+            const token = localStorage.getItem("authToken");
+            if (!token) return navigate("/auth/login");
+
+            const res = await axios.get(`http://localhost:5000/api/business/user-businesses?ownerId=${ownerId}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
 
@@ -39,6 +57,8 @@ const FinancialReports = () => {
             if (res.data.businesses.length > 0) {
                 setSelectedBusiness(res.data.businesses[0]._id);
                 fetchFinancialReports(res.data.businesses[0]._id);
+            } else {
+                setFinancialReports([]);
             }
         } catch (err) {
             console.error("Failed to load businesses", err);
@@ -65,13 +85,11 @@ const FinancialReports = () => {
 
             setLoading(true);
             const query = `?businessId=${selectedBusiness}&from=${fromDate}&to=${toDate}`;
-            console.log(query);
             await axios.get(`http://localhost:5000/api/financial-Statement/generate-financial-statement${query}`, {
                 headers: { Authorization: `Bearer ${token}` },
                 responseType: 'blob',
             });
 
-            // Reload list after generation
             await fetchFinancialReports(selectedBusiness);
         } catch (err) {
             console.error("Generation failed", err);
@@ -111,7 +129,6 @@ const FinancialReports = () => {
                 headers: { Authorization: `Bearer ${token}` },
             });
 
-            // Refresh list
             await fetchFinancialReports(selectedBusiness);
         } catch (err) {
             console.error("Delete failed", err);
@@ -128,6 +145,24 @@ const FinancialReports = () => {
                     {error && <div className="alert alert-danger">{error}</div>}
 
                     <FormGroup>
+                        <Label>Select Business Owner</Label>
+                        <Input
+                            type="select"
+                            value={selectedOwner}
+                            onChange={(e) => {
+                                const ownerId = e.target.value;
+                                setSelectedOwner(ownerId);
+                                fetchBusinesses(ownerId);
+                            }}
+                        >
+                            <option value="">-- Select Owner --</option>
+                            {owners.map((owner) => (
+                                <option key={owner._id} value={owner._id}>{owner.fullName}</option>
+                            ))}
+                        </Input>
+                    </FormGroup>
+
+                    <FormGroup>
                         <Label>Select Business</Label>
                         <Input
                             type="select"
@@ -136,6 +171,7 @@ const FinancialReports = () => {
                                 setSelectedBusiness(e.target.value);
                                 fetchFinancialReports(e.target.value);
                             }}
+                            disabled={!selectedOwner}
                         >
                             {businesses.map((biz) => (
                                 <option key={biz._id} value={biz._id}>{biz.name}</option>
@@ -162,7 +198,7 @@ const FinancialReports = () => {
                         </FormGroup>
                     </Row>
 
-                    <Button color="primary" onClick={generateFinancialReport} disabled={loading}>
+                    <Button color="primary" onClick={generateFinancialReport} disabled={loading || !selectedBusiness}>
                         {loading ? "Generating..." : "Generate New Report"}
                     </Button>
 
@@ -206,6 +242,7 @@ const FinancialReports = () => {
 };
 
 export default FinancialReports;
+
 
 
 
