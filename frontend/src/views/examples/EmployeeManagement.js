@@ -46,6 +46,8 @@ const EmployeeManagement = () => {
     });
     const [showAbsenceModal, setShowAbsenceModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
+    const [showAbsenceListModal, setShowAbsenceListModal] = useState(false);
+    const [selectedEmployee, setSelectedEmployee] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const employeesPerPage = 5;
@@ -461,6 +463,17 @@ const EmployeeManagement = () => {
                                         setAbsenceData({ employeeId: employee._id, startDate: '', endDate: '', reason: '' });
                                         setShowAbsenceModal(true);
                                     }} disabled={loading.submit}><FaCalendarAlt /></Button>
+                                    <Button 
+                                        size="sm" 
+                                        color="primary" 
+                                        onClick={() => {
+                                            setSelectedEmployee(employee);
+                                            setShowAbsenceListModal(true);
+                                        }} 
+                                        disabled={loading.submit}
+                                    >
+                                        View Absences
+                                    </Button>
                                 </td>
                             </tr>
                         ))}
@@ -655,6 +668,63 @@ const EmployeeManagement = () => {
                         {loading.submit ? <FaSpinner className="fa-spin" /> : 'Save'}
                     </Button>
                     <Button color="secondary" onClick={() => setShowAbsenceModal(false)} disabled={loading.submit}>Cancel</Button>
+                </ModalFooter>
+            </Modal>
+
+            {/* Absence List Modal */}
+            <Modal isOpen={showAbsenceListModal} toggle={() => setShowAbsenceListModal(false)} className={styles.modal}>
+                <ModalHeader toggle={() => setShowAbsenceListModal(false)} className={styles.modalHeader}>
+                    {selectedEmployee ? `${selectedEmployee.firstName} ${selectedEmployee.lastName}'s Absences` : 'Absences'}
+                </ModalHeader>
+                <ModalBody>
+                    {selectedEmployee && selectedEmployee.absences && selectedEmployee.absences.length > 0 ? (
+                        <Table responsive>
+                            <thead>
+                                <tr>
+                                    <th>Start Date</th>
+                                    <th>End Date</th>
+                                    <th>Reason</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {selectedEmployee.absences.map((absence, index) => {
+                                    const startDate = new Date(absence.startDate);
+                                    const endDate = new Date(absence.endDate);
+                                    const now = new Date();
+                                    let status = 'Completed';
+                                    if (now >= startDate && now <= endDate) {
+                                        status = 'Current';
+                                    } else if (now < startDate) {
+                                        status = 'Upcoming';
+                                    }
+                                    
+                                    return (
+                                        <tr key={index}>
+                                            <td>{startDate.toLocaleDateString()}</td>
+                                            <td>{endDate.toLocaleDateString()}</td>
+                                            <td>{absence.reason}</td>
+                                            <td>
+                                                <Badge color={
+                                                    status === 'Current' ? 'warning' :
+                                                    status === 'Upcoming' ? 'info' : 'success'
+                                                }>
+                                                    {status}
+                                                </Badge>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </Table>
+                    ) : (
+                        <Alert color="info">
+                            No absences recorded for this employee.
+                        </Alert>
+                    )}
+                </ModalBody>
+                <ModalFooter>
+                    <Button color="secondary" onClick={() => setShowAbsenceListModal(false)}>Close</Button>
                 </ModalFooter>
             </Modal>
         </div>
