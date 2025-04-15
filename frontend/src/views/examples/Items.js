@@ -259,25 +259,31 @@ const Items = () => {
         }));
     };
 
+    const validateItem = (item) => {
+        if (!item.name.trim() || !item.unit.trim()) {
+            return 'Name and Unit are required fields.';
+        }
+        if (item.salesInfo.sellingPrice === '' || item.purchaseInfo.costPrice === '') {
+            return 'Selling price and Cost price are required.';
+        }
+        if (parseFloat(item.salesInfo.sellingPrice) < 0 || parseFloat(item.purchaseInfo.costPrice) < 0) {
+            return 'Prices cannot be negative.';
+        }
+        return '';
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+        const validationError = validateItem(item);
+        if (validationError) {
+            showNotification(validationError, 'danger');
+            return;
+        }
         try {
             setIsLoading(true);
 
             if (!business) {
                 showNotification('Please create a business first before adding items', 'warning');
-                return;
-            }
-
-            // Validate required fields
-            if (!item.name || !item.unit) {
-                showNotification('Name and Unit are required fields', 'warning');
-                return;
-            }
-
-            // Validate prices
-            if (!item.salesInfo.sellingPrice || !item.purchaseInfo.costPrice) {
-                showNotification('Selling price and Cost price are required', 'warning');
                 return;
             }
 
@@ -637,7 +643,7 @@ const Items = () => {
                                             <Col md={6}>
                                                 <FormGroup>
                                                     <Label>Name</Label>
-                                                    <Input type="text" name="name" value={item.name} onChange={handleChange} required />
+                                                    <Input type="text" name="name" value={item.name} onChange={handleChange} />
                                                 </FormGroup>
                                             </Col>
                                         </Row>
@@ -646,7 +652,7 @@ const Items = () => {
                                             <Col md={6}>
                                                 <FormGroup>
                                                     <Label>Unit</Label>
-                                                    <Input type="text" name="unit" value={item.unit} onChange={handleChange} required />
+                                                    <Input type="text" name="unit" value={item.unit} onChange={handleChange} />
                                                 </FormGroup>
                                             </Col>
                                         </Row>
@@ -665,7 +671,6 @@ const Items = () => {
                                                             name="salesInfo.sellingPrice"
                                                             value={item.salesInfo.sellingPrice}
                                                             onChange={handleChange}
-                                                            required
                                                             min="0"
                                                             step="0.01"
                                                         />
@@ -716,7 +721,6 @@ const Items = () => {
                                                             name="purchaseInfo.costPrice"
                                                             value={item.purchaseInfo.costPrice}
                                                             onChange={handleChange}
-                                                            required
                                                             min="0"
                                                             step="0.01"
                                                         />

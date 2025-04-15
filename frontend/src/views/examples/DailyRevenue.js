@@ -168,8 +168,32 @@ const DailyRevenue = () => {
         }));
     };
 
+    const validateEntry = (entry) => {
+        if (entry.revenues.cash.sales < 0 || entry.revenues.cash.returns < 0 || entry.revenues.card.sales < 0 || entry.revenues.card.returns < 0) {
+            return 'Sales and returns cannot be negative.';
+        }
+        if (entry.expenses.petty < 0) {
+            return 'Petty cash expenses cannot be negative.';
+        }
+        if (
+            entry.revenues.cash.sales === 0 &&
+            entry.revenues.card.sales === 0 &&
+            entry.revenues.other.length === 0 &&
+            entry.expenses.petty === 0 &&
+            entry.expenses.other.length === 0
+        ) {
+            return 'Please enter at least one revenue or expense.';
+        }
+        return '';
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+        const validationError = validateEntry(entry);
+        if (validationError) {
+            setNotification({ show: true, message: validationError, type: 'danger' });
+            return;
+        }
         try {
             setIsLoading(true);
             let response;
