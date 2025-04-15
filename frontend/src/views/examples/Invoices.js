@@ -15,6 +15,7 @@ import {
     Spinner
 } from "reactstrap";
 import Header from "components/Headers/Header.js";
+import { useNavigate } from "react-router-dom";
 
 const Invoices = () => {
     const [invoiceName, setInvoiceName] = useState("");
@@ -22,10 +23,40 @@ const Invoices = () => {
     const [file, setFile] = useState(null);
     const [uploadedInvoices, setUploadedInvoices] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [businessId, setBusinessId] = useState("");
+    const [businesses, setBusinesses] = useState([]);
 
-    const fetchInvoices = async () => {
+    const navigate = useNavigate();
+    const token = localStorage.getItem("authToken");
+
+    const authHeader = {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    };
+
+    const fetchBusinesses = async () => {
         try {
-            const res = await axios.get("http://localhost:5000/api/invoices1");
+            if (!token) {
+                navigate("/auth/login");
+                return;
+            }
+
+            const response = await axios.get("http://localhost:5000/api/business/user-businesses", authHeader);
+            setBusinesses(response.data.businesses);
+
+            if (response.data.length > 0) {
+                setBusinessId(response.data[0]._id);
+            }
+        } catch (err) {
+            console.error("Error fetching businesses", err);
+        }
+    };
+
+    const fetchInvoices = async (id) => {
+        if (!id) return;
+        try {
+            const res = await axios.get(`http://localhost:5000/api/invoices1?businessId=${id}`, authHeader);
             setUploadedInvoices(res.data);
         } catch (err) {
             console.error("Error fetching invoices", err);
@@ -33,8 +64,14 @@ const Invoices = () => {
     };
 
     useEffect(() => {
-        fetchInvoices();
+        fetchBusinesses();
     }, []);
+
+    useEffect(() => {
+        if (businessId) {
+            fetchInvoices(businessId);
+        }
+    }, [businessId]);
 
     const handleFileChange = (e) => {
         setFile(e.target.files[0]);
@@ -42,8 +79,8 @@ const Invoices = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!invoiceName || !file) {
-            alert("Please provide an invoice name and a file.");
+        if (!invoiceName || !file || !businessId) {
+            alert("Please provide all required fields.");
             return;
         }
 
@@ -51,11 +88,16 @@ const Invoices = () => {
         formData.append("invoiceName", invoiceName);
         formData.append("invoiceType", invoiceType);
         formData.append("file", file);
+        formData.append("businessId", businessId);
 
         try {
             setLoading(true);
             const response = await axios.post("http://localhost:5000/api/invoices1", formData, {
-                headers: { "Content-Type": "multipart/form-data" },
+                ...authHeader,
+                headers: {
+                    ...authHeader.headers,
+                    "Content-Type": "multipart/form-data"
+                }
             });
             setUploadedInvoices([...uploadedInvoices, response.data]);
             setInvoiceName("");
@@ -70,7 +112,7 @@ const Invoices = () => {
 
     const handleDelete = async (id) => {
         try {
-            await axios.delete(`http://localhost:5000/api/invoices1/${id}`);
+            await axios.delete(`http://localhost:5000/api/invoices1/${id}`, authHeader);
             setUploadedInvoices(uploadedInvoices.filter((invoice) => invoice._id !== id));
         } catch (err) {
             console.error("Error deleting invoice", err);
@@ -85,6 +127,25 @@ const Invoices = () => {
                     <Col lg="8">
                         <Card className="shadow p-4">
                             <h3 className="mb-4">📤 Upload Invoice</h3>
+
+                            <FormGroup>
+                                <Label for="businessSelector">Select Business</Label>
+                                <Input
+                                    type="select"
+                                    id="businessSelector"
+                                    value={businessId}
+                                    onChange={(e) => setBusinessId(e.target.value)}
+                                    required
+                                >
+                                    <option value="" disabled>Select a business</option>
+                                    {businesses.map((b) => (
+                                        <option key={b._id} value={b._id}>
+                                            {b.name}
+                                        </option>
+                                    ))}
+                                </Input>
+                            </FormGroup>
+
                             <Form onSubmit={handleSubmit}>
                                 <FormGroup>
                                     <Label for="invoiceName">Invoice Name</Label>
@@ -133,7 +194,7 @@ const Invoices = () => {
                                         <div>
                                             <strong>{invoice.invoiceName}</strong> ({invoice.invoiceType})<br />
                                             <a
-                                                href={`http://localhost:5000/${invoice.filePath}`}
+                                                href={`http://localhost:5000/${invoice.filePath}?token=${token}`}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                             >
@@ -159,4 +220,6 @@ const Invoices = () => {
 };
 
 export default Invoices;
+
+
 
