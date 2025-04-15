@@ -571,24 +571,35 @@ export const search= async (req, res) => {
     }
   };
 
-  export const removeAssignment= async (req, res) => {
+  export const removeAssignment = async (req, res) => {
     const { accountantId } = req.body;
-    const userId = req.user._id; // Assuming authenticate middleware adds the user info
+    const userId = req.user._id;
 
     try {
-        const user = await User.findById(userId);
-        if (!user) return res.status(404).send("User not found");
+        const businessOwner = await User.findById(userId);
+        if (!businessOwner) return res.status(404).send("Business owner not found");
 
-        if (!user.assignedTo) {
+        if (!businessOwner.assignedTo) {
             return res.status(400).send("No accountant assigned to your business");
         }
 
-        if (user.assignedTo.toString() !== accountantId) {
+        if (businessOwner.assignedTo.toString() !== accountantId) {
             return res.status(400).send("This accountant is not assigned to your business");
         }
 
-        user.assignedTo = null; // Remove the assignment
-        await user.save();
+        const accountant = await User.findById(accountantId);
+        if (!accountant) return res.status(404).send("Accountant not found");
+
+        if (accountant.assignedTo?.toString() !== businessOwner._id.toString()) {
+            return res.status(400).send("Mismatch in accountant assignment");
+        }
+
+        // Unlink both
+        businessOwner.assignedTo = null;
+        accountant.assignedTo = null;
+
+        await businessOwner.save();
+        await accountant.save();
 
         res.status(200).send("Assignment removed successfully");
     } catch (err) {

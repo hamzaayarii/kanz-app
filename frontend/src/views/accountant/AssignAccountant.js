@@ -1,144 +1,185 @@
 import React, { useEffect, useState } from "react";
-import { Container, Table, Button, Card, CardHeader, CardBody, Spinner } from "reactstrap";
+import {
+  Button,
+  Card,
+  CardContent,
+  Typography,
+  CircularProgress,
+  Snackbar,
+  Alert,
+  Box,
+  Avatar
+} from "@mui/material";
+import { DataGrid } from "@mui/x-data-grid";
 import axios from "axios";
-import Header from 'components/Headers/Header';
+import { BusinessCenter, RemoveCircleOutline } from "@mui/icons-material";
 
 const AssignAccountant = () => {
-    const [accountants, setAccountants] = useState([]);
-    const [assigningId, setAssigningId] = useState(null);
-    const [removingId, setRemovingId] = useState(null); // For removing assignment
-    const [currentUser, setCurrentUser] = useState(null);
-    const [assignedId, setAssignedId] = useState(null);
+  const [accountants, setAccountants] = useState([]);
+  const [assigningId, setAssigningId] = useState(null);
+  const [removing, setRemoving] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [assignedId, setAssignedId] = useState(null);
+  const [notification, setNotification] = useState({ message: "", severity: "info" });
 
-    const token = localStorage.getItem("authToken");
+  const token = localStorage.getItem("authToken");
 
-    useEffect(() => {
-        if (!token) return;
+  useEffect(() => {
+    if (!token) return;
 
-        // Get current logged-in user
-        axios.get("http://localhost:5000/api/users/me", {
-            headers: { Authorization: `Bearer ${token}` }
-        })
-        .then(res => {
-            setCurrentUser(res.data);
-            setAssignedId(res.data.assignedTo); // Save assigned accountant ID
-        })
-        .catch(err => console.error("Error fetching user:", err));
+    const fetchData = async () => {
+      try {
+        const userRes = await axios.get("http://localhost:5000/api/users/me", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setCurrentUser(userRes.data);
+        setAssignedId(userRes.data.assignedTo);
 
-        // Get all accountants
-        axios.get("http://localhost:5000/api/users/getUsersByRole?role=accountant", {
-            headers: { Authorization: `Bearer ${token}` }
-        })
-        .then(res => setAccountants(res.data))
-        .catch(err => console.error("Error fetching accountants:", err));
-    }, [token]);
-
-    // Handle the assignment of an accountant
-    const handleAssign = (accountantId) => {
-        setAssigningId(accountantId);
-
-        axios.post("http://localhost:5000/api/users/assign", { accountantId }, {
-            headers: { Authorization: `Bearer ${token}` }
-        })
-        .then(() => {
-            alert("Accountant assigned successfully!");
-            setAssignedId(accountantId); // Update the assigned accountant
-        })
-        .catch(error => {
-            console.error("Error assigning accountant:", error);
-            alert("Failed to assign accountant.");
-        })
-        .finally(() => setAssigningId(null));
+        const accRes = await axios.get(
+          "http://localhost:5000/api/users/getUsersByRole?role=accountant",
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        setAccountants(accRes.data);
+      } catch (err) {
+        console.error("Error:", err);
+        setNotification({ message: "Error loading data", severity: "error" });
+      }
     };
 
-    // Handle removing the assignment of an accountant
-    const handleRemoveAssignment = () => {
-        if (!assignedId) {
-            alert("No accountant assigned to your business.");
-            return;
-        }
+    fetchData();
+  }, [token]);
 
-        setRemovingId(assignedId);
+  const handleAssign = async (id) => {
+    try {
+      setAssigningId(id);
+      await axios.post(
+        "http://localhost:5000/api/users/assign",
+        { accountantId: id },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setAssignedId(id);
+      setNotification({ message: "Accountant assigned!", severity: "success" });
+    } catch (err) {
+      console.error("Assign error:", err);
+      setNotification({ message: "Failed to assign accountant.", severity: "error" });
+    } finally {
+      setAssigningId(null);
+    }
+  };
 
-        axios.post("http://localhost:5000/api/users/removeAssignment", { accountantId: assignedId }, {
-            headers: { Authorization: `Bearer ${token}` }
-        })
-        .then(() => {
-            alert("Accountant unassigned successfully!");
-            setAssignedId(null); // Update the assigned accountant to null
-        })
-        .catch(error => {
-            console.error("Error removing assignment:", error);
-            alert("Failed to remove accountant assignment.");
-        })
-        .finally(() => setRemovingId(null));
-    };
+  const handleRemove = async () => {
+    try {
+      setRemoving(true);
+      await axios.post(
+        "http://localhost:5000/api/users/removeAssignment",
+        { accountantId: assignedId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setAssignedId(null);
+      setNotification({ message: "Assignment removed.", severity: "info" });
+    } catch (err) {
+      console.error("Remove error:", err);
+      setNotification({ message: "Failed to remove assignment.", severity: "error" });
+    } finally {
+      setRemoving(false);
+    }
+  };
 
-    // Show nothing if user is not a business owner
-    if (!currentUser || currentUser.role !== "business_owner") return null;
+  if (!currentUser || currentUser.role !== "business_owner") return null;
 
-    return (
-        <>
-            <Header />
-            <Container className="mt-5">
-                <Card>
-                    <CardHeader>
-                        <h3 className="mb-0">Assign an Accountant</h3>
-                        <p className="text-sm text-muted">Select an accountant to assign to your business.</p>
-                    </CardHeader>
-                    <CardBody>
-                        {accountants.length === 0 ? (
-                            <p>No accountants found.</p>
-                        ) : (
-                            <Table bordered responsive hover>
-                                <thead>
-                                    <tr>
-                                        <th>#</th>
-                                        <th>Name</th>
-                                        <th>Email</th>
-                                        <th>Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {accountants.map((acc, index) => (
-                                        <tr key={acc._id}>
-                                            <td>{index + 1}</td>
-                                            <td>{acc.fullName}</td>
-                                            <td>{acc.email}</td>
-                                            <td>
-                                                {assignedId === acc._id ? (
-                                                    <>
-                                                        <span className="text-success fw-bold">Assigned</span>
-                                                        <Button
-                                                            color="danger"
-                                                            size="sm"
-                                                            onClick={handleRemoveAssignment}
-                                                            disabled={removingId === acc._id}
-                                                        >
-                                                            {removingId === acc._id ? <Spinner size="sm" /> : "Remove Assignment"}
-                                                        </Button>
-                                                    </>
-                                                ) : (
-                                                    <Button
-                                                        color="primary"
-                                                        size="sm"
-                                                        onClick={() => handleAssign(acc._id)}
-                                                        disabled={assigningId === acc._id || assignedId}
-                                                    >
-                                                        {assigningId === acc._id ? <Spinner size="sm" /> : "Assign"}
-                                                    </Button>
-                                                )}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </Table>
-                        )}
-                    </CardBody>
-                </Card>
-            </Container>
-        </>
-    );
+  const columns = [
+    {
+      field: "avatar",
+      headerName: "",
+      width: 60,
+      renderCell: (params) => (
+        <Avatar alt={params.row.fullName} src={params.row.avatarUrl} />
+      )
+    },
+    { field: "fullName", headerName: "Name", flex: 1 },
+    { field: "email", headerName: "Email", flex: 1.5 },
+    {
+      field: "action",
+      headerName: "Action",
+      width: 180,
+      renderCell: (params) => {
+        const isAssigned = assignedId === params.row._id;
+        return isAssigned ? (
+          <Button
+            variant="outlined"
+            color="error"
+            size="small"
+            startIcon={removing ? <CircularProgress size={16} /> : <RemoveCircleOutline />}
+            onClick={handleRemove}
+            disabled={removing}
+          >
+            Remove
+          </Button>
+        ) : (
+          <Button
+            variant="contained"
+            size="small"
+            color="primary"
+            onClick={() => handleAssign(params.row._id)}
+            disabled={assigningId === params.row._id || assignedId}
+            startIcon={assigningId === params.row._id ? <CircularProgress size={16} /> : <BusinessCenter />}
+          >
+            {assigningId === params.row._id ? "Assigning..." : "Assign"}
+          </Button>
+        );
+      }
+    }
+  ];
+
+  return (
+    <div className="px-8 py-6">
+      <Card className="shadow-md">
+        <CardContent>
+          <Typography variant="h5" gutterBottom>
+            Assign an Accountant
+          </Typography>
+          <Typography variant="body2" color="text.secondary" gutterBottom>
+            Choose from the registered accountants or refer to the{" "}
+            <a
+              className="text-blue-600 hover:underline"
+              href="https://www.oect.org.tn/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Répertoire des experts comptables agréés en Tunisie
+            </a>
+          </Typography>
+
+          <Box className="mt-6" style={{ height: 400, width: "100%" }}>
+            <DataGrid
+              rows={accountants}
+              getRowId={(row) => row._id}
+              columns={columns}
+              pageSize={5}
+              rowsPerPageOptions={[5]}
+              disableRowSelectionOnClick
+              sx={{ fontFamily: "inherit" }}
+            />
+          </Box>
+        </CardContent>
+      </Card>
+
+      <Snackbar
+        open={!!notification.message}
+        autoHideDuration={4000}
+        onClose={() => setNotification({ message: "", severity: "info" })}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => setNotification({ message: "", severity: "info" })}
+          severity={notification.severity}
+          sx={{ width: "100%" }}
+        >
+          {notification.message}
+        </Alert>
+      </Snackbar>
+    </div>
+  );
 };
 
 export default AssignAccountant;
