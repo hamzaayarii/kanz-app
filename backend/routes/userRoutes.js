@@ -1,7 +1,7 @@
 // src/routes/userRoutes.js
 const express = require('express');
 const router = express.Router();
-const { create, list, updateUser, deleteUser, googleAuth, googleAuthRequest, forgot_password, reset_password, toggleBan, login,assignAccountant,getUsersByRole,search,removeAssignment  } = require('../controllers/userController');
+const { create, list, updateUser, deleteUser, googleAuth, googleAuthRequest, forgot_password, reset_password, toggleBan, login,assignAccountant,getUsersByRole,search,removeAssignment,verifyEmail,resendVerification } = require('../controllers/userController');
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -147,5 +147,9 @@ router.get('/search', authenticate, async (req, res) => {
   });
   router.get('/search', authenticate,search);
   router.post('/removeAssignment', authenticate, removeAssignment);
+
+// Email verification routes
+router.get('/verify/:token', verifyEmail);
+router.post('/resend-verification', resendVerification);
 
 module.exports = router;

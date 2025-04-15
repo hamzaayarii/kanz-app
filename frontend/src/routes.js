@@ -27,6 +27,7 @@ import AssignAccountant from './views/accountant/AssignAccountant.js';
 import DailyRevenue from './views/examples/DailyRevenue';
 import DailyRevenueList from './views/examples/DailyRevenueList';
 import Categories from "./views/examples/Categories";
+import EmailVerification from './views/examples/EmailVerification.js';
 
 // Grouped and enhanced routes for better UX
 const routes = [
@@ -250,6 +251,14 @@ const routes = [
     name: 'Sign Up',
     icon: 'ni ni-circle-08 text-pink',
     component: <Register />,
+    layout: '/auth',
+    showInSidebar: false,
+  },
+  {
+    path: '/verify-email/:token',
+    name: 'Verify Email',
+    icon: 'ni ni-check-bold text-green',
+    component: <EmailVerification />,
     layout: '/auth',
     showInSidebar: false,
   },

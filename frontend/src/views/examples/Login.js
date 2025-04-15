@@ -94,7 +94,24 @@ const Login = () => {
       }
     } catch (error) {
       console.error('Login error:', error);
-      if (error.response) {
+      if (error.response?.data?.needsVerification) {
+        // Store email for verification resending
+        localStorage.setItem('pendingVerificationEmail', email);
+        
+        // Show verification required message with resend option
+        const resend = window.confirm(
+          'Your email is not verified. Would you like to receive a new verification email?'
+        );
+        
+        if (resend) {
+          try {
+            await axios.post('http://localhost:5000/api/users/resend-verification', { email });
+            alert('Verification email sent! Please check your inbox.');
+          } catch (resendError) {
+            alert('Error sending verification email. Please try again.');
+          }
+        }
+      } else if (error.response) {
         alert('Error: ' + error.response.data.message);
       } else {
         alert('An error occurred. Please try again.');
