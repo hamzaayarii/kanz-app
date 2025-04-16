@@ -4,7 +4,8 @@ const {
   getMessages, 
   sendMessage, 
   createConversation, 
-  deleteConversation
+  deleteConversation,
+  getLatestMessages
 }=require('../controllers/chatController');
 const { authenticate }=require('../middlewares/authMiddleware');
 
@@ -15,5 +16,5 @@ router.get('/messages/:conversationId', authenticate, getMessages);
 router.post('/messages', authenticate, sendMessage);
 router.post('/conversations', authenticate, createConversation);
 router.delete('/conversations/:conversationId', authenticate, deleteConversation);
-
+router.get('/latest-messages', authenticate, getLatestMessages); 
 module.exports = router;

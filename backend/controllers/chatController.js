@@ -209,3 +209,72 @@ export const deleteConversation = async (req, res) => {
   }
 };
 
+export const getLatestMessages = async (req, res) => {
+  try {
+    const userId = req.user?._id || req.user?.id || req.userId;
+    const limit = parseInt(req.query.limit) || 5;
+    
+    console.log('Fetching messages for user ID:', userId);
+    
+    // Find all conversations where this user is a participant
+    const conversations = await Conversation.find({
+      participants: userId
+    }).select('_id');
+    
+    console.log('Found conversations:', conversations.length);
+    
+    if (conversations.length === 0) {
+      return res.json({
+        success: true,
+        debug: { userId, reason: 'No conversations found' },
+        latestMessages: []
+      });
+    }
+    
+    const conversationIds = conversations.map(conv => conv._id);
+    console.log('Conversation IDs:', conversationIds);
+    
+    // Check if any messages exist at all in the database
+    const totalMessagesCount = await Message.countDocuments();
+    console.log('Total messages in database:', totalMessagesCount);
+    
+    // Check if any messages exist for these conversations
+    const messagesForUserCount = await Message.countDocuments({
+      conversationId: { $in: conversationIds }
+    });
+    console.log('Messages for user conversations:', messagesForUserCount);
+    
+    // Find the latest messages from these conversations
+    const latestMessages = await Message.find({
+      conversationId: { $in: conversationIds }
+    })
+    .sort({ createdAt: -1 })
+    .limit(limit)
+    .populate('sender', 'username name profileImage')
+    .populate('conversationId', 'participants')
+    .lean();
+    
+    console.log('Latest messages found:', latestMessages.length);
+    
+    // Just return the raw messages first to see what's in there
+    res.json({
+      success: true,
+      debug: {
+        userId,
+        conversationsCount: conversations.length,
+        totalMessagesInDB: totalMessagesCount,
+        messagesForUserCount,
+        latestMessagesCount: latestMessages.length
+      },
+      latestMessages: latestMessages
+    });
+    
+  } catch (error) {
+    console.error('Error fetching latest messages:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error',
+      error: error.message 
+    });
+  }
+};
