@@ -13,7 +13,7 @@ const financialStatementSchema = new mongoose.Schema({
     },
     type: {
         type: String,
-        enum: ['balance_sheet', 'income_statement', 'cash_flow'],
+        enum: ['complete_financial_statement','balance_sheet', 'income_statement', 'cash_flow'],
         required: true
     },
     periodStart: {
@@ -28,6 +28,7 @@ const financialStatementSchema = new mongoose.Schema({
         type: Object, // Stocke les données du bilan, compte de résultat, ou flux de trésorerie
         required: true
     },
+    fileName: { type: String, required: true },
     createdAt: {
         type: Date,
         default: Date.now

@@ -36,6 +36,11 @@ import {
     TabPane
 } from 'reactstrap';
 import { FaSearch, FaPlus, FaEdit, FaTrash, FaFilter, FaSort } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
+
+// Add axios default configuration
+axios.defaults.withCredentials = true;
+axios.defaults.baseURL = 'http://localhost:5000';
 
 const TVA_RATES = {
     'TVA19': 19,
@@ -45,6 +50,7 @@ const TVA_RATES = {
 };
 
 const Items = () => {
+    const navigate = useNavigate();
     const [item, setItem] = useState({
         type: 'Goods',
         name: '',
@@ -77,10 +83,50 @@ const Items = () => {
     const [itemToDelete, setItemToDelete] = useState(null);
     const [activeTab, setActiveTab] = useState('1');
     const [filterType, setFilterType] = useState('all');
+    const [business, setBusiness] = useState(null);
 
     useEffect(() => {
-        fetchItems();
-    }, [page, limit, searchTerm, sortField, sortDirection, filterType]);
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            navigate('/auth/login');
+            return;
+        }
+
+        // Set up axios interceptor
+        const interceptor = axios.interceptors.request.use(
+            (config) => {
+                const token = localStorage.getItem('authToken');
+                if (token) {
+                    config.headers.Authorization = `Bearer ${token}`;
+                }
+                console.log('Request config:', {
+                    url: config.url,
+                    method: config.method,
+                    headers: config.headers,
+                });
+                return config;
+            },
+            (error) => {
+                console.error('Request interceptor error:', error);
+                return Promise.reject(error);
+            }
+        );
+
+        // Clean up interceptor on unmount
+        return () => {
+            axios.interceptors.request.eject(interceptor);
+        };
+    }, [navigate]);
+
+    useEffect(() => {
+        fetchBusiness();
+    }, []);
+
+    useEffect(() => {
+        if (business) {
+            fetchItems();
+        }
+    }, [page, limit, searchTerm, sortField, sortDirection, filterType, business]);
 
     useEffect(() => {
         let timeoutId;
@@ -100,10 +146,51 @@ const Items = () => {
         setMessage({ text, type, show: true });
     };
 
-        const fetchItems = async () => {
-            try {
+    const fetchBusiness = async () => {
+        try {
+            console.log('Fetching business...');
+            const token = localStorage.getItem('authToken');
+            console.log('Token:', token);
+            
+            const response = await axios.get('/api/business/user-businesses', {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+            
+            console.log('Business response:', response.data);
+            
+            if (response.data.businesses && response.data.businesses.length > 0) {
+                setBusiness(response.data.businesses[0]);
+            } else {
+                setMessage({ 
+                    text: 'Please create a business first before adding items', 
+                    type: 'warning', 
+                    show: true 
+                });
+            }
+        } catch (error) {
+            console.error('Error fetching business:', error);
+            if (error.response?.status === 401) {
+                navigate('/auth/login');
+            } else {
+                setMessage({ 
+                    text: `Failed to fetch business information: ${error.response?.data?.message || error.message}`, 
+                    type: 'danger', 
+                    show: true 
+                });
+            }
+        }
+    };
+
+    const fetchItems = async () => {
+        try {
             setIsLoading(true);
-            const response = await axios.get(`http://localhost:5000/api/products`, {
+            const token = localStorage.getItem('authToken');
+            const response = await axios.get('/api/products', {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                },
                 params: {
                     page,
                     limit,
@@ -113,7 +200,8 @@ const Items = () => {
                     filterType
                 }
             });
-            console.log('API Response:', response.data);
+            
+            console.log('Items response:', response.data);
             
             if (Array.isArray(response.data)) {
                 setItemsList(response.data);
@@ -127,14 +215,19 @@ const Items = () => {
                 setTotalPages(1);
                 showNotification('Failed to load items properly', 'danger');
             }
-            } catch (error) {
-                console.error('Error fetching items:', error);
-            showNotification('Failed to fetch items: ' + error.message, 'danger');
+        } catch (error) {
+            console.error('Error fetching items:', error);
+            if (error.response?.status === 401) {
+                navigate('/auth/login');
+            } else {
+                showNotification('Failed to fetch items: ' + error.message, 'danger');
+            }
             setItemsList([]);
+            setTotalPages(1);
         } finally {
             setIsLoading(false);
-            }
-        };
+        }
+    };
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -166,20 +259,31 @@ const Items = () => {
         }));
     };
 
+    const validateItem = (item) => {
+        if (!item.name.trim() || !item.unit.trim()) {
+            return 'Name and Unit are required fields.';
+        }
+        if (item.salesInfo.sellingPrice === '' || item.purchaseInfo.costPrice === '') {
+            return 'Selling price and Cost price are required.';
+        }
+        if (parseFloat(item.salesInfo.sellingPrice) < 0 || parseFloat(item.purchaseInfo.costPrice) < 0) {
+            return 'Prices cannot be negative.';
+        }
+        return '';
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+        const validationError = validateItem(item);
+        if (validationError) {
+            showNotification(validationError, 'danger');
+            return;
+        }
         try {
             setIsLoading(true);
 
-            // Validate required fields
-            if (!item.name || !item.unit) {
-                showNotification('Name and Unit are required fields', 'warning');
-                return;
-            }
-
-            // Validate prices
-            if (!item.salesInfo.sellingPrice || !item.purchaseInfo.costPrice) {
-                showNotification('Selling price and Cost price are required', 'warning');
+            if (!business) {
+                showNotification('Please create a business first before adding items', 'warning');
                 return;
             }
 
@@ -188,6 +292,7 @@ const Items = () => {
                 type: item.type,
                 name: item.name.trim(),
                 unit: item.unit.trim(),
+                business: business._id,
                 salesInfo: {
                     sellingPrice: parseFloat(item.salesInfo.sellingPrice),
                     description: item.salesInfo.description?.trim() || '',
@@ -205,11 +310,11 @@ const Items = () => {
             console.log('Sending product data:', productData);
 
             if (isEditMode) {
-                const response = await axios.put(`http://localhost:5000/api/products/${currentItemId}`, productData);
+                const response = await axios.put(`/api/products/${currentItemId}`, productData);
                 console.log('Server response:', response.data);
                 showNotification('Item updated successfully!', 'success');
             } else {
-                const response = await axios.post('http://localhost:5000/api/products', productData);
+                const response = await axios.post('/api/products', productData);
                 console.log('Server response:', response.data);
                 showNotification('Item added successfully!', 'success');
             }
@@ -258,7 +363,7 @@ const Items = () => {
     const confirmDelete = async () => {
         try {
             setIsLoading(true);
-            await axios.delete(`http://localhost:5000/api/products/${itemToDelete}`);
+            await axios.delete(`/api/products/${itemToDelete}`);
             showNotification('Item deleted successfully!', 'success');
             setDeleteModal(false);
             fetchItems();
@@ -538,7 +643,7 @@ const Items = () => {
                                             <Col md={6}>
                                                 <FormGroup>
                                                     <Label>Name</Label>
-                                                    <Input type="text" name="name" value={item.name} onChange={handleChange} required />
+                                                    <Input type="text" name="name" value={item.name} onChange={handleChange} />
                                                 </FormGroup>
                                             </Col>
                                         </Row>
@@ -547,7 +652,7 @@ const Items = () => {
                                             <Col md={6}>
                                                 <FormGroup>
                                                     <Label>Unit</Label>
-                                                    <Input type="text" name="unit" value={item.unit} onChange={handleChange} required />
+                                                    <Input type="text" name="unit" value={item.unit} onChange={handleChange} />
                                                 </FormGroup>
                                             </Col>
                                         </Row>
@@ -566,7 +671,6 @@ const Items = () => {
                                                             name="salesInfo.sellingPrice"
                                                             value={item.salesInfo.sellingPrice}
                                                             onChange={handleChange}
-                                                            required
                                                             min="0"
                                                             step="0.01"
                                                         />
@@ -617,7 +721,6 @@ const Items = () => {
                                                             name="purchaseInfo.costPrice"
                                                             value={item.purchaseInfo.costPrice}
                                                             onChange={handleChange}
-                                                            required
                                                             min="0"
                                                             step="0.01"
                                                         />

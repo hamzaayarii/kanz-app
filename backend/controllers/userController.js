@@ -65,6 +65,10 @@ export const create = async (req, res) => {
         // 🔹 Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
 
+        // Generate verification token (6-digit number)
+        const verificationToken = Math.floor(100000 + Math.random() * 900000).toString();
+        const verificationTokenExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
+
         // 🔹 Create user object
         const newUser = new User({
             fullName,
@@ -74,44 +78,48 @@ export const create = async (req, res) => {
             governorate,
             avatar,
             gender,
-            role: role || 'business_owner'
+            role: role || 'business_owner',
+            verificationToken,
+            verificationTokenExpiresAt,
+            isVerified: false
         });
 
         const savedUser = await newUser.save();
 
-        // 🔹 Send welcome email
+        // 🔹 Send verification email
         try {
+            const verificationLink = `http://localhost:3000/auth/verify-email/${verificationToken}`;
             const mailOptions = {
                 from: process.env.EMAIL_USER,
                 to: email,
-                subject: 'Welcome to Accounting Management App!',
+                subject: 'Verify Your Email - Accounting Management App',
                 html: `
                     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                         <h2>Welcome to Accounting Management App!</h2>
                         <p>Dear ${fullName},</p>
-                        <p>Thank you for registering with our Accounting Management App. We're excited to have you on board!</p>
-                        <p>With our app, you can:</p>
-                        <ul>
-                            <li>Manage your business finances</li>
-                            <li>Track expenses and income</li>
-                            <li>Generate financial reports</li>
-                            <li>And much more!</li>
-                        </ul>
-                        <p>If you have any questions, feel free to reach out to our support team.</p>
+                        <p>Thank you for registering! Please verify your email address by clicking the link below:</p>
+                        <p>
+                            <a href="${verificationLink}" style="display: inline-block; padding: 10px 20px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">
+                                Verify Email Address
+                            </a>
+                        </p>
+                        <p>Or enter this verification code on the verification page: <strong>${verificationToken}</strong></p>
+                        <p>This verification link and code will expire in 24 hours.</p>
+                        <p>If you did not create an account, please ignore this email.</p>
                         <p>Best regards,<br>The Accounting Management Team</p>
                     </div>
                 `
             };
             await transporter.sendMail(mailOptions);
         } catch (emailError) {
-            console.error('Error sending welcome email:', emailError);
+            console.error('Error sending verification email:', emailError);
             // We don't want to fail the registration if email fails
         }
 
-        // 🔹 Send response (excluding password)
+        // 🔹 Send response (excluding password and verification token)
         return res.status(201).json({
             success: true,
-            message: "User registered successfully!",
+            message: "User registered successfully! Please check your email to verify your account.",
             user: {
                 _id: savedUser._id,
                 fullName: savedUser.fullName,
@@ -121,7 +129,8 @@ export const create = async (req, res) => {
                 avatar: savedUser.avatar,
                 gender: savedUser.gender,
                 role: savedUser.role,
-                createdAt: savedUser.createdAt
+                createdAt: savedUser.createdAt,
+                isVerified: false
             }
         });
     } catch (error) {
@@ -220,7 +229,16 @@ export const login = async (req, res) => {
 
         console.log('User found:', user);
 
-        // Vérifier si l'utilisateur est banni
+        // Check if email is verified
+        if (!user.isVerified) {
+            return res.status(403).json({
+                success: false,
+                message: "Please verify your email before logging in",
+                needsVerification: true
+            });
+        }
+
+        // Check if user is banned
         if (user.isBanned) {
             console.log('User is banned');
             return res.status(403).json({ success: false, message: "Your account is banned. Please contact support." });
@@ -249,12 +267,12 @@ export const login = async (req, res) => {
 
         console.log('Token generated:', token);
 
-        // 🔹 Store token in a **secure** HTTP-only cookie
+        // Store token in a secure HTTP-only cookie
         res.cookie('token', token, {
-            httpOnly: true, // Prevents access via JavaScript (for security)
-            secure: process.env.NODE_ENV === 'production', // Only use `secure` in production (HTTPS)
-            sameSite: 'strict', // Helps prevent CSRF attacks
-            maxAge: 60 * 60 * 1000 // 1 hour expiration
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 60 * 60 * 1000
         });
 
         res.status(200).json({
@@ -496,7 +514,7 @@ export const assignAccountant = async (req, res) => {
         }
 
         if (businessOwner.assignedTo) {
-            return res.status(400).json({ message: "You’ve already assigned an accountant." });
+            return res.status(400).json({ message: "You've already assigned an accountant." });
         }
 
         // Link both
@@ -553,24 +571,35 @@ export const search= async (req, res) => {
     }
   };
 
-  export const removeAssignment= async (req, res) => {
+  export const removeAssignment = async (req, res) => {
     const { accountantId } = req.body;
-    const userId = req.user._id; // Assuming authenticate middleware adds the user info
+    const userId = req.user._id;
 
     try {
-        const user = await User.findById(userId);
-        if (!user) return res.status(404).send("User not found");
+        const businessOwner = await User.findById(userId);
+        if (!businessOwner) return res.status(404).send("Business owner not found");
 
-        if (!user.assignedTo) {
+        if (!businessOwner.assignedTo) {
             return res.status(400).send("No accountant assigned to your business");
         }
 
-        if (user.assignedTo.toString() !== accountantId) {
+        if (businessOwner.assignedTo.toString() !== accountantId) {
             return res.status(400).send("This accountant is not assigned to your business");
         }
 
-        user.assignedTo = null; // Remove the assignment
-        await user.save();
+        const accountant = await User.findById(accountantId);
+        if (!accountant) return res.status(404).send("Accountant not found");
+
+        if (accountant.assignedTo?.toString() !== businessOwner._id.toString()) {
+            return res.status(400).send("Mismatch in accountant assignment");
+        }
+
+        // Unlink both
+        businessOwner.assignedTo = null;
+        accountant.assignedTo = null;
+
+        await businessOwner.save();
+        await accountant.save();
 
         res.status(200).send("Assignment removed successfully");
     } catch (err) {
@@ -578,3 +607,130 @@ export const search= async (req, res) => {
         res.status(500).send("Server error");
     }
 };
+
+// 📌 Verify Email
+export const verifyEmail = async (req, res) => {
+    try {
+        const { token } = req.params;
+        console.log('Verifying token:', token); // Add logging
+
+        // Find user with matching verification token
+        const user = await User.findOne({
+            verificationToken: token,
+            verificationTokenExpiresAt: { $gt: Date.now() } // Token not expired
+        });
+
+        console.log('Found user:', user); // Add logging
+
+        if (!user) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid or expired verification token"
+            });
+        }
+
+        // Update user as verified
+        user.isVerified = true;
+        user.verificationToken = undefined;
+        user.verificationTokenExpiresAt = undefined;
+        await user.save();
+
+        console.log('User verified successfully'); // Add logging
+
+        return res.status(200).json({
+            success: true,
+            message: "Email verified successfully"
+        });
+    } catch (error) {
+        console.error("Error verifying email:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Error verifying email",
+            error: error.message
+        });
+    }
+};
+
+// 📌 Resend Verification Email
+export const resendVerification = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        }
+
+        if (user.isVerified) {
+            return res.status(400).json({
+                success: false,
+                message: "Email is already verified"
+            });
+        }
+
+        // Generate new verification token
+        const verificationToken = Math.floor(100000 + Math.random() * 900000).toString();
+        const verificationTokenExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+        user.verificationToken = verificationToken;
+        user.verificationTokenExpiresAt = verificationTokenExpiresAt;
+        await user.save();
+
+        // Send new verification email
+        const verificationLink = `http://localhost:3000/verify-email/${verificationToken}`;
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: email,
+            subject: 'Verify Your Email - Accounting Management App',
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                    <h2>Email Verification</h2>
+                    <p>Dear ${user.fullName},</p>
+                    <p>You requested a new verification email. Please verify your email address by clicking the link below:</p>
+                    <p>
+                        <a href="${verificationLink}" style="display: inline-block; padding: 10px 20px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">
+                            Verify Email Address
+                        </a>
+                    </p>
+                    <p>Or enter this verification code: <strong>${verificationToken}</strong></p>
+                    <p>This verification link and code will expire in 24 hours.</p>
+                    <p>If you did not request this email, please ignore it.</p>
+                    <p>Best regards,<br>The Accounting Management Team</p>
+                </div>
+            `
+        };
+
+        await transporter.sendMail(mailOptions);
+
+        return res.status(200).json({
+            success: true,
+            message: "Verification email sent successfully"
+        });
+    } catch (error) {
+        console.error("Error resending verification:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Error sending verification email",
+            error: error.message
+        });
+    }
+};
+export const getAssignedBusinessOwners = async (req, res) => {
+    try {
+      const accountantId = req.user._id;
+  
+      // Find all users with role 'business_owner' that are assigned to this accountant
+      const businessOwners = await User.find({
+        role: 'business_owner',
+        assignedTo: accountantId,
+      }).select('-password');
+  
+      res.status(200).json(businessOwners);
+    } catch (err) {
+      console.error("Error fetching assigned business owners:", err);
+      res.status(500).json({ message: "Server error" });
+    }
+  };

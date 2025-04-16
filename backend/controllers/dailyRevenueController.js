@@ -1,12 +1,28 @@
 const DailyRevenue = require('../models/DailyRevenue');
 const JournalEntry = require('../models/JournalEntry');
 const Business = require('../models/Business');
+const User = require('../models/User');
+
+// Helper function to get businesses for current user
+const getBusinessesForUser = async (user) => {
+    if (user.role === 'accountant') {
+        // Find all business owners assigned to this accountant
+        const owners = await User.find({ role: 'business_owner', assignedTo: user._id }).select('_id');
+        const ownerIds = owners.map(o => o._id);
+        if (ownerIds.length === 0) return [];
+        return await Business.find({ owner: { $in: ownerIds } });
+    } else {
+        // Business owner: just their own businesses
+        return await Business.find({ owner: user._id });
+    }
+};
 
 // Create a new daily revenue entry
 exports.create = async (req, res) => {
     try {
         console.log('User from request:', req.user);
-        const business = await Business.findOne({ owner: req.user._id });
+        const businesses = await getBusinessesForUser(req.user);
+        const business = businesses[0]; // For create, just use the first (or you may want to select by some criteria)
         console.log('Found business:', business);
         if (!business) {
             return res.status(404).json({ success: false, message: 'Business not found' });
@@ -121,18 +137,17 @@ exports.create = async (req, res) => {
     }
 };
 
-// Get all daily revenue entries for a business
+// Get all daily revenue entries for businesses
 exports.list = async (req, res) => {
     try {
-        const business = await Business.findOne({ owner: req.user._id });
-        if (!business) {
+        const businesses = await getBusinessesForUser(req.user);
+        if (!businesses || businesses.length === 0) {
             return res.status(404).json({ success: false, message: 'Business not found' });
         }
-
-        const dailyRevenues = await DailyRevenue.find({ business: business._id })
+        const businessIds = businesses.map(b => b._id);
+        const dailyRevenues = await DailyRevenue.find({ business: { $in: businessIds } })
             .sort({ date: -1 })
             .populate('journalEntry');
-
         res.json({
             success: true,
             data: dailyRevenues
@@ -148,23 +163,21 @@ exports.list = async (req, res) => {
 // Get a single daily revenue entry
 exports.get = async (req, res) => {
     try {
-        const business = await Business.findOne({ owner: req.user._id });
-        if (!business) {
+        const businesses = await getBusinessesForUser(req.user);
+        if (!businesses || businesses.length === 0) {
             return res.status(404).json({ success: false, message: 'Business not found' });
         }
-
+        const businessIds = businesses.map(b => b._id);
         const dailyRevenue = await DailyRevenue.findOne({
             _id: req.params.id,
-            business: business._id
+            business: { $in: businessIds }
         }).populate('journalEntry');
-
         if (!dailyRevenue) {
             return res.status(404).json({
                 success: false,
                 message: 'Daily revenue entry not found'
             });
         }
-
         res.json({
             success: true,
             data: dailyRevenue
@@ -180,40 +193,35 @@ exports.get = async (req, res) => {
 // Update a daily revenue entry
 exports.update = async (req, res) => {
     try {
-        const business = await Business.findOne({ owner: req.user._id });
-        if (!business) {
+        const businesses = await getBusinessesForUser(req.user);
+        if (!businesses || businesses.length === 0) {
             return res.status(404).json({ success: false, message: 'Business not found' });
         }
-
+        const businessIds = businesses.map(b => b._id);
         const dailyRevenue = await DailyRevenue.findOne({
             _id: req.params.id,
-            business: business._id
+            business: { $in: businessIds }
         });
-
         if (!dailyRevenue) {
             return res.status(404).json({
                 success: false,
                 message: 'Daily revenue entry not found'
             });
         }
-
         if (dailyRevenue.status === 'VERIFIED') {
             return res.status(400).json({
                 success: false,
                 message: 'Cannot update a verified daily revenue entry'
             });
         }
-
         // Update the entry
         Object.assign(dailyRevenue, req.body);
         await dailyRevenue.save();
-
         // Update or create journal entry if needed
         if (dailyRevenue.autoJournalEntry) {
             // Similar journal entry creation logic as in create function
             // You might want to update the existing journal entry or create a new one
         }
-
         res.json({
             success: true,
             data: dailyRevenue
@@ -229,45 +237,43 @@ exports.update = async (req, res) => {
 // Delete a daily revenue entry
 exports.delete = async (req, res) => {
     try {
-        const business = await Business.findOne({ owner: req.user._id });
-        if (!business) {
+        const businesses = await getBusinessesForUser(req.user);
+        if (!businesses || businesses.length === 0) {
             return res.status(404).json({ success: false, message: 'Business not found' });
         }
-
+        const businessIds = businesses.map(b => b._id);
         const dailyRevenue = await DailyRevenue.findOne({
             _id: req.params.id,
-            business: business._id
+            business: { $in: businessIds }
         });
-
         if (!dailyRevenue) {
             return res.status(404).json({
                 success: false,
                 message: 'Daily revenue entry not found'
             });
         }
-
-        if (dailyRevenue.status !== 'DRAFT') {
+        // Check if the entry is verified
+        if (dailyRevenue.status === 'VERIFIED') {
             return res.status(400).json({
                 success: false,
-                message: 'Can only delete draft entries'
+                message: 'Cannot delete a verified entry'
             });
         }
-
-        // Delete associated journal entry if it exists
+        // If there's an associated journal entry, delete it first
         if (dailyRevenue.journalEntry) {
             await JournalEntry.findByIdAndDelete(dailyRevenue.journalEntry);
         }
-
-        await dailyRevenue.delete();
-
+        // Delete the daily revenue entry
+        await DailyRevenue.findByIdAndDelete(req.params.id);
         res.json({
             success: true,
             message: 'Daily revenue entry deleted successfully'
         });
     } catch (error) {
-        res.status(400).json({
+        console.error('Error deleting daily revenue:', error);
+        res.status(500).json({
             success: false,
-            message: error.message
+            message: error.message || 'Error deleting daily revenue entry'
         });
     }
 };
@@ -275,23 +281,21 @@ exports.delete = async (req, res) => {
 // Update status of a daily revenue entry
 exports.updateStatus = async (req, res) => {
     try {
-        const business = await Business.findOne({ owner: req.user._id });
-        if (!business) {
+        const businesses = await getBusinessesForUser(req.user);
+        if (!businesses || businesses.length === 0) {
             return res.status(404).json({ success: false, message: 'Business not found' });
         }
-
+        const businessIds = businesses.map(b => b._id);
         const dailyRevenue = await DailyRevenue.findOne({
             _id: req.params.id,
-            business: business._id
+            business: { $in: businessIds }
         });
-
         if (!dailyRevenue) {
             return res.status(404).json({
                 success: false,
                 message: 'Daily revenue entry not found'
             });
         }
-
         const { status } = req.body;
         if (!['DRAFT', 'POSTED', 'VERIFIED'].includes(status)) {
             return res.status(400).json({
@@ -299,7 +303,6 @@ exports.updateStatus = async (req, res) => {
                 message: 'Invalid status'
             });
         }
-
         // Validate status transition
         if (dailyRevenue.status === 'VERIFIED') {
             return res.status(400).json({
@@ -307,17 +310,14 @@ exports.updateStatus = async (req, res) => {
                 message: 'Cannot change status of a verified entry'
             });
         }
-
         if (status === 'VERIFIED' && dailyRevenue.status !== 'POSTED') {
             return res.status(400).json({
                 success: false,
                 message: 'Entry must be posted before verification'
             });
         }
-
         dailyRevenue.status = status;
         await dailyRevenue.save();
-
         res.json({
             success: true,
             data: dailyRevenue

@@ -42,7 +42,7 @@ const Expenses = () => {
                 navigate('/auth/login');
                 return;
             }
-            const response = await axios.get("http://localhost:5000/api/business/buisnessowner", {
+            const response = await axios.get("http://localhost:5000/api/business/user-businesses", {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             setBusinesses(response.data.businesses);

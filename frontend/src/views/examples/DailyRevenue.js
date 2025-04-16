@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
     Card,
     CardHeader,
@@ -18,6 +19,10 @@ import axios from 'axios';
 import Header from "components/Headers/Header.js";
 
 const DailyRevenue = () => {
+    const { id } = useParams();
+    const navigate = useNavigate();
+    const isEditMode = !!id;
+
     const [entry, setEntry] = useState({
         date: new Date().toISOString().split('T')[0],
         revenues: {
@@ -59,6 +64,52 @@ const DailyRevenue = () => {
         }
         return config;
     });
+
+    // Add response interceptor to handle auth errors
+    api.interceptors.response.use(
+        (response) => response,
+        (error) => {
+            if (error.response?.status === 401) {
+                // Token is invalid or expired
+                localStorage.removeItem('authToken');
+                navigate('/auth/login');
+            }
+            return Promise.reject(error);
+        }
+    );
+
+    // Fetch entry data if in edit mode
+    useEffect(() => {
+        const fetchEntry = async () => {
+            if (isEditMode) {
+                try {
+                    setIsLoading(true);
+                    const token = getAuthToken();
+                    if (!token) {
+                        navigate('/auth/login');
+                        return;
+                    }
+                    const response = await api.get(`/daily-revenue/${id}`);
+                    const entryData = response.data.data;
+                    setEntry(entryData);
+                } catch (error) {
+                    if (error.response?.status === 401) {
+                        navigate('/auth/login');
+                    } else {
+                        setNotification({
+                            show: true,
+                            message: error.response?.data?.message || 'Error fetching entry',
+                            type: 'danger'
+                        });
+                    }
+                } finally {
+                    setIsLoading(false);
+                }
+            }
+        };
+
+        fetchEntry();
+    }, [id, isEditMode, navigate]);
 
     const handleRevenueChange = (type, field, value) => {
         setEntry(prev => ({
@@ -117,31 +168,73 @@ const DailyRevenue = () => {
         }));
     };
 
+    const validateEntry = (entry) => {
+        if (entry.revenues.cash.sales < 0 || entry.revenues.cash.returns < 0 || entry.revenues.card.sales < 0 || entry.revenues.card.returns < 0) {
+            return 'Sales and returns cannot be negative.';
+        }
+        if (entry.expenses.petty < 0) {
+            return 'Petty cash expenses cannot be negative.';
+        }
+        if (
+            entry.revenues.cash.sales === 0 &&
+            entry.revenues.card.sales === 0 &&
+            entry.revenues.other.length === 0 &&
+            entry.expenses.petty === 0 &&
+            entry.expenses.other.length === 0
+        ) {
+            return 'Please enter at least one revenue or expense.';
+        }
+        return '';
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+        const validationError = validateEntry(entry);
+        if (validationError) {
+            setNotification({ show: true, message: validationError, type: 'danger' });
+            return;
+        }
         try {
             setIsLoading(true);
-            const response = await api.post('/daily-revenue', entry);
-            setNotification({
-                show: true,
-                message: 'Daily revenue entry saved successfully',
-                type: 'success'
-            });
-            // Reset form after successful submission
-            setEntry({
-                date: new Date().toISOString().split('T')[0],
-                revenues: {
-                    cash: { sales: 0, returns: 0, netCash: 0 },
-                    card: { sales: 0, returns: 0, netCard: 0 },
-                    other: []
-                },
-                expenses: {
-                    petty: 0,
-                    other: []
-                },
-                notes: '',
-                autoJournalEntry: true
-            });
+            let response;
+            
+            if (isEditMode) {
+                response = await api.put(`/daily-revenue/${id}`, entry);
+                setNotification({
+                    show: true,
+                    message: 'Daily revenue entry updated successfully',
+                    type: 'success'
+                });
+            } else {
+                response = await api.post('/daily-revenue', entry);
+                setNotification({
+                    show: true,
+                    message: 'Daily revenue entry saved successfully',
+                    type: 'success'
+                });
+                // Reset form only for new entries
+                setEntry({
+                    date: new Date().toISOString().split('T')[0],
+                    revenues: {
+                        cash: { sales: 0, returns: 0, netCash: 0 },
+                        card: { sales: 0, returns: 0, netCard: 0 },
+                        other: []
+                    },
+                    expenses: {
+                        petty: 0,
+                        other: []
+                    },
+                    notes: '',
+                    autoJournalEntry: true
+                });
+            }
+
+            // Navigate back to list after successful update
+            if (isEditMode) {
+                setTimeout(() => {
+                    navigate('/admin/daily-revenue-list');
+                }, 1500);
+            }
         } catch (error) {
             setNotification({
                 show: true,
@@ -160,8 +253,23 @@ const DailyRevenue = () => {
                 <Row>
                     <div className="col">
                         <Card className="shadow">
-                            <CardHeader>
-                                <h3 className="mb-0">Daily Revenue Entry</h3>
+                            <CardHeader className="border-0">
+                                <Row className="align-items-center">
+                                    <Col xs="8">
+                                        <h3 className="mb-0">
+                                            {isEditMode ? 'Edit Daily Money Flow' : 'New Daily Money Flow'}
+                                        </h3>
+                                    </Col>
+                                    <Col className="text-right" xs="4">
+                                        <Button
+                                            color="secondary"
+                                            onClick={() => navigate('/admin/daily-revenue-list')}
+                                            size="sm"
+                                        >
+                                            Back to List
+                                        </Button>
+                                    </Col>
+                                </Row>
                             </CardHeader>
                             <CardBody>
                                 {notification.show && (
@@ -397,9 +505,24 @@ const DailyRevenue = () => {
                                         </Label>
                                     </FormGroup>
 
-                                    <Button color="primary" type="submit" disabled={isLoading}>
-                                        {isLoading ? 'Saving...' : 'Save Daily Revenue'}
-                                    </Button>
+                                    <Row className="mt-4">
+                                        <Col>
+                                            <Button 
+                                                color="secondary" 
+                                                onClick={() => navigate('/admin/daily-revenue-list')}
+                                                className="mr-2"
+                                            >
+                                                Cancel
+                                            </Button>
+                                            <Button 
+                                                color="primary" 
+                                                type="submit"
+                                                disabled={isLoading}
+                                            >
+                                                {isLoading ? 'Saving...' : (isEditMode ? 'Update' : 'Save')}
+                                            </Button>
+                                        </Col>
+                                    </Row>
                                 </Form>
                             </CardBody>
                         </Card>

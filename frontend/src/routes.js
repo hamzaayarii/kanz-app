@@ -27,6 +27,10 @@ import AssignAccountant from './views/accountant/AssignAccountant.js';
 import DailyRevenue from './views/examples/DailyRevenue';
 import DailyRevenueList from './views/examples/DailyRevenueList';
 import Categories from "./views/examples/Categories";
+import EmailVerification from './views/examples/EmailVerification.js';
+import AccountantBusinessOwners from './views/examples/AccountantBusinessOwners.js';
+import OwnerFinancialReports from "./views/examples/OwnerFinancialReports.js";
+import BusinessUpdatePage from './views/buisness/BusinessUpdatePage.js';
 
 // Grouped and enhanced routes for better UX
 const routes = [
@@ -42,24 +46,45 @@ const routes = [
     showInSidebar: () => true, // Visible to all authenticated users
   },
   {
+    path: '/buisness asigned to',
+    name: 'My Clients',
+    icon: 'ni ni-money-coins text-success',
+    description: 'Track your daily revenue flow',
+    component: <AuthRoute><AccountantBusinessOwners /></AuthRoute>,
+    layout: '/admin',
+    category: 'Overview',
+   // showInSidebar: () => true, 
+    showInSidebar: isUserAccountant,
+  },
+  {
     path: '/daily-revenue',
-    name: 'Daily Earnings',
+    name: 'Daily Money Flow',
     icon: 'ni ni-money-coins text-success',
     description: 'Track your daily revenue flow',
     component: <AuthRoute><DailyRevenue /></AuthRoute>,
     layout: '/admin',
     category: 'Overview',
-    showInSidebar: () => true, // Both BO and accountant should see revenue
+    showInSidebar: () => true,
+  },
+  {
+    path: '/daily-revenue/edit/:id',
+    name: 'Edit Daily Money Flow',
+    icon: 'ni ni-money-coins text-success',
+    description: 'Edit daily revenue entry',
+    component: <AuthRoute><DailyRevenue /></AuthRoute>,
+    layout: '/admin',
+    category: 'Overview',
+    showInSidebar: () => false, // Hide from sidebar
   },
   {
     path: '/daily-revenue-list',
-    name: 'Earnings History',
+    name: 'Daily Money Flow History',
     icon: 'ni ni-chart-pie-35 text-info',
     description: 'View all daily revenue entries',
     component: <AuthRoute><DailyRevenueList /></AuthRoute>,
     layout: '/admin',
     category: 'Overview',
-    showInSidebar: () => true, // Both BO and accountant should see revenue history
+    showInSidebar: () => true,
   },
 
   // Financial Management
@@ -111,7 +136,7 @@ const routes = [
     component: <AuthRoute><CreateInvoice /></AuthRoute>,
     layout: '/admin',
     category: 'Finance',
-    showInSidebar: isUserAccountant,
+    showInSidebar: () => true, // Changed to allow both roles to create invoices
   },
   {
     path: '/invoices',
@@ -132,7 +157,18 @@ const routes = [
     component: <AuthRoute><FinancialStatements /></AuthRoute>,
     layout: '/admin',
     category: 'Finance',
-    showInSidebar: () => true, // Visible to both BO and Accountant
+    showInSidebar: isUserAccountant,
+  },
+
+  {
+    path: '/financial-statements-list',
+    name: 'Financial Reports',
+    icon: 'ni ni-chart-bar-32 text-purple',
+    description: 'Detailed financial insights',
+    component: <AuthRoute><OwnerFinancialReports /></AuthRoute>,
+    layout: '/admin',
+    category: 'Finance',
+    showInSidebar: isUserBusinessOwner,
   },
 
   // Tax Management
@@ -166,7 +202,7 @@ const routes = [
     component: <AuthRoute><BusinessManagement /></AuthRoute>,
     layout: '/admin',
     category: 'Business',
-    showInSidebar: isUserBusinessOwner,
+    showInSidebar: isUserAdmin,
   },
   {
     path: '/employee-management',
@@ -232,11 +268,6 @@ const routes = [
     showInSidebar: isUserAdmin,
   },
 
-  // Utility Pages
-  // Removed Data Tables as it's not needed for production
-  // Removed Icon Gallery as it's not needed for production
-
-  // Authentication Routes (Hidden from Sidebar)
   {
     path: '/login',
     name: 'Login',
@@ -250,6 +281,14 @@ const routes = [
     name: 'Sign Up',
     icon: 'ni ni-circle-08 text-pink',
     component: <Register />,
+    layout: '/auth',
+    showInSidebar: false,
+  },
+  {
+    path: '/verify-email/:token',
+    name: 'Verify Email',
+    icon: 'ni ni-check-bold text-green',
+    component: <EmailVerification />,
     layout: '/auth',
     showInSidebar: false,
   },
@@ -270,15 +309,23 @@ const routes = [
     showInSidebar: false,
   },
 
-  // Standalone Routes
+
   {
     path: '/business-registration',
     name: 'Start Your Business',
     icon: 'ni ni-briefcase-24 text-primary',
     component: <BusinessOwnerRoute><BusinessRegistrationPage /></BusinessOwnerRoute>,
     layout: '/standalone',
-    showInSidebar: false,
+    showInSidebar: isUserBusinessOwner,
   },
+  {
+    path: '/business-update/:id',  // New route for updates
+    name: 'Update Business',
+    icon: 'ni ni-briefcase-24 text-primary',
+    component: <BusinessOwnerRoute><BusinessUpdatePage /></BusinessOwnerRoute>,
+    layout: '/admin',
+    showInSidebar: false,  // Typically don't show update in sidebar as it's context-specific
+},
   {
     path: '/category',
     name: 'Category Management',

@@ -1,13 +1,37 @@
 const express = require('express');
 const Product = require('../models/Product');
+const { authenticate } = require('../middlewares/authMiddleware');
+const Business = require('../models/Business');
 
 const router = express.Router();
 
-// Ajouter un produit
+// Apply authentication middleware to all product routes
+router.use(authenticate);
+
+// Helper function to get user's business
+const getUserBusiness = async (userId, userRole) => {
+    let query;
+    if (userRole === 'accountant') {
+        query = { accountant: userId };
+    } else {
+        query = { owner: userId };
+    }
+    return await Business.findOne(query);
+};
+
+// Add a product
 router.post('/', async (req, res) => {
     try {
         console.log('Received product data:', req.body);
         
+        // Get the user's business based on role
+        const business = await getUserBusiness(req.user._id, req.user.role);
+        if (!business) {
+            return res.status(404).json({ 
+                message: 'Business not found. Please create a business first.' 
+            });
+        }
+
         // Validate required fields
         const requiredFields = ['type', 'name', 'unit'];
         const missingFields = requiredFields.filter(field => !req.body[field]);
@@ -37,6 +61,8 @@ router.post('/', async (req, res) => {
             type: req.body.type,
             name: req.body.name,
             unit: req.body.unit,
+            business: business._id,
+            user: req.user._id,
             salesInfo: {
                 sellingPrice: req.body.salesInfo.sellingPrice,
                 description: req.body.salesInfo.description || '',
@@ -69,7 +95,7 @@ router.post('/', async (req, res) => {
     }
 });
 
-// Récupérer tous les produits avec pagination, tri et filtrage
+// Get all products with pagination, sorting and filtering
 router.get('/', async (req, res) => {
     try {
         const {
@@ -81,10 +107,18 @@ router.get('/', async (req, res) => {
             filterType = 'all'
         } = req.query;
 
-        // Construire la requête
-        let query = {};
+        // Get the user's business based on role
+        const business = await getUserBusiness(req.user._id, req.user.role);
+        if (!business) {
+            return res.status(404).json({ 
+                message: 'Business not found. Please create a business first.' 
+            });
+        }
+
+        // Build query
+        let query = { business: business._id };
         
-        // Ajouter filtre de recherche
+        // Add search filter
         if (search) {
             query.$or = [
                 { name: { $regex: search, $options: 'i' } },
@@ -93,28 +127,28 @@ router.get('/', async (req, res) => {
             ];
         }
 
-        // Ajouter filtre de type
+        // Add type filter
         if (filterType !== 'all') {
             query.type = filterType;
         }
 
-        // Construire objet de tri
+        // Build sort object
         const sort = {};
         sort[sortField] = sortDirection === 'asc' ? 1 : -1;
 
-        // Calculer skip
+        // Calculate skip
         const skip = (page - 1) * limit;
 
-        // Obtenir le nombre total pour la pagination
+        // Get total count for pagination
         const total = await Product.countDocuments(query);
 
-        // Obtenir les produits avec pagination, tri et filtrage
+        // Get products with pagination, sorting and filtering
         const products = await Product.find(query)
             .sort(sort)
             .skip(skip)
             .limit(parseInt(limit));
 
-        // Calculer le nombre total de pages
+        // Calculate total pages
         const totalPages = Math.ceil(total / limit);
 
         res.status(200).json({
@@ -125,31 +159,60 @@ router.get('/', async (req, res) => {
             limit: parseInt(limit)
         });
     } catch (error) {
-        console.error('Erreur lors de la récupération des produits:', error);
+        console.error('Error fetching products:', error);
         res.status(500).json({ message: error.message });
     }
 });
 
-// Mettre à jour un produit
+// Update a product
 router.put('/:id', async (req, res) => {
     try {
-        const updatedProduct = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true });
-        if (!updatedProduct) {
-            return res.status(404).json({ message: 'Product not found' });
+        // Get the user's business based on role
+        const business = await getUserBusiness(req.user._id, req.user.role);
+        if (!business) {
+            return res.status(404).json({ 
+                message: 'Business not found. Please create a business first.' 
+            });
         }
+
+        // Find and update the product, ensuring it belongs to the user's business
+        const updatedProduct = await Product.findOneAndUpdate(
+            { _id: req.params.id, business: business._id },
+            req.body,
+            { new: true }
+        );
+
+        if (!updatedProduct) {
+            return res.status(404).json({ message: 'Product not found or unauthorized' });
+        }
+
         res.status(200).json(updatedProduct);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 });
 
-// Supprimer un produit par ID
+// Delete a product by ID
 router.delete('/:id', async (req, res) => {
     try {
-        const deletedProduct = await Product.findByIdAndDelete(req.params.id);
-        if (!deletedProduct) {
-            return res.status(404).json({ message: 'Product not found' });
+        // Get the user's business based on role
+        const business = await getUserBusiness(req.user._id, req.user.role);
+        if (!business) {
+            return res.status(404).json({ 
+                message: 'Business not found. Please create a business first.' 
+            });
         }
+
+        // Find and delete the product, ensuring it belongs to the user's business
+        const deletedProduct = await Product.findOneAndDelete({
+            _id: req.params.id,
+            business: business._id
+        });
+
+        if (!deletedProduct) {
+            return res.status(404).json({ message: 'Product not found or unauthorized' });
+        }
+
         res.status(200).json({ message: 'Product deleted successfully' });
     } catch (error) {
         res.status(500).json({ message: error.message });

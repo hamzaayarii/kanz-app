@@ -4,8 +4,8 @@ import * as Yup from 'yup';
 const validationPatterns = {
     phone: /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/,  // Phone number validation
     email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,  // Email validation
-    taxNumber: /^\d{7}[A-Z]$/, // Tax number: 7 digits followed by a capital letter
-    rneNumber: /^\d{11}$/ // RNE number: exactly 11 digits
+    taxNumber: /^\d{8}[A-Z](\/M\/\d{3})?$/, // 8 digits + letter, optional /M/000 suffix
+    rneNumber: /^[A-Z]\d{7,10}$/ // Letter followed by 7-10 digits
 };
 
 // Yup validation schema
@@ -15,11 +15,17 @@ export const businessValidationSchema = Yup.object().shape({
         .min(3, 'Business Name must be at least 3 characters'),
     typeOfActivity: Yup.string().required('Type of Activity is required'),
     taxRegistrationNumber: Yup.string()
-    .required('Matricule Fiscal is required')
-    .matches(/^\d{8}[A-Z](\/[A-Z])?\/\d{3}$/, 'Tax number should be in format 12345678A/M/000'),
+        .required('Matricule Fiscal is required')
+        .matches(
+            validationPatterns.taxNumber, 
+            'Tax number should be in format 12345678A or 12345678A/M/000'
+        ),
     rneNumber: Yup.string()
         .required('RNE Number is required')
-        .matches(validationPatterns.rneNumber, 'RNE must be exactly 11 digits'),
+        .matches(
+            validationPatterns.rneNumber, 
+            'RNE must start with a letter (A/B/C/D) followed by 7-10 digits (e.g., B12345678)'
+        ),
     address: Yup.string()
         .required('Address is required')
         .min(5, 'Address must be at least 5 characters'),

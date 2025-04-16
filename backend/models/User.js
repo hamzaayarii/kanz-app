@@ -33,6 +33,10 @@ const userSchema = new Schema({
     resetToken: String,
     verificationToken: String,
     verificationTokenExpiresAt: Date,
+    isVerified: {
+        type: Boolean,
+        default: false
+    },
     updatedAt: Date,
     isBanned: {
         type: Boolean,

@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { updateBusiness, deleteBusiness, assignAccountant, getAccountant, addBusiness, getUserBusinesses, checkUserBusiness } = require('../controllers/businessController');
+const {getBusiness, updateBusiness, deleteBusiness, assignAccountant, getAccountant, addBusiness, getUserBusinesses, checkUserBusiness, getUserBusinessesByAccountant } = require('../controllers/businessController');
 const { authenticate, authorizeBusinessOwner, authorizeAccountant } = require('../middlewares/authMiddleware');
 const Business = require('../models/Business');
 
@@ -10,16 +10,20 @@ router.use(authenticate);
 // Business routes
 router.post('/register', authorizeBusinessOwner, addBusiness); // Only business owners can add businesses
 
-router.get('/buisnessowner', authorizeBusinessOwner, getUserBusinesses); // Only business owners can list his businesses
+// Get businesses for both owners and accountants
+router.get('/user-businesses', getUserBusinesses);
 
 router.get('/check', checkUserBusiness);
 
 router.get('/list-accountant', getAccountant);
-
+router.get('/:businessId',authenticate,getBusiness);
 
 router.post('/assign-accountant', assignAccountant);
-router.put('/updatebusiness/:businessId', authenticate, updateBusiness);
-router.delete('/deletebusiness/:businessId', authenticate, deleteBusiness);
+router.route('/:businessId')
+  .delete(authenticate, deleteBusiness)
+  .put(authenticate, updateBusiness);
+
+router.get('/getUserBusinessesByAccountant', getUserBusinessesByAccountant);
 
 
 module.exports = router;

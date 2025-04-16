@@ -4,6 +4,7 @@ import {
   Button, Card, CardBody, FormGroup, Form,
   Input, InputGroupAddon, InputGroupText, InputGroup, Col, Label
 } from "reactstrap";
+import axios from "axios";
 
 
 const Register = () => {
@@ -117,38 +118,33 @@ const Register = () => {
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitError(null);
 
-    // Check if there are any validation errors
-    const hasErrors = Object.values(errors).some(error => error !== "");
-    if (hasErrors) {
-      setSubmitError("Please fix all errors before submitting");
-      return;
+    // Validate all fields
+    let newErrors = {};
+    Object.keys(formData).forEach(field => {
+        const error = validateField(field, formData[field]);
+        if (error) newErrors[field] = error;
+    });
+
+    if (Object.keys(newErrors).length > 0) {
+        setErrors(newErrors);
+        return;
     }
 
     try {
-      const response = await fetch("http://localhost:5000/api/users/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-
-      const data = await response.json();
-
-      // Check if the response is successful
-      if (!response.ok) {
-        throw new Error(data.message || "Something went wrong");
-      }
-
-      // Store the token in localStorage
-      localStorage.setItem("token", data.token);
-
-      // Redirect to the dashboard
-      navigate("/admin/dashboard");
-
-    } catch (err) {
-      // Handle any errors and show the message
-      setSubmitError(err.message);
+        const response = await axios.post('http://localhost:5000/api/users/register', formData);
+        
+        if (response.data.success) {
+            // Store email for verification resending
+            localStorage.setItem('pendingVerificationEmail', formData.email);
+            
+            // Show success message
+            setSubmitError(null);
+            alert('Registration successful! Please check your email to verify your account.');
+            navigate('/auth/login');
+        }
+    } catch (error) {
+        setSubmitError(error.response?.data?.message || 'Registration failed. Please try again.');
     }
   };
 

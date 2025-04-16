@@ -46,8 +46,8 @@ const businessTypes = [
 const validationPatterns = {
     phone: /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/,
     email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-    taxNumber: /^\d{8}[A-Z](\/[A-Z])?\/\d{3}$/, // Format like 12345678A/M/000
-    rneNumber: /^\d{11}$/ // Keep this the same
+    taxNumber: /^\d{8}[A-Z](\/M\/\d{3})?$/ ,// Matches both formats
+    rneNumber: /^[A-Z]\d{7,10}$/ // Letter (A-Z) followed by 7-10 digits
 };
 
 // Validation rules and error messages
@@ -91,15 +91,15 @@ const validationRules = {
         pattern: validationPatterns.taxNumber,
         message: {
             required: 'Tax number is required',
-            pattern: 'Tax number should be in format 12345678A/M/000'
+            pattern: 'Tax number should be in format 8 digits + letter, optional /M/000 suffix'
         }
     },
     rneNumber: {
         required: true,
-        pattern: /^\d{11}$/,
+        pattern: validationPatterns.rneNumber,
         message: {
             required: 'RNE number is required',
-            pattern: 'RNE number should be exactly 11 digits'
+            pattern: 'RNE must start with a letter (A-Z) followed by 7-10 digits (e.g., B12345678)'
         }
     },
     phone: {
@@ -578,55 +578,54 @@ const BusinessRegistrationPage = () => {
 
                                     <Row>
                                     <Col md="6">
-                                    <FormGroup>
-  <label className="form-control-label">
-    Tax Number (Matricule Fiscal)*
-    {touched.taxNumber && !errors.taxNumber && (
-      <i className="fas fa-check-circle text-success ml-2"></i>
-    )}
-  </label>
-  <Input
-    className="form-control-alternative"
-    name="taxNumber"
-    placeholder="e.g. 12345678A/M/000"
-    type="text"
-    value={formData.taxNumber}
-    onChange={handleChange}
-    onBlur={handleBlur}
-    invalid={showError('taxNumber')}
-    valid={touched.taxNumber && !errors.taxNumber}
-    pattern="^\d{8}[A-Z](\/[A-Z])?\/\d{3}$"
-  />
-  <FormFeedback>{errors.taxNumber}</FormFeedback>
-  <small className="form-text text-muted">
-    Format: 12345678A/M/000
-  </small>
-</FormGroup>
+  <FormGroup>
+    <label className="form-control-label">
+      Tax Number (Matricule Fiscal)*
+      {touched.taxNumber && !errors.taxNumber && (
+        <i className="fas fa-check-circle text-success ml-2"></i>
+      )}
+    </label>
+    <Input
+      className="form-control-alternative"
+      name="taxNumber"
+      placeholder="e.g. 12345678A/M/000"
+      type="text"
+      value={formData.taxNumber}
+      onChange={handleChange}
+      onBlur={handleBlur}
+      invalid={showError('taxNumber')}
+      valid={touched.taxNumber && !errors.taxNumber}
+      pattern="^\d{8}[A-Z](/M/\d{3})?$"
+    />
+    <FormFeedback>{errors.taxNumber}</FormFeedback>
+    <small className="form-text text-muted">
+      Format: 12345678A or 12345678A/M/000
+    </small>
+  </FormGroup>
 </Col>
 
                                         <Col md="6">
                                         <FormGroup>
   <label className="form-control-label">
-    Numéro RNE*
-    {touched.rneNumber && !errors.rneNumber && formData.rneNumber && (
+  RNE Number*
+    {touched.rneNumber && !errors.rneNumber && (
       <i className="fas fa-check-circle text-success ml-2"></i>
     )}
   </label>
   <Input
     className="form-control-alternative"
     name="rneNumber"
-    placeholder="e.g. 12345678901"
+    placeholder="e.g. B12345678"
     type="text"
     value={formData.rneNumber}
     onChange={handleChange}
     onBlur={handleBlur}
     invalid={showError('rneNumber')}
-    valid={touched.rneNumber && !errors.rneNumber && formData.rneNumber}
-    pattern="^\d{11}$"
-/>
+    valid={touched.rneNumber && !errors.rneNumber}
+  />
   <FormFeedback>{errors.rneNumber}</FormFeedback>
   <small className="form-text text-muted">
-    Required - Should be 11 digits
+    Format: Letter (A-Z) followed by 7-10 digits (e.g., B12345678)
   </small>
 </FormGroup>
                                         </Col>

@@ -71,13 +71,12 @@ const AdminNavbar = (props) => {
       const token = localStorage.getItem("authToken");
       if (!token) return;
 
-      const response = await fetch("http://localhost:5000/api/business/buisnessowner", {
+      const response = await axios.get("http://localhost:5000/api/business/user-businesses", {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      const data = await response.json();
-      if (data.success) {
-        setBusiness(data.business);
+      if (response.data.businesses && response.data.businesses.length > 0) {
+        setBusiness(response.data.businesses[0]);
       }
     } catch (error) {
       console.error("Error fetching business:", error);
@@ -111,7 +110,7 @@ const AdminNavbar = (props) => {
 
   return (
     <>
-      <Navbar className="navbar-top navbar-dark" expand="md" id="navbar-main">
+      <Navbar className="navbar-top navbar-dark" expand="md" id="navbar-main" style={{ zIndex: 2000, position: 'relative' }}>
         <Container fluid>
           <Link
             className="h4 mb-0 text-white text-uppercase d-none d-lg-inline-block"
@@ -142,14 +141,11 @@ const AdminNavbar = (props) => {
                   style={{ top: "100%", right: 0, zIndex: 1000, minWidth: "200px" }}>
                   {/* If user has multiple businesses, map through them here */}
                   {business && (
-                    <div
-                      className="px-3 py-2 cursor-pointer hover-bg-light"
-                      onClick={() => navigateToBusiness(business._id)}
-                    >
-                      <div className="font-weight-bold">{business.name}</div>
-                      <div className="text-muted small">{business.type}</div>
-                    </div>
-                  )}
+  <div className="px-3 py-2">
+    <div className="font-weight-bold">{business.name}</div>
+    <div className="text-muted small">{business.type}</div>
+  </div>
+)}
                   <div className="border-top mt-2 pt-2 px-3">
                     <Link to="/standalone/business-registration" className="text-primary d-block py-1">
                       <i className="ni ni-fat-add mr-2"></i> Add New Business

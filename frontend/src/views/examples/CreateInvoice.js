@@ -49,7 +49,7 @@ const CreateInvoice = () => {
                 console.log('FetchBusinesses - Token:', token); // Debug token
                 if (!token) throw new Error('You must be logged in to retrieve companies');
 
-                const response = await axios.get('http://localhost:5000/api/business/buisnessowner', {
+                const response = await axios.get('http://localhost:5000/api/business/user-businesses', {
                     headers: { Authorization: `Bearer ${token}` },
                     timeout: 10000
                 });
