@@ -294,7 +294,6 @@ const deleteBusiness = async (req, res) => {
         res.status(500).json({ message: "Error deleting business", error });
     }
 };
-
 const updateBusiness = async (req, res) => {
     try {
         const { businessId } = req.params;
@@ -499,4 +498,6 @@ const getUserBusinessesByAccountant = async (req, res) => {
     }
 };
 
+
 module.exports = { getBusiness,deleteBusiness, updateBusiness, assignAccountant, getAccountant, addBusiness, getUserBusinesses, checkUserBusiness, getUserBusinessesByAccountant };
+

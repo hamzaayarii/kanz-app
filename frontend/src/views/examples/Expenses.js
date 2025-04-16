@@ -101,6 +101,9 @@ const Expenses = () => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
+   
+
+    // Handle form submission (Create or Update)
     const handleSubmit = async (e) => {
         e.preventDefault();
         const errors = validateForm();
