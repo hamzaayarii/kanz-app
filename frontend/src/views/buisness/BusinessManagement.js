@@ -69,7 +69,7 @@ const BusinessManagement = () => {
     };
 
     const handleEditBusiness = (businessId) => {
-        navigate(`/admin/business-registration?id=${businessId}`);
+        navigate(`/admin/business-update/${businessId}`);
     };
 
     const toggleDeleteModal = (business = null) => {

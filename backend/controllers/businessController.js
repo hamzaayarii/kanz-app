@@ -298,19 +298,176 @@ const deleteBusiness = async (req, res) => {
 const updateBusiness = async (req, res) => {
     try {
         const { businessId } = req.params;
-        const updates = req.body;
+        const { 
+            name, 
+            address, 
+            country, 
+            state, 
+            type, 
+            businessActivity, 
+            taxNumber, 
+            rneNumber,
+            phone, 
+            capital,
+            vatRegistration,
+            exportOriented,
+            employeeCount,
+            email
+        } = req.body;
+        
+        const userId = req.user._id;
 
-        const updatedBusiness = await Business.findByIdAndUpdate(businessId, updates, { new: true });
-        if (!updatedBusiness) {
-            return res.status(404).json({ message: "Business not found." });
+        // 1. Validate required fields
+        const requiredFields = { name, type, taxNumber, rneNumber, address, country, state, phone };
+        const missingFields = Object.entries(requiredFields)
+            .filter(([_, value]) => !value)
+            .map(([key]) => key);
+
+        if (missingFields.length > 0) {
+            return res.status(400).json({
+                success: false,
+                message: `Missing required fields: ${missingFields.join(', ')}`
+            });
         }
 
-        res.json({ message: "Business updated successfully.", business: updatedBusiness });
+        // 2. Validate RNE and tax number formats
+        if (!/^[A-Z]\d{7,10}$/.test(rneNumber)) {
+            return res.status(400).json({
+                success: false,
+                message: "RNE number must start with a letter (A-Z) followed by 7 to 10 digits (e.g., B12345678)"
+            });
+        }
+        
+        if (!/^\d{8}[A-Z](\/M\/\d{3})?$/.test(taxNumber)) {
+            return res.status(400).json({
+                success: false,
+                message: "Tax number must be in the format 12345678A or 12345678A/M/000"
+            });
+        }
+
+        // 3. Find the business and verify ownership
+        const business = await Business.findOne({ _id: businessId, owner: userId });
+        if (!business) {
+            return res.status(404).json({
+                success: false,
+                message: "Business not found or you don't have permission to update it"
+            });
+        }
+
+        // 4. Check if RNE or tax number conflicts with other businesses (excluding current one)
+        const existingBusiness = await Business.findOne({
+            _id: { $ne: businessId },
+            $or: [
+                { rneNumber },
+                { taxNumber }
+            ]
+        });
+
+        if (existingBusiness) {
+            const conflictField = existingBusiness.rneNumber === rneNumber 
+                ? 'RNE number' 
+                : 'tax number';
+            
+            return res.status(409).json({
+                success: false,
+                message: `This ${conflictField} is already registered by another business`
+            });
+        }
+
+        // 5. Update the business
+        const updatedFields = {
+            name,
+            address,
+            country,
+            state,
+            type,
+            businessActivity,
+            taxNumber,
+            rneNumber,
+            phone,
+            email: email || null,
+            capital: capital || 0,
+            vatRegistration: Boolean(vatRegistration),
+            exportOriented: Boolean(exportOriented),
+            employeeCount: employeeCount || '1-5',
+            status: 'pending' // Reset status to pending if admin needs to review updates
+        };
+
+        const updatedBusiness = await Business.findByIdAndUpdate(
+            businessId,
+            updatedFields,
+            { new: true, runValidators: true }
+        );
+
+        return res.status(200).json({
+            success: true,
+            message: "Business updated successfully",
+            business: updatedBusiness
+        });
+
     } catch (error) {
-        res.status(500).json({ message: "Error updating business", error });
+        console.error('Update error:', error);
+        
+        // Handle duplicate key errors
+        if (error.code === 11000) {
+            const duplicateField = Object.keys(error.keyPattern)[0];
+            const fieldName = duplicateField === 'taxNumber' ? 'tax number' : 
+                           duplicateField === 'rneNumber' ? 'RNE number' :
+                           duplicateField === 'email' ? 'email' :
+                           duplicateField;
+            
+            return res.status(409).json({
+                success: false,
+                message: `This ${fieldName} is already registered`,
+                field: duplicateField
+            });
+        }
+        
+        // Handle validation errors
+        if (error.name === 'ValidationError') {
+            const errors = Object.values(error.errors).map(err => err.message);
+            return res.status(400).json({
+                success: false,
+                message: "Validation failed",
+                errors
+            });
+        }
+        
+        // Handle other errors
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error"
+        });
     }
 };
 
+
+const getBusiness = async (req, res) => {
+    try {
+      const businessId = req.params.businessId;
+      const userId = req.user.id;
+      
+      const business = await Business.findById(businessId);
+      
+      if (!business) {
+        return res.status(404).json({ success: false, message: 'Business not found' });
+      }
+      
+      // Check if user is the owner or an assigned accountant
+      if (business.owner.toString() !== userId && 
+          business.accountant?.toString() !== userId) {
+        return res.status(403).json({ 
+          success: false, 
+          message: 'You are not authorized to access this business' 
+        });
+      }
+      
+      res.json({ success: true, business });
+    } catch (error) {
+      console.error('Error fetching business:', error);
+      res.status(500).json({ success: false, message: 'Server error' });
+    }
+  };
 
 const getUserBusinessesByAccountant = async (req, res) => {
     try {
@@ -342,4 +499,4 @@ const getUserBusinessesByAccountant = async (req, res) => {
     }
 };
 
-module.exports = { deleteBusiness, updateBusiness, assignAccountant, getAccountant, addBusiness, getUserBusinesses, checkUserBusiness, getUserBusinessesByAccountant };
+module.exports = { getBusiness,deleteBusiness, updateBusiness, assignAccountant, getAccountant, addBusiness, getUserBusinesses, checkUserBusiness, getUserBusinessesByAccountant };
