@@ -27,16 +27,16 @@ router.get('/generate-financial-statement', authenticate, async (req, res) => {
 
     try {
         const [taxReports, revenues, expenses, invoices, payrolls] = await Promise.all([
-            TaxReport.find({ userId, businessId, createdAt: { $gte: startDate, $lte: endDate } }),
-            DailyRevenue.find({ userId, businessId, date: { $gte: startDate, $lte: endDate } }),
-            Expense.find({ userId, businessId, date: { $gte: startDate, $lte: endDate } }),
-            Invoice.find({ userId, businessId, date: { $gte: startDate, $lte: endDate } }),
-            Payroll.find({ userId, businessId, createdAt: { $gte: startDate, $lte: endDate } })
+            TaxReport.find({ userId/*, createdAt: { $gte: startDate, $lte: endDate }*/ }),
+            DailyRevenue.find({ business: businessId/*, date: { $gte: startDate, $lte: endDate }*/ }),
+            Expense.find({ business:businessId/*, date: { $gte: startDate, $lte: endDate }*/ }),
+            Invoice.find({ userId, businessId/*, date: { $gte: startDate, $lte: endDate } */}),
+            Payroll.find({ businessId/*, createdAt: { $gte: startDate, $lte: endDate }*/ })
         ]);
 
-        const totalRevenue = revenues.reduce((acc, r) => acc + r.amount, 0);
+        const totalRevenue = revenues.reduce((acc, r) => acc + r.summary.totalRevenue, 0);
         const totalExpenses = expenses.reduce((acc, e) => acc + e.amount, 0);
-        const totalPayroll = payrolls.reduce((acc, p) => acc + p.totalAmount, 0);
+        const totalPayroll = payrolls.reduce((acc, p) => acc + p.grossSalary, 0);
         const totalInvoices = invoices.reduce((acc, inv) => acc + inv.total, 0);
         const totalTax = taxReports.reduce((acc, r) => acc + r.calculatedTax, 0);
 
