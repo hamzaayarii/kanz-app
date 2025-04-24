@@ -17,14 +17,20 @@ pipeline {
     } 
 
     stages {
-        stage('Install Dependencies') {
-            steps {
-                // Navigate to the backend folder before installing dependencies
-                dir('backend') {
-                    sh 'npm install'
-                }
-            }
+       stage('Install Dependencies') {
+    steps {
+        dir('backend') {
+            // Clean node_modules and package-lock.json to prevent ENOTEMPTY errors
+            sh '''
+                echo "Cleaning node_modules and npm cache..."
+                rm -rf node_modules package-lock.json
+                npm cache clean --force
+                npm install
+            '''
         }
+    }
+}
+
 
         stage('Run Unit Tests') {
             steps {
