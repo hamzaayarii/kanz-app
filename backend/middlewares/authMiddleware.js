@@ -1,14 +1,6 @@
 const jwt = require('jsonwebtoken');
 const SECRET_KEY = process.env.SECRET_KEY || 'your_secret_key';
 
-// TODO: There is a known 403 error issue in the application that needs to be investigated and fixed.
-// The error occurs in authentication flows and needs proper error handling and user feedback.
-// Current workaround: Users may experience 403 errors when:
-// 1. Token validation fails
-// 2. Role-based access control is enforced
-// 3. Business access permissions are checked
-// Please investigate and implement proper error handling and user feedback mechanisms.
-
 const authenticate = (req, res, next) => {
     // First try to get token from Authorization header
     let token = req.headers.authorization?.split(' ')[1];
