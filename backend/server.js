@@ -28,6 +28,7 @@ const server = http.createServer(app);
 const io = initializeSocket(server);
 
 const chatRoutes= require('./routes/chatRoutes.js');
+const chatBotRoutes = require('./routes/chatBot.js');
 
 // MongoDB connection
 mongoose.connect(dbConfig.mongodb.url, { useNewUrlParser: true, useUnifiedTopology: true })
@@ -86,6 +87,8 @@ app.use('/api/chat', chatRoutes);
 app.get('/', (req, res) => {
     res.send('Welcome to AccountingManagementApp');
 });
+
+app.use('/api/chatBot', chatBotRoutes);
 
 // Start the server
 const PORT = process.env.PORT || 5000;

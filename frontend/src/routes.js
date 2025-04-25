@@ -31,6 +31,11 @@ import EmailVerification from './views/examples/EmailVerification.js';
 import AccountantBusinessOwners from './views/examples/AccountantBusinessOwners.js';
 import OwnerFinancialReports from "./views/examples/OwnerFinancialReports.js";
 import BusinessUpdatePage from './views/buisness/BusinessUpdatePage.js';
+import ChatBotPage from './components/chatBot/chatBotPage.js';
+import FloatingChatBot from './components/chatBot/FloatingChatBot.js';
+
+
+
 
 // Grouped and enhanced routes for better UX
 const routes = [
@@ -55,6 +60,20 @@ const routes = [
     category: 'Overview',
    // showInSidebar: () => true, 
     showInSidebar: isUserAccountant,
+  },
+
+  {
+    path: '/chatbot',
+    name: 'My Clients',
+    icon: 'ni ni-money-coins text-success',
+    description: 'Track your daily revenue flow',
+    component: <AuthRoute> <FloatingChatBot /></AuthRoute>,  
+   
+
+    layout: '/admin',
+    category: 'Overview',
+   
+    showInSidebar: isUserAccountant(), 
   },
   {
     path: '/daily-revenue',
