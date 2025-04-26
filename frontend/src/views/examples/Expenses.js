@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 
 const Expenses = () => {
     const [expenses, setExpenses] = useState([]);
+    const [otherExpenses, setOtherExpenses] = useState([]);
     const [businesses, setBusinesses] = useState([]);
     const [categories, setCategories] = useState([]);
     const [selectedBusiness, setSelectedBusiness] = useState("");
@@ -24,33 +25,13 @@ const Expenses = () => {
         description: "",
     });
 
-    // ✅ Validation Rules
     const validationRules = {
-        category: {
-            required: true,
-            message: "Category is required"
-        },
-        date: {
-            required: true,
-            message: "Date is required"
-        },
-        amount: {
-            required: true,
-            min: 0.01,
-            message: "Amount must be greater than 0"
-        },
-        tax: {
-            required: true,
-            message: "Tax is required"
-        },
-        vendor: {
-            required: true,
-            message: "Vendor is required"
-        },
-        reference: {
-            required: true,
-            message: "Reference is required"
-        }
+        category: { required: true, message: "Category is required" },
+        date: { required: true, message: "Date is required" },
+        amount: { required: true, min: 0.01, message: "Amount must be greater than 0" },
+        tax: { required: true, message: "Tax is required" },
+        vendor: { required: true, message: "Vendor is required" },
+        reference: { required: true, message: "Reference is required" },
     };
 
     const validateForm = () => {
@@ -74,6 +55,7 @@ const Expenses = () => {
     useEffect(() => {
         if (selectedBusiness) {
             fetchExpenses(selectedBusiness);
+            fetchOtherExpenses(selectedBusiness);
         }
     }, [selectedBusiness]);
 
@@ -128,7 +110,22 @@ const Expenses = () => {
         }
     };
 
-    // 🛠 handleChange now dynamically validates fields live
+    const fetchOtherExpenses = async (businessId) => {
+        try {
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                navigate('/auth/login');
+                return;
+            }
+            const response = await axios.get(`http://localhost:5000/api/expenses/other-expenses?business=${businessId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            setOtherExpenses(response.data);
+        } catch (error) {
+            console.error("Error fetching other expenses", error);
+        }
+    };
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prevFormData => ({
@@ -140,7 +137,6 @@ const Expenses = () => {
         if (rule) {
             setFormErrors(prevErrors => {
                 const updatedErrors = { ...prevErrors };
-
                 if (rule.required && (value === "" || value === undefined || value === null)) {
                     updatedErrors[name] = rule.message;
                 } else if (rule.min !== undefined && parseFloat(value) < rule.min) {
@@ -148,7 +144,6 @@ const Expenses = () => {
                 } else {
                     delete updatedErrors[name];
                 }
-
                 return updatedErrors;
             });
         }
@@ -181,13 +176,6 @@ const Expenses = () => {
         setEditingExpense(expense);
         const initialErrors = validateForm();
         setFormErrors(initialErrors);
-        setShowForm(true);
-    };
-
-    // ✨ Show Form + trigger initial validation
-    const handleShowForm = () => {
-        const errors = validateForm();
-        setFormErrors(errors);
         setShowForm(true);
     };
 
@@ -229,7 +217,7 @@ const Expenses = () => {
                         </Input>
                     </FormGroup>
 
-                    <Button color="primary" onClick={handleShowForm}>
+                    <Button color="primary" onClick={() => setShowForm(!showForm)}>
                         {showForm ? "Hide Form" : "Add Expense"}
                     </Button>
 
@@ -281,7 +269,7 @@ const Expenses = () => {
 
                     <hr />
 
-                    <h4>Expenses List</h4>
+                    <h4>Normal Expenses</h4>
                     <Table bordered responsive>
                         <thead>
                         <tr>
@@ -313,12 +301,37 @@ const Expenses = () => {
                                 </tr>
                             ))
                         ) : (
-                            <tr>
-                                <td colSpan="8" className="text-center">No expenses found</td>
-                            </tr>
+                            <tr><td colSpan="8" className="text-center">No expenses found</td></tr>
                         )}
                         </tbody>
                     </Table>
+
+                    <hr />
+
+                    <h4>Other Expenses</h4>
+                    <Table bordered responsive>
+                        <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Amount</th>
+                            <th>Notes</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {otherExpenses.length > 0 ? (
+                            otherExpenses.map((expense) => (
+                                <tr key={expense._id}>
+                                    <td>{new Date(expense.date).toLocaleDateString()}</td>
+                                    <td>${expense.summary.totalExpenses}</td>
+                                    <td>{expense.notes}</td>
+                                </tr>
+                            ))
+                        ) : (
+                            <tr><td colSpan="3" className="text-center">No other expenses found</td></tr>
+                        )}
+                        </tbody>
+                    </Table>
+
                 </Card>
             </Row>
         </Container>

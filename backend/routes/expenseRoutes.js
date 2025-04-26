@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Expense = require('../models/Expense');
 const {authenticate, authorizeBusinessOwner} = require("../middlewares/authMiddleware");
+const DailyRevenue = require("../models/DailyRevenue");
 
 // Create an expense
 router.post('/', authenticate, authorizeBusinessOwner,async (req, res) => {
@@ -21,6 +22,17 @@ router.get('/', authenticate, async (req, res) => {
     try {
         const query = business ? { business } : {};
         const expenses = await Expense.find(query);
+        res.json(expenses);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+router.get('/other-expenses', authenticate, async (req, res) => {
+    const { business } = req.query;
+    try {
+        const query = business ? { business } : {};
+        const expenses = await DailyRevenue.find(query);
         res.json(expenses);
     } catch (error) {
         res.status(500).json({ message: 'Server error' });
@@ -62,5 +74,8 @@ router.delete('/:id', authenticate, authorizeBusinessOwner,async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 });
+
+
+
 
 module.exports = router;
