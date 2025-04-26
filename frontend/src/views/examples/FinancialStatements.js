@@ -13,15 +13,16 @@ import {
 import { useNavigate } from "react-router-dom";
 
 const FinancialReports = () => {
-    const [owners, setOwners] = useState([]);  // Default to empty array
+    const [owners, setOwners] = useState([]);
     const [selectedOwner, setSelectedOwner] = useState("");
-    const [businesses, setBusinesses] = useState([]);  // Default to empty array
+    const [businesses, setBusinesses] = useState([]);
     const [selectedBusiness, setSelectedBusiness] = useState("");
     const [fromDate, setFromDate] = useState("");
     const [toDate, setToDate] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
-    const [financialReports, setFinancialReports] = useState([]);  // Default to empty array
+    const [formError, setFormError] = useState("");  // New: for form validation
+    const [financialReports, setFinancialReports] = useState([]);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -36,9 +37,7 @@ const FinancialReports = () => {
             const res = await axios.get("http://localhost:5000/api/users/assigned-business-owners", {
                 headers: { Authorization: `Bearer ${token}` },
             });
-            const owners = res.data;
-            setOwners(owners || []);  // Ensure owners is always an array
-            console.log(owners);
+            setOwners(res.data || []);
         } catch (err) {
             console.error("Failed to load owners", err);
             setError("Failed to load business owners.");
@@ -49,16 +48,18 @@ const FinancialReports = () => {
         try {
             const token = localStorage.getItem("authToken");
             if (!token) return navigate("/auth/login");
+
             const res = await axios.get(`http://localhost:5000/api/business/getUserBusinessesByAccountant?ownerId=${ownerId}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
 
-            setBusinesses(res.data.businesses || []);  // Ensure businesses is always an array
+            setBusinesses(res.data.businesses || []);
             if (res.data.businesses.length > 0) {
                 setSelectedBusiness(res.data.businesses[0]._id);
                 fetchFinancialReports(res.data.businesses[0]._id);
             } else {
                 setFinancialReports([]);
+                setSelectedBusiness("");
             }
         } catch (err) {
             console.error("Failed to load businesses", err);
@@ -72,13 +73,33 @@ const FinancialReports = () => {
             const res = await axios.get(`http://localhost:5000/api/financial-Statement/list?businessId=${businessId}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
-            setFinancialReports(res.data || []);  // Ensure financialReports is always an array
+            setFinancialReports(res.data || []);
         } catch (err) {
             console.error("Failed to load reports", err);
         }
     };
 
     const generateFinancialReport = async () => {
+        setFormError(""); // Clear previous errors
+
+        // Simple Validation
+        if (!selectedOwner) {
+            setFormError("Please select a business owner.");
+            return;
+        }
+        if (!selectedBusiness) {
+            setFormError("Please select a business.");
+            return;
+        }
+        if (!fromDate || !toDate) {
+            setFormError("Please select both From and To dates.");
+            return;
+        }
+        if (new Date(fromDate) > new Date(toDate)) {
+            setFormError("From Date cannot be after To Date.");
+            return;
+        }
+
         try {
             const token = localStorage.getItem("authToken");
             if (!token) return navigate("/auth/login");
@@ -143,6 +164,7 @@ const FinancialReports = () => {
                     <h3>Financial Reports</h3>
 
                     {error && <div className="alert alert-danger">{error}</div>}
+                    {formError && <div className="alert alert-warning">{formError}</div>} {/* New */}
 
                     <FormGroup>
                         <Label>Select Business Owner</Label>
@@ -152,16 +174,20 @@ const FinancialReports = () => {
                             onChange={(e) => {
                                 const ownerId = e.target.value;
                                 setSelectedOwner(ownerId);
+                                setSelectedBusiness("");
+                                setFinancialReports([]);
                                 fetchBusinesses(ownerId);
                             }}
                         >
                             <option value="">-- Select Owner --</option>
                             {owners.length > 0 ? (
                                 owners.map((owner) => (
-                                    <option key={owner._id} value={owner._id}>{owner.fullName}</option>
+                                    <option key={owner._id} value={owner._id}>
+                                        {owner.fullName}
+                                    </option>
                                 ))
                             ) : (
-                                <option>No business owners found</option>
+                                <option disabled>No business owners found</option>
                             )}
                         </Input>
                     </FormGroup>
@@ -177,12 +203,15 @@ const FinancialReports = () => {
                             }}
                             disabled={!selectedOwner}
                         >
+                            <option value="">-- Select Business --</option>
                             {businesses.length > 0 ? (
                                 businesses.map((biz) => (
-                                    <option key={biz._id} value={biz._id}>{biz.name}</option>
+                                    <option key={biz._id} value={biz._id}>
+                                        {biz.name}
+                                    </option>
                                 ))
                             ) : (
-                                <option>No businesses found</option>
+                                <option disabled>No businesses found</option>
                             )}
                         </Input>
                     </FormGroup>
@@ -194,6 +223,7 @@ const FinancialReports = () => {
                                 type="date"
                                 value={fromDate}
                                 onChange={(e) => setFromDate(e.target.value)}
+                                disabled={!selectedBusiness}
                             />
                         </FormGroup>
                         <FormGroup className="col-md-6">
@@ -202,11 +232,16 @@ const FinancialReports = () => {
                                 type="date"
                                 value={toDate}
                                 onChange={(e) => setToDate(e.target.value)}
+                                disabled={!selectedBusiness}
                             />
                         </FormGroup>
                     </Row>
 
-                    <Button color="primary" onClick={generateFinancialReport} disabled={loading || !selectedBusiness}>
+                    <Button
+                        color="primary"
+                        onClick={generateFinancialReport}
+                        disabled={loading || !selectedBusiness || !fromDate || !toDate}
+                    >
                         {loading ? "Generating..." : "Generate New Report"}
                     </Button>
 
@@ -240,7 +275,7 @@ const FinancialReports = () => {
                                 </tr>
                             ))
                         ) : (
-                            <tr><td colSpan="5">No reports found.</td></tr>
+                            <tr><td colSpan="5" className="text-center">No reports found.</td></tr>
                         )}
                         </tbody>
                     </Table>
@@ -251,6 +286,7 @@ const FinancialReports = () => {
 };
 
 export default FinancialReports;
+
 
 
 

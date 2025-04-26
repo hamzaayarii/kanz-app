@@ -7,7 +7,7 @@ import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 import cookie from 'cookie-parser';
 dotenv.config();
-import axios from 'axios';
+// import axios from 'axios';
 
 
 const SECRET_KEY = process.env.SECRET_KEY || 'your_secret_key';

@@ -24,6 +24,48 @@ const Expenses = () => {
         description: "",
     });
 
+    // ✅ Validation Rules
+    const validationRules = {
+        category: {
+            required: true,
+            message: "Category is required"
+        },
+        date: {
+            required: true,
+            message: "Date is required"
+        },
+        amount: {
+            required: true,
+            min: 0.01,
+            message: "Amount must be greater than 0"
+        },
+        tax: {
+            required: true,
+            message: "Tax is required"
+        },
+        vendor: {
+            required: true,
+            message: "Vendor is required"
+        },
+        reference: {
+            required: true,
+            message: "Reference is required"
+        }
+    };
+
+    const validateForm = () => {
+        const errors = {};
+        Object.entries(validationRules).forEach(([field, rule]) => {
+            const value = formData[field];
+            if (rule.required && (value === "" || value === undefined || value === null)) {
+                errors[field] = rule.message;
+            } else if (rule.min !== undefined && parseFloat(value) < rule.min) {
+                errors[field] = rule.message;
+            }
+        });
+        return errors;
+    };
+
     useEffect(() => {
         fetchBusinesses();
         fetchCategories();
@@ -86,24 +128,32 @@ const Expenses = () => {
         }
     };
 
-    const validateForm = () => {
-        const errors = {};
-        if (!formData.category) errors.category = "Category is required";
-        if (!formData.date) errors.date = "Date is required";
-        if (!formData.amount || Number(formData.amount) <= 0) errors.amount = "Amount must be greater than 0";
-        if (!formData.tax && formData.tax !== 0) errors.tax = "Tax is required";
-        if (!formData.vendor) errors.vendor = "Vendor is required";
-        if (!formData.reference) errors.reference = "Reference is required";
-        return errors;
-    };
-
+    // 🛠 handleChange now dynamically validates fields live
     const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        setFormData(prevFormData => ({
+            ...prevFormData,
+            [name]: value
+        }));
+
+        const rule = validationRules[name];
+        if (rule) {
+            setFormErrors(prevErrors => {
+                const updatedErrors = { ...prevErrors };
+
+                if (rule.required && (value === "" || value === undefined || value === null)) {
+                    updatedErrors[name] = rule.message;
+                } else if (rule.min !== undefined && parseFloat(value) < rule.min) {
+                    updatedErrors[name] = rule.message;
+                } else {
+                    delete updatedErrors[name];
+                }
+
+                return updatedErrors;
+            });
+        }
     };
 
-   
-
-    // Handle form submission (Create or Update)
     const handleSubmit = async (e) => {
         e.preventDefault();
         const errors = validateForm();
@@ -129,6 +179,15 @@ const Expenses = () => {
         const formattedDate = new Date(expense.date).toISOString().split('T')[0];
         setFormData({ ...expense, date: formattedDate });
         setEditingExpense(expense);
+        const initialErrors = validateForm();
+        setFormErrors(initialErrors);
+        setShowForm(true);
+    };
+
+    // ✨ Show Form + trigger initial validation
+    const handleShowForm = () => {
+        const errors = validateForm();
+        setFormErrors(errors);
         setShowForm(true);
     };
 
@@ -170,58 +229,51 @@ const Expenses = () => {
                         </Input>
                     </FormGroup>
 
-                    <Button color="primary" onClick={() => setShowForm(!showForm)}>
+                    <Button color="primary" onClick={handleShowForm}>
                         {showForm ? "Hide Form" : "Add Expense"}
                     </Button>
 
                     {showForm && (
                         <Form onSubmit={handleSubmit} className="mt-3">
-                            <FormGroup>
-                                <Label>Category</Label>
-                                <Input
-                                    type="select"
-                                    name="category"
-                                    value={formData.category}
-                                    onChange={handleChange}
-                                    invalid={!!formErrors.category}
-                                    required
-                                >
-                                    <option value="">Select a category</option>
-                                    {categories.map((category) => (
-                                        <option key={category._id} value={category._id}>{category.name}</option>
-                                    ))}
-                                </Input>
-                                {formErrors.category && <div className="text-danger">{formErrors.category}</div>}
-                            </FormGroup>
-                            <FormGroup>
-                                <Label>Date</Label>
-                                <Input type="date" name="date" value={formData.date} onChange={handleChange} invalid={!!formErrors.date} required />
-                                {formErrors.date && <div className="text-danger">{formErrors.date}</div>}
-                            </FormGroup>
-                            <FormGroup>
-                                <Label>Amount</Label>
-                                <Input type="number" name="amount" value={formData.amount} onChange={handleChange} invalid={!!formErrors.amount} required />
-                                {formErrors.amount && <div className="text-danger">{formErrors.amount}</div>}
-                            </FormGroup>
-                            <FormGroup>
-                                <Label>Tax</Label>
-                                <Input type="number" name="tax" value={formData.tax} onChange={handleChange} invalid={!!formErrors.tax} required />
-                                {formErrors.tax && <div className="text-danger">{formErrors.tax}</div>}
-                            </FormGroup>
-                            <FormGroup>
-                                <Label>Vendor</Label>
-                                <Input type="text" name="vendor" value={formData.vendor} onChange={handleChange} invalid={!!formErrors.vendor} required />
-                                {formErrors.vendor && <div className="text-danger">{formErrors.vendor}</div>}
-                            </FormGroup>
-                            <FormGroup>
-                                <Label>Reference</Label>
-                                <Input type="text" name="reference" value={formData.reference} onChange={handleChange} invalid={!!formErrors.reference} required />
-                                {formErrors.reference && <div className="text-danger">{formErrors.reference}</div>}
-                            </FormGroup>
-                            <FormGroup>
-                                <Label>Description</Label>
-                                <Input type="text" name="description" value={formData.description} onChange={handleChange} />
-                            </FormGroup>
+                            {[
+                                { name: "category", label: "Category", type: "select" },
+                                { name: "date", label: "Date", type: "date" },
+                                { name: "amount", label: "Amount", type: "number" },
+                                { name: "tax", label: "Tax", type: "number" },
+                                { name: "vendor", label: "Vendor", type: "text" },
+                                { name: "reference", label: "Reference", type: "text" },
+                                { name: "description", label: "Description", type: "text", optional: true }
+                            ].map(({ name, label, type, optional }) => (
+                                <FormGroup key={name}>
+                                    <Label>{label}</Label>
+                                    {type === "select" ? (
+                                        <Input
+                                            type="select"
+                                            name={name}
+                                            value={formData[name]}
+                                            onChange={handleChange}
+                                            invalid={!!formErrors[name]}
+                                            required={!optional}
+                                        >
+                                            <option value="">Select a category</option>
+                                            {categories.map((category) => (
+                                                <option key={category._id} value={category._id}>{category.name}</option>
+                                            ))}
+                                        </Input>
+                                    ) : (
+                                        <Input
+                                            type={type}
+                                            name={name}
+                                            value={formData[name]}
+                                            onChange={handleChange}
+                                            invalid={!!formErrors[name]}
+                                            required={!optional}
+                                        />
+                                    )}
+                                    {formErrors[name] && <div className="text-danger">{formErrors[name]}</div>}
+                                </FormGroup>
+                            ))}
+
                             <Button type="submit" color="success">{editingExpense ? "Update Expense" : "Submit"}</Button>
                             {editingExpense && <Button color="secondary" onClick={resetForm} className="ml-2">Cancel</Button>}
                         </Form>
@@ -274,6 +326,3 @@ const Expenses = () => {
 };
 
 export default Expenses;
-
-
-
