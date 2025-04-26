@@ -16,6 +16,7 @@ router.get('/user-businesses', getUserBusinesses);
 router.get('/check', checkUserBusiness);
 
 router.get('/list-accountant', getAccountant);
+router.get('/getUserBusinessesByAccountant', getUserBusinessesByAccountant);
 router.get('/:businessId',authenticate,getBusiness);
 
 router.post('/assign-accountant', assignAccountant);
@@ -23,7 +24,7 @@ router.route('/:businessId')
   .delete(authenticate, deleteBusiness)
   .put(authenticate, updateBusiness);
 
-router.get('/getUserBusinessesByAccountant', getUserBusinessesByAccountant);
+
 
 
 module.exports = router;

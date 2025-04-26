@@ -372,8 +372,12 @@ export const googleAuth = async (req, res) => {
                 verificationToken,
                 verificationTokenExpiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
             });
-            await user.save();
+
         }
+
+        user.isVerified = true;
+        await user.save();
+
         const token = jwt.sign(
             {
                 _id: user._id,

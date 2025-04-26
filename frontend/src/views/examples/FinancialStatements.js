@@ -21,7 +21,7 @@ const FinancialReports = () => {
     const [toDate, setToDate] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
-    const [formError, setFormError] = useState("");  // New: for form validation
+    const [formError, setFormError] = useState("");
     const [financialReports, setFinancialReports] = useState([]);
     const navigate = useNavigate();
 
@@ -79,26 +79,33 @@ const FinancialReports = () => {
         }
     };
 
-    const generateFinancialReport = async () => {
-        setFormError(""); // Clear previous errors
-
-        // Simple Validation
+    const validateForm = () => {
         if (!selectedOwner) {
             setFormError("Please select a business owner.");
-            return;
+            return false;
         }
         if (!selectedBusiness) {
             setFormError("Please select a business.");
-            return;
+            return false;
         }
-        if (!fromDate || !toDate) {
-            setFormError("Please select both From and To dates.");
-            return;
+        if (!fromDate) {
+            setFormError("Please select From date.");
+            return false;
+        }
+        if (!toDate) {
+            setFormError("Please select To date.");
+            return false;
         }
         if (new Date(fromDate) > new Date(toDate)) {
             setFormError("From Date cannot be after To Date.");
-            return;
+            return false;
         }
+        setFormError("");
+        return true;
+    };
+
+    const generateFinancialReport = async () => {
+        if (!validateForm()) return;
 
         try {
             const token = localStorage.getItem("authToken");
@@ -164,7 +171,7 @@ const FinancialReports = () => {
                     <h3>Financial Reports</h3>
 
                     {error && <div className="alert alert-danger">{error}</div>}
-                    {formError && <div className="alert alert-warning">{formError}</div>} {/* New */}
+                    {formError && <div className="alert alert-warning">{formError}</div>}
 
                     <FormGroup>
                         <Label>Select Business Owner</Label>
@@ -222,7 +229,10 @@ const FinancialReports = () => {
                             <Input
                                 type="date"
                                 value={fromDate}
-                                onChange={(e) => setFromDate(e.target.value)}
+                                onChange={(e) => {
+                                    setFromDate(e.target.value);
+                                    setTimeout(validateForm, 0);
+                                }}
                                 disabled={!selectedBusiness}
                             />
                         </FormGroup>
@@ -231,7 +241,10 @@ const FinancialReports = () => {
                             <Input
                                 type="date"
                                 value={toDate}
-                                onChange={(e) => setToDate(e.target.value)}
+                                onChange={(e) => {
+                                    setToDate(e.target.value);
+                                    setTimeout(validateForm, 0);
+                                }}
                                 disabled={!selectedBusiness}
                             />
                         </FormGroup>
@@ -286,9 +299,3 @@ const FinancialReports = () => {
 };
 
 export default FinancialReports;
-
-
-
-
-
-
