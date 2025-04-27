@@ -1,18 +1,40 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import axios from "axios";
-
+import "./FloatingChatBot.css"; // ⬅️ import the new CSS
+import backgroundImage from './bg.png';
+import logo from './chatbot.png';
 const FloatingChatBot = ({ userContext }) => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const messagesEndRef = useRef(null);
+
+  const options = [
+    { id: 1, text: "Track my order/shipment" },
+    { id: 2, text: "Update my account information" },
+    { id: 3, text: "Resolve a payment issue" },
+    { id: 4, text: "Find a specific product" }
+  ];
+
+  useEffect(() => {
+    if (isOpen && messages.length === 0) {
+      addMessage("bot", "Hi! 👋 Need help? Tell me what's going on or choose an option below!");
+    }
+  }, [isOpen, messages.length]);
+
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages]);
 
   const addMessage = (sender, text) => {
-    setMessages((prev) => [...prev, { sender, text }]);
+    setMessages((prev) => [...prev, { sender, text, timestamp: new Date() }]);
   };
 
-  const sendMessage = async () => {
-    const trimmed = input.trim();
+  const sendMessage = async (messageText = input.trim()) => {
+    const trimmed = messageText.trim();
     if (!trimmed) return;
 
     addMessage("user", trimmed);
@@ -48,75 +70,130 @@ const FloatingChatBot = ({ userContext }) => {
     }
   };
 
+  const handleOptionClick = (option) => {
+    sendMessage(option.text);
+  };
+
   const toggleChat = () => {
     setIsOpen(!isOpen);
-    if (!isOpen && messages.length === 0) {
-      addMessage("bot", `Hello! I'm your business assistant for ${userContext?.businessName || 'your business'}. How can I help you with legal, accounting, or tax matters today?`);
-    }
+  };
+
+  const formatTime = (date) => {
+    return date.toLocaleTimeString('en-US', { 
+      hour: '2-digit', 
+      minute: '2-digit'
+    });
   };
 
   return (
     <div className="floating-chatbot">
-      {/* Chat button */}
+      {/* Chat toggle button */}
       <button
         onClick={toggleChat}
-        className={`rounded-full w-16 h-16 flex items-center justify-center shadow-lg ${isOpen ? "bg-red-500" : "bg-blue-500"} text-white transition-all duration-300`}
+        className="chat-toggle-button"
+        style={{
+          backgroundColor: isOpen ? "#DC3545" : "#0D6EFD",
+        }}
       >
         {isOpen ? (
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
           </svg>
         ) : (
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-          </svg>
+          <>
+            <div className="notification-badge">1</div>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+          </>
         )}
       </button>
 
       {/* Chat window */}
       {isOpen && (
-        <div className="absolute bottom-20 right-0 w-96 bg-white rounded-lg shadow-xl overflow-hidden transition-all duration-300 flex flex-col">
-          <div className="bg-blue-500 text-white p-4">
-            <h3 className="font-bold text-lg">Business Assistant</h3>
-            <p className="text-sm opacity-80">Legal, Accounting & Tax</p>
+        <div 
+        className="chat-window"
+        style={{
+          backgroundImage: `url(${backgroundImage})`,
+          backgroundRepeat: "no-repeat",
+          backgroundPosition: "center",
+          backgroundSize: "cover"
+        }}
+      >
+          <div className="chat-header">
+            <div className="chat-title">
+              <div className="chat-avatar">
+              <img src={logo} alt="Chatbot Logo" />
+              </div>
+              <h3>Customer Support Assistant</h3>
+            </div>
+            <button className="close-button" onClick={toggleChat}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
           </div>
 
-          <div className="flex-1 p-4 h-80 overflow-y-auto">
-            {messages.map((m, i) => (
-              <div
-                key={i}
-                className={`p-3 mb-2 rounded-lg ${
-                  m.sender === "user"
-                    ? "bg-blue-100 ml-auto text-right"
-                    : "bg-gray-100"
-                } max-w-[80%] ${m.sender === "user" ? "ml-auto" : "mr-auto"}`}
-              >
-                <div>{m.text}</div>
+          <div className="chat-messages">
+            {messages.map((message, index) => (
+              <div key={index} className={`message ${message.sender}`}>
+                {message.sender === "bot" ? (
+                  <>
+                    <div className="message-content">{message.text}</div>
+                    <div className="message-time">{formatTime(message.timestamp)}</div>
+                  </>
+                ) : (
+                  <div className="message-content">{message.text}</div>
+                )}
               </div>
             ))}
-            {loading && (
-              <div className="text-sm text-gray-500 italic p-2">Bot is typing...</div>
+
+            {messages.length === 1 && messages[0].sender === "bot" && (
+              <div className="options-container">
+                {options.map(option => (
+                  <button
+                    key={option.id}
+                    className="option-button"
+                    onClick={() => handleOptionClick(option)}
+                  >
+                    {option.text}
+                  </button>
+                ))}
+              </div>
             )}
+
+            {loading && (
+              <div className="message bot typing">
+                <div className="typing-indicator">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
           </div>
 
-          <div className="p-4 border-t">
-            <div className="flex items-center gap-2">
-              <input
-                value={input}
-                disabled={loading}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-                className="flex-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Ask a question..."
-              />
-                      <button
-            onClick={sendMessage}
-            disabled={loading}
-            className="bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700 focus:outline-none disabled:bg-blue-300 transition-all duration-300 transform hover:scale-105 shadow-lg"
-          >
-            Send
-          </button>
-            </div>
+          <div className="chat-input-area">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+              placeholder="Type your message..."
+              disabled={loading}
+            />
+            <button 
+              onClick={() => sendMessage()}
+              disabled={loading || !input.trim()}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor">
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+              </svg>
+            </button>
           </div>
         </div>
       )}
