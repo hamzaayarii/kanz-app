@@ -308,7 +308,7 @@ const Expenses = () => {
 
                     <hr />
 
-                    <h4>Other Expenses</h4>
+                    <h4>Daily Expenses</h4>
                     <Table bordered responsive>
                         <thead>
                         <tr>

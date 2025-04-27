@@ -75,7 +75,4 @@ router.delete('/:id', authenticate, authorizeBusinessOwner,async (req, res) => {
     }
 });
 
-
-
-
 module.exports = router;
