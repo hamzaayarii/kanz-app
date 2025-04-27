@@ -5,13 +5,15 @@ import { useNavigate } from 'react-router-dom';
 
 const Expenses = () => {
     const [expenses, setExpenses] = useState([]);
-    const [otherExpenses, setOtherExpenses] = useState([]);
+    const [dailyExpenses, setDailyExpenses] = useState([]);
+    const [taxReportExpenses , setTaxReportExpenses] = useState([]);
     const [businesses, setBusinesses] = useState([]);
     const [categories, setCategories] = useState([]);
     const [selectedBusiness, setSelectedBusiness] = useState("");
     const [showForm, setShowForm] = useState(false);
     const [editingExpense, setEditingExpense] = useState(null);
     const [formErrors, setFormErrors] = useState({});
+
     const navigate = useNavigate();
 
     const [formData, setFormData] = useState({
@@ -50,12 +52,13 @@ const Expenses = () => {
     useEffect(() => {
         fetchBusinesses();
         fetchCategories();
+        fetchTaxReportExpenses();
     }, []);
 
     useEffect(() => {
         if (selectedBusiness) {
             fetchExpenses(selectedBusiness);
-            fetchOtherExpenses(selectedBusiness);
+            fetchDailyExpenses(selectedBusiness);
         }
     }, [selectedBusiness]);
 
@@ -94,6 +97,22 @@ const Expenses = () => {
         }
     };
 
+    const fetchTaxReportExpenses = async () => {
+        try {
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                navigate('/auth/login');
+                return;
+            }
+            const response = await axios.get("http://localhost:5000/api/expenses/taxreport-expenses", {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            setTaxReportExpenses(response.data);
+        } catch (error) {
+            console.error("Error fetching tax report expenses", error);
+        }
+    };
+
     const fetchExpenses = async (businessId) => {
         try {
             const token = localStorage.getItem('authToken');
@@ -110,17 +129,17 @@ const Expenses = () => {
         }
     };
 
-    const fetchOtherExpenses = async (businessId) => {
+    const fetchDailyExpenses = async (businessId) => {
         try {
             const token = localStorage.getItem('authToken');
             if (!token) {
                 navigate('/auth/login');
                 return;
             }
-            const response = await axios.get(`http://localhost:5000/api/expenses/other-expenses?business=${businessId}`, {
+            const response = await axios.get(`http://localhost:5000/api/expenses/daily-expenses?business=${businessId}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            setOtherExpenses(response.data);
+            setDailyExpenses(response.data);
         } catch (error) {
             console.error("Error fetching other expenses", error);
         }
@@ -210,7 +229,8 @@ const Expenses = () => {
 
                     <FormGroup>
                         <Label>Select Business</Label>
-                        <Input type="select" value={selectedBusiness} onChange={(e) => setSelectedBusiness(e.target.value)}>
+                        <Input type="select" value={selectedBusiness}
+                               onChange={(e) => setSelectedBusiness(e.target.value)}>
                             {businesses.map((biz) => (
                                 <option key={biz._id} value={biz._id}>{biz.name}</option>
                             ))}
@@ -224,14 +244,14 @@ const Expenses = () => {
                     {showForm && (
                         <Form onSubmit={handleSubmit} className="mt-3">
                             {[
-                                { name: "category", label: "Category", type: "select" },
-                                { name: "date", label: "Date", type: "date" },
-                                { name: "amount", label: "Amount", type: "number" },
-                                { name: "tax", label: "Tax", type: "number" },
-                                { name: "vendor", label: "Vendor", type: "text" },
-                                { name: "reference", label: "Reference", type: "text" },
-                                { name: "description", label: "Description", type: "text", optional: true }
-                            ].map(({ name, label, type, optional }) => (
+                                {name: "category", label: "Category", type: "select"},
+                                {name: "date", label: "Date", type: "date"},
+                                {name: "amount", label: "Amount", type: "number"},
+                                {name: "tax", label: "Tax", type: "number"},
+                                {name: "vendor", label: "Vendor", type: "text"},
+                                {name: "reference", label: "Reference", type: "text"},
+                                {name: "description", label: "Description", type: "text", optional: true}
+                            ].map(({name, label, type, optional}) => (
                                 <FormGroup key={name}>
                                     <Label>{label}</Label>
                                     {type === "select" ? (
@@ -262,12 +282,14 @@ const Expenses = () => {
                                 </FormGroup>
                             ))}
 
-                            <Button type="submit" color="success">{editingExpense ? "Update Expense" : "Submit"}</Button>
-                            {editingExpense && <Button color="secondary" onClick={resetForm} className="ml-2">Cancel</Button>}
+                            <Button type="submit"
+                                    color="success">{editingExpense ? "Update Expense" : "Submit"}</Button>
+                            {editingExpense &&
+                                <Button color="secondary" onClick={resetForm} className="ml-2">Cancel</Button>}
                         </Form>
                     )}
 
-                    <hr />
+                    <hr/>
 
                     <h4>Normal Expenses</h4>
                     <Table bordered responsive>
@@ -295,18 +317,22 @@ const Expenses = () => {
                                     <td>{expense.reference}</td>
                                     <td>{expense.description}</td>
                                     <td>
-                                        <Button color="warning" size="sm" onClick={() => handleEdit(expense)}>Edit</Button>
-                                        <Button color="danger" size="sm" className="ml-2" onClick={() => handleDelete(expense._id)}>Delete</Button>
+                                        <Button color="warning" size="sm"
+                                                onClick={() => handleEdit(expense)}>Edit</Button>
+                                        <Button color="danger" size="sm" className="ml-2"
+                                                onClick={() => handleDelete(expense._id)}>Delete</Button>
                                     </td>
                                 </tr>
                             ))
                         ) : (
-                            <tr><td colSpan="8" className="text-center">No expenses found</td></tr>
+                            <tr>
+                                <td colSpan="8" className="text-center">No expenses found</td>
+                            </tr>
                         )}
                         </tbody>
                     </Table>
 
-                    <hr />
+                    <hr/>
 
                     <h4>Daily Expenses</h4>
                     <Table bordered responsive>
@@ -318,8 +344,8 @@ const Expenses = () => {
                         </tr>
                         </thead>
                         <tbody>
-                        {otherExpenses.length > 0 ? (
-                            otherExpenses.map((expense) => (
+                        {dailyExpenses.length > 0 ? (
+                            dailyExpenses.map((expense) => (
                                 <tr key={expense._id}>
                                     <td>{new Date(expense.date).toLocaleDateString()}</td>
                                     <td>${expense.summary.totalExpenses}</td>
@@ -327,7 +353,37 @@ const Expenses = () => {
                                 </tr>
                             ))
                         ) : (
-                            <tr><td colSpan="3" className="text-center">No other expenses found</td></tr>
+                            <tr>
+                                <td colSpan="3" className="text-center">No other expenses found</td>
+                            </tr>
+                        )}
+                        </tbody>
+                    </Table>
+
+                    <hr/>
+
+                    <h4>Tax Report Expenses</h4>
+                    <Table bordered responsive>
+                        <thead>
+                        <tr>
+                            <th>Year</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {taxReportExpenses.length > 0 ? (
+                            taxReportExpenses.map((expense) => (
+                                <tr key={expense._id}>
+                                    <td>{expense.year}</td>
+                                    <td>${expense.expenses}</td>
+                                    <td>{expense.status}</td>
+                                </tr>
+                            ))
+                        ) : (
+                            <tr>
+                                <td colSpan="3" className="text-center">No other expenses found</td>
+                            </tr>
                         )}
                         </tbody>
                     </Table>
