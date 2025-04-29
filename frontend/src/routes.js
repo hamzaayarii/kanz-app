@@ -32,6 +32,7 @@ import AccountantBusinessOwners from './views/examples/AccountantBusinessOwners.
 import OwnerFinancialReports from "./views/examples/OwnerFinancialReports.js";
 import BusinessUpdatePage from './views/buisness/BusinessUpdatePage.js';
 import AnomalyDetection from './views/examples/AnomalyDetection.js';
+import PredictCashFlow from "./views/examples/PredictCashFlow.js";
 
 
 
@@ -122,6 +123,16 @@ const routes = [
     icon: 'ni ni-credit-card text-red',
     description: 'Keep expenses in check',
     component: <AuthRoute><Expenses /></AuthRoute>,
+    layout: '/admin',
+    category: 'Finance',
+    showInSidebar: isUserBusinessOwner,
+  },
+  {
+    path: '/predictCashFlow',
+    name: 'Cash FLow Prediction',
+    icon: 'ni ni-credit-card text-red',
+    description: 'Predict Cash Flow',
+    component: <AuthRoute><PredictCashFlow /></AuthRoute>,
     layout: '/admin',
     category: 'Finance',
     showInSidebar: isUserBusinessOwner,

@@ -23,6 +23,8 @@ const dailyRevenueRoutes = require('./routes/dailyRevenueRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const financialStatementRoutes = require('./routes/financialStatementRoutes');
 const anomalyDetectionRoutes = require('./routes/anomalyDetectionRoutes');
+const predictCashFlowRoutes = require('./routes/predictCashFlowRoutes');
+
 const app = express();
 const initializeSocket = require('./middlewares/socketHandler');
 const server = http.createServer(app);
@@ -62,6 +64,7 @@ app.use('/api/daily-revenue', dailyRevenueRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/financial-Statement',financialStatementRoutes);
 app.use('/api/anomalies', anomalyDetectionRoutes);
+app.use('/api/predictCashFlow', predictCashFlowRoutes);
 
 // Fetch user data by ID (API route)
 app.get('/api/users/:id', authenticate, async (req, res) => {
