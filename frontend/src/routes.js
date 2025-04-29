@@ -31,6 +31,7 @@ import EmailVerification from './views/examples/EmailVerification.js';
 import AccountantBusinessOwners from './views/examples/AccountantBusinessOwners.js';
 import OwnerFinancialReports from "./views/examples/OwnerFinancialReports.js";
 import BusinessUpdatePage from './views/buisness/BusinessUpdatePage.js';
+import AnomalyDetection from './views/examples/AnomalyDetection.js';
 
 
 
@@ -343,6 +344,16 @@ const routes = [
     ),
     layout: '/admin',
     showInSidebar: isUserAdmin,
+  },
+  {
+    path: '/anomaly-detection',
+    name: 'Anomaly Detection',
+    icon: 'ni ni-chart-bar-32 text-red',
+    description: 'Detect financial anomalies',
+    component: <AuthRoute><AnomalyDetection /></AuthRoute>,
+    layout: '/admin',
+    category: 'Finance',
+    showInSidebar: isUserAccountant || isUserBusinessOwner,
   },
 ];
 

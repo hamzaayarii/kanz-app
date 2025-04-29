@@ -22,6 +22,7 @@ const journalRoutes = require('./routes/journalRoutes');
 const dailyRevenueRoutes = require('./routes/dailyRevenueRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const financialStatementRoutes = require('./routes/financialStatementRoutes');
+const anomalyDetectionRoutes = require('./routes/anomalyDetectionRoutes');
 const app = express();
 const initializeSocket = require('./middlewares/socketHandler');
 const server = http.createServer(app);
@@ -37,7 +38,7 @@ mongoose.connect(dbConfig.mongodb.url, { useNewUrlParser: true, useUnifiedTopolo
 
 // Middleware
 app.use(cors({
-    origin: 'http://localhost:3000',
+    origin: ['http://localhost:3000', 'http://localhost:5000'],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     credentials: true
 }));
@@ -60,6 +61,7 @@ app.use('/api/journal', journalRoutes);
 app.use('/api/daily-revenue', dailyRevenueRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/financial-Statement',financialStatementRoutes);
+app.use('/api/anomalies', anomalyDetectionRoutes);
 
 // Fetch user data by ID (API route)
 app.get('/api/users/:id', authenticate, async (req, res) => {
