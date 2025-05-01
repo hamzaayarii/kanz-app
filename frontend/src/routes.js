@@ -31,7 +31,7 @@ import EmailVerification from './views/examples/EmailVerification.js';
 import AccountantBusinessOwners from './views/examples/AccountantBusinessOwners.js';
 import OwnerFinancialReports from "./views/examples/OwnerFinancialReports.js";
 import BusinessUpdatePage from './views/buisness/BusinessUpdatePage.js';
-
+import Notifications from './views/examples/Notificaion.js';
 
 
 
@@ -123,6 +123,15 @@ const routes = [
     component: <AuthRoute><Expenses /></AuthRoute>,
     layout: '/admin',
     category: 'Finance',
+    showInSidebar: isUserBusinessOwner,
+  },
+
+  {
+    path: '/notifications',
+    name: 'notifications',
+    component: <AuthRoute><Notifications /></AuthRoute>,
+    layout: '/admin',
+   
     showInSidebar: isUserBusinessOwner,
   },
   {
@@ -344,6 +353,8 @@ const routes = [
     layout: '/admin',
     showInSidebar: isUserAdmin,
   },
+
+
 ];
 
 export default routes;
