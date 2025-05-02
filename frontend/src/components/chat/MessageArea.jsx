@@ -1,24 +1,65 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ArrowLeft } from 'react-feather';
 import MessageBubble from './MessageBubble';
 import TypingIndicator from './TypingIndicator';
+import MessageInput from './MessageInput';
 
 const MessageArea = ({ 
   selectedContact, 
-  messages, 
+  messages: initialMessages, 
   currentUser, 
   typingUsers,
   currentConversationId,
-  handleChatBack 
+  handleChatBack,
+  onSendMessage
 }) => {
+  // Keep local messages state to prevent duplicate rendering
+  const [messages, setMessages] = useState(initialMessages || []);
   const messagesEndRef = useRef(null);
+  const prevMessagesLengthRef = useRef(initialMessages?.length || 0);
+
+  // Update local messages when props change, but avoid duplicates
+  useEffect(() => {
+    if (initialMessages && initialMessages.length !== prevMessagesLengthRef.current) {
+      setMessages(initialMessages);
+      prevMessagesLengthRef.current = initialMessages.length;
+    }
+  }, [initialMessages]);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Get date for showing day separators
+  // Send message handler
+  const sendMessage = (content) => {
+    // Generate a temporary ID for optimistic rendering
+    const tempId = `temp-${Date.now()}`;
+    
+    // Create new message object
+    const newMessage = {
+      _id: tempId,
+      content,
+      sender: currentUser,
+      createdAt: new Date().toISOString(),
+      isOptimistic: true // Flag to identify locally added messages
+    };
+    
+    // Update local state immediately (optimistic update)
+    setMessages(prevMessages => [...prevMessages, newMessage]);
+    
+    // Pass to parent component to handle the actual sending
+    if (onSendMessage) {
+      onSendMessage(content, tempId);
+    }
+  };
+  
+  // Handle typing indicator
+  const handleTyping = () => {
+    // Your typing logic here
+  };
+
+  // Format date for showing day separators
   const formatDateHeader = (date) => {
     const options = { weekday: 'long' };
     return date.toLocaleDateString('fr-FR', options).toUpperCase();
@@ -154,6 +195,12 @@ const MessageArea = ({
 
         <div ref={messagesEndRef} />
       </div>
+      
+      {/* Message input component now integrated in MessageArea */}
+      <MessageInput
+        sendMessage={sendMessage}
+        handleTyping={handleTyping}
+      />
     </div>
   );
 };
