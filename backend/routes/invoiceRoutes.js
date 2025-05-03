@@ -8,13 +8,12 @@ const fs = require('fs');
 const path = require('path');
 const pdfParse = require('pdf-parse');
 const natural = require('natural');
-const vision = require('@google-cloud/vision');
+const Tesseract = require('tesseract.js');
 const rateLimit = require('express-rate-limit');
 const sanitizeHtml = require('sanitize-html');
 require('dotenv').config();
 
 const router = express.Router();
-const client = new vision.ImageAnnotatorClient();
 const tokenizer = new natural.WordTokenizer();
 
 router.use(rateLimit({
@@ -24,7 +23,7 @@ router.use(rateLimit({
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        const uploadPath = path.join(__dirname, '../uploads');
+        const uploadPath = path.join(__dirname, '../Uploads');
         if (!fs.existsSync(uploadPath)) {
             fs.mkdirSync(uploadPath, { recursive: true });
         }
@@ -85,49 +84,47 @@ const extractTextFromDocument = async (filePath) => {
     }
 
     try {
-        const [result] = await client.annotateImage({
-            image: { source: { filename: filePath } },
-            features: [{ type: 'DOCUMENT_TEXT_DETECTION' }],
-            imageContext: { languageHints: ['fr', 'en'] }
-        });
+        let text = '';
 
-        let text = result.fullTextAnnotation?.text || '';
-        if (text.trim()) {
-            console.log('Text extracted using Google Cloud Vision:', text);
-            return text;
-        }
-
+        // Handle PDF files using pdf-parse
         if (path.extname(filePath).toLowerCase() === '.pdf') {
-            try {
-                const dataBuffer = fs.readFileSync(filePath);
-                const data = await pdfParse(dataBuffer);
-                text = data.text;
-                if (text.trim()) {
-                    console.log('Text extracted using pdf-parse:', text);
-                    return text;
+            const dataBuffer = fs.readFileSync(filePath);
+            const data = await pdfParse(dataBuffer);
+            text = data.text;
+            if (text.trim()) {
+                console.log('Text extracted using pdf-parse:', text);
+                return text;
+            }
+        }
+        // Handle image files (JPEG, JPG, PNG) using Tesseract.js
+        else if (['.jpeg', '.jpg', '.png'].includes(path.extname(filePath).toLowerCase())) {
+            const { data: { text: ocrText } } = await Tesseract.recognize(
+                filePath,
+                'eng+fra', // Support English and French
+                {
+                    logger: info => console.log('Tesseract progress:', info),
                 }
-            } catch (pdfError) {
-                console.error('pdf-parse failed:', pdfError.message);
-                const [fallbackResult] = await client.documentTextDetection({
-                    image: { source: { filename: filePath } }
-                });
-                text = fallbackResult.fullTextAnnotation?.text || '';
-                if (text.trim()) {
-                    console.log('Text extracted using Vision API fallback:', text);
-                    return text;
-                }
+            );
+            text = ocrText;
+            if (text.trim()) {
+                console.log('Text extracted using Tesseract.js:', text);
+                return text;
             }
         }
 
+        // If no text is extracted, throw an error
         if (!text.trim()) {
             const error = new Error('Aucun texte détecté dans le document');
             error.status = 400;
             throw error;
         }
+
         return text;
     } catch (error) {
+        console.error('Text extraction error:', error.message);
         throw new Error(`Erreur lors de l'extraction du texte : ${error.message}`);
     } finally {
+        // Clean up the uploaded file
         if (fs.existsSync(filePath)) {
             fs.unlinkSync(filePath);
         }
@@ -166,7 +163,7 @@ const parseInvoiceText = (text) => {
         items: [],
         subTotal: 0.0,
         discount: 0.0,
-        shippingCharges: 0.0, // Fixed typo from shippingACharges
+        shippingCharges: 0.0,
         total: 0.0,
         customerNotes: null
     };
@@ -253,7 +250,7 @@ const parseInvoiceText = (text) => {
             const dates = line.match(pattern);
             if (dates) {
                 const parseDate = (dateStr) => {
-                    let parts = dateStr.split(/[\/\-\.]/);
+                    let parts = dateStr.split(/[/-]/);
                     if (parts.length !== 3) return null;
                     let [day, month, year] = parts.map(part => parseInt(part, 10));
                     if (year < 100) year += 2000;
@@ -563,7 +560,7 @@ router.post('/', authenticate, validateInvoiceInput, asyncHandler(async (req, re
 
     console.log('/invoices POST - User:', req.user);
     console.log('/invoices POST - Business ID:', businessId);
-    console.log('/invoices POST - Full Body:', req.body); // Debug full request body
+    console.log('/invoices POST - Full Body:', req.body);
     const business = await Business.findOne({ _id: businessId, owner: req.user._id });
     console.log('/invoices POST - Found Business:', business);
     if (!business) {

@@ -34,11 +34,6 @@ import BusinessUpdatePage from './views/buisness/BusinessUpdatePage.js';
 import AnomalyDetection from './views/examples/AnomalyDetection.js';
 import PredictCashFlow from "./views/examples/PredictCashFlow.js";
 
-
-
-
-
-
 // Grouped and enhanced routes for better UX
 const routes = [
   // Dashboard & Overview
@@ -173,22 +168,13 @@ const routes = [
     name: 'Financial Reports',
     icon: 'ni ni-chart-bar-32 text-purple',
     description: 'Detailed financial insights',
-    component: <AuthRoute><FinancialStatements /></AuthRoute>,
+    component: <BusinessOwnerRoute><FinancialStatements /></BusinessOwnerRoute>,
     layout: '/admin',
     category: 'Finance',
-    showInSidebar: isUserAccountant,
+    showInSidebar: true,
   },
 
-  {
-    path: '/financial-statements-list',
-    name: 'Financial Reports',
-    icon: 'ni ni-chart-bar-32 text-purple',
-    description: 'Detailed financial insights',
-    component: <AuthRoute><OwnerFinancialReports /></AuthRoute>,
-    layout: '/admin',
-    category: 'Finance',
-    showInSidebar: isUserBusinessOwner,
-  },
+
 
   // Tax Management
   {

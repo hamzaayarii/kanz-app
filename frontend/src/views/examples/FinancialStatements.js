@@ -1,301 +1,456 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
-import {
-    Container,
-    Row,
-    Card,
-    FormGroup,
-    Label,
-    Input,
-    Button,
-    Table,
-} from "reactstrap";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { useForm, useWatch } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
+import styles from '../../assets/css/FinancialStatements.module.css';
 
-const FinancialReports = () => {
-    const [owners, setOwners] = useState([]);
-    const [selectedOwner, setSelectedOwner] = useState("");
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
+const ManualBalanceSheet = () => {
+    const {
+        register,
+        handleSubmit,
+        setValue,
+        control,
+        formState: { errors },
+    } = useForm({
+        defaultValues: {
+            businessId: '',
+            periodStart: '',
+            periodEnd: '',
+            fixedAssetsTangible: '',
+            fixedAssetsIntangible: '',
+            receivables: '',
+            cash: '',
+            capital: '',
+            supplierDebts: '',
+            bankDebts: '',
+        },
+    });
+    const watchBusinessId = useWatch({ control, name: 'businessId', defaultValue: '' });
     const [businesses, setBusinesses] = useState([]);
-    const [selectedBusiness, setSelectedBusiness] = useState("");
-    const [fromDate, setFromDate] = useState("");
-    const [toDate, setToDate] = useState("");
+    const [selectedBusiness, setSelectedBusiness] = useState(null);
+    const [balanceSheets, setBalanceSheets] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
-    const [formError, setFormError] = useState("");
-    const [financialReports, setFinancialReports] = useState([]);
+    const [error, setError] = useState('');
     const navigate = useNavigate();
 
+    // Fetch businesses
     useEffect(() => {
-        fetchBusinessOwners();
-    }, []);
+        const fetchBusinesses = async () => {
+            try {
+                const token = localStorage.getItem('authToken');
+                if (!token) {
+                    throw new Error('You must be logged in to fetch businesses');
+                }
 
-    const fetchBusinessOwners = async () => {
-        try {
-            const token = localStorage.getItem("authToken");
-            if (!token) return navigate("/auth/login");
+                console.log('Fetching businesses with token:', token);
+                const response = await axios.get(`${API_URL}/business/user-businesses`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                    timeout: 10000,
+                });
 
-            const res = await axios.get("http://localhost:5000/api/users/assigned-business-owners", {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            setOwners(res.data || []);
-        } catch (err) {
-            console.error("Failed to load owners", err);
-            setError("Failed to load business owners.");
-        }
-    };
-
-    const fetchBusinesses = async (ownerId) => {
-        try {
-            const token = localStorage.getItem("authToken");
-            if (!token) return navigate("/auth/login");
-
-            const res = await axios.get(`http://localhost:5000/api/business/getUserBusinessesByAccountant?ownerId=${ownerId}`, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-
-            setBusinesses(res.data.businesses || []);
-            if (res.data.businesses.length > 0) {
-                setSelectedBusiness(res.data.businesses[0]._id);
-                fetchFinancialReports(res.data.businesses[0]._id);
-            } else {
-                setFinancialReports([]);
-                setSelectedBusiness("");
+                const businesses = response.data.businesses || [];
+                console.log('Fetched businesses:', businesses.length);
+                setBusinesses(businesses);
+                if (businesses.length > 0) {
+                    setValue('businessId', businesses[0]._id);
+                } else {
+                    setError('No businesses found.');
+                }
+            } catch (err) {
+                console.error('FetchBusinesses Error:', {
+                    message: err.message,
+                    response: err.response?.data,
+                    status: err.response?.status,
+                });
+                setError(err.response?.data?.message || 'Error fetching businesses');
             }
-        } catch (err) {
-            console.error("Failed to load businesses", err);
-            setError("Failed to load businesses.");
-        }
-    };
+        };
 
-    const fetchFinancialReports = async (businessId) => {
+        fetchBusinesses();
+    }, [setValue]);
+
+    // Update selected business
+    useEffect(() => {
+        const business = businesses.find((b) => b._id === watchBusinessId);
+        console.log('Selected business:', business);
+        setSelectedBusiness(business || null);
+    }, [watchBusinessId, businesses]);
+
+    // Fetch balance sheets when business changes
+    useEffect(() => {
+        if (watchBusinessId) {
+            const fetchBalanceSheets = async () => {
+                try {
+                    const token = localStorage.getItem('authToken');
+                    if (!token) {
+                        throw new Error('Missing token to fetch balance sheets');
+                    }
+
+                    console.log('Fetching balance sheets for businessId:', watchBusinessId);
+                    const res = await axios.get(`${API_URL}/financial-Statement/list?businessId=${watchBusinessId}`, {
+                        headers: { Authorization: `Bearer ${token}` },
+                    });
+                    console.log('Fetched balance sheets:', res.data.length);
+                    setBalanceSheets(res.data || []);
+                } catch (err) {
+                    console.error('FetchBalanceSheets Error:', {
+                        message: err.message,
+                        response: err.response?.data,
+                        status: err.response?.status,
+                    });
+                    setError(err.response?.data?.message || 'Failed to load balance sheets.');
+                }
+            };
+            fetchBalanceSheets();
+        }
+    }, [watchBusinessId]);
+
+    const onSubmit = async (data) => {
+        if (!validateForm(data)) return;
+
         try {
-            const token = localStorage.getItem("authToken");
-            const res = await axios.get(`http://localhost:5000/api/financial-Statement/list?businessId=${businessId}`, {
+            setLoading(true);
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                setError('You must be logged in.');
+                navigate('/auth/login');
+                return;
+            }
+
+            console.log('Submitting balance sheet with data:', data);
+            const payload = {
+                businessId: data.businessId,
+                periodStart: data.periodStart,
+                periodEnd: data.periodEnd,
+                fixedAssetsTangible: Number(data.fixedAssetsTangible) || 0,
+                fixedAssetsIntangible: Number(data.fixedAssetsIntangible) || 0,
+                receivables: Number(data.receivables) || 0,
+                cash: Number(data.cash) || 0,
+                capital: Number(data.capital) || 0,
+                supplierDebts: Number(data.supplierDebts) || 0,
+                bankDebts: Number(data.bankDebts) || 0,
+            };
+            console.log('Sending payload:', payload);
+            const res = await axios.post(`${API_URL}/financial-Statement/create`, payload, {
                 headers: { Authorization: `Bearer ${token}` },
             });
-            setFinancialReports(res.data || []);
-        } catch (err) {
-            console.error("Failed to load reports", err);
-        }
-    };
 
-    const validateForm = () => {
-        if (!selectedOwner) {
-            setFormError("Please select a business owner.");
-            return false;
-        }
-        if (!selectedBusiness) {
-            setFormError("Please select a business.");
-            return false;
-        }
-        if (!fromDate) {
-            setFormError("Please select From date.");
-            return false;
-        }
-        if (!toDate) {
-            setFormError("Please select To date.");
-            return false;
-        }
-        if (new Date(fromDate) > new Date(toDate)) {
-            setFormError("From Date cannot be after To Date.");
-            return false;
-        }
-        setFormError("");
-        return true;
-    };
+            console.log('Balance sheet created:', res.data);
+            if (res.data.validationErrors?.length > 0) {
+                setError(`Balance sheet created with errors: ${res.data.validationErrors.join(', ')}`);
+            }
 
-    const generateFinancialReport = async () => {
-        if (!validateForm()) return;
-
-        try {
-            const token = localStorage.getItem("authToken");
-            if (!token) return navigate("/auth/login");
-
-            setLoading(true);
-            const query = `?businessId=${selectedBusiness}&from=${fromDate}&to=${toDate}`;
-            await axios.get(`http://localhost:5000/api/financial-Statement/generate-financial-statement${query}`, {
+            console.log('Downloading PDF from:', res.data.downloadUrl);
+            const downloadRes = await axios.get(res.data.downloadUrl, {
                 headers: { Authorization: `Bearer ${token}` },
                 responseType: 'blob',
             });
+            const url = window.URL.createObjectURL(downloadRes.data);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `balance-sheet-${data.businessId}-${data.periodStart}.pdf`;
+            a.click();
+            window.URL.revokeObjectURL(url);
 
-            await fetchFinancialReports(selectedBusiness);
+            // Refresh balance sheets
+            const refreshRes = await axios.get(`${API_URL}/financial-Statement/list?businessId=${data.businessId}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            console.log('Refreshed balance sheets:', refreshRes.data.length);
+            setBalanceSheets(refreshRes.data || []);
+            setError(''); // Clear any previous errors
         } catch (err) {
-            console.error("Generation failed", err);
-            alert("Failed to generate financial report.");
+            console.error('CreateBalanceSheet Error:', {
+                message: err.message,
+                response: err.response?.data,
+                status: err.response?.status,
+            });
+            setError(err.response?.data?.error || err.response?.data?.message || 'Failed to create balance sheet.');
         } finally {
             setLoading(false);
         }
     };
 
-    const downloadReport = async (reportId) => {
+    const validateForm = (data) => {
+        console.log('Validating form:', data);
+        if (!data.businessId) {
+            setError('Please select a business.');
+            return false;
+        }
+        if (!data.periodStart || !data.periodEnd) {
+            setError('Please select start and end dates.');
+            return false;
+        }
+        if (new Date(data.periodStart) > new Date(data.periodEnd)) {
+            setError('Start date cannot be later than end date.');
+            return false;
+        }
+        setError('');
+        return true;
+    };
+
+    const downloadBalanceSheet = async (balanceSheetId) => {
         try {
-            const token = localStorage.getItem("authToken");
-            const res = await axios.get(`http://localhost:5000/api/financial-Statement/download/${reportId}`, {
+            const token = localStorage.getItem('authToken');
+            console.log('Downloading balance sheet:', balanceSheetId);
+            const res = await axios.get(`${API_URL}/financial-Statement/download/${balanceSheetId}`, {
                 headers: { Authorization: `Bearer ${token}` },
                 responseType: 'blob',
             });
-
             const url = window.URL.createObjectURL(res.data);
-            const a = document.createElement("a");
+            const a = document.createElement('a');
             a.href = url;
-            a.download = `financial-statement-${reportId}.pdf`;
+            a.download = `balance-sheet-${balanceSheetId}.pdf`;
             a.click();
             window.URL.revokeObjectURL(url);
+            console.log('Downloaded balance sheet:', balanceSheetId);
         } catch (err) {
-            console.error("Download failed", err);
-            alert("Failed to download report.");
+            console.error('DownloadBalanceSheet Error:', {
+                message: err.message,
+                response: err.response?.data,
+                status: err.response?.status,
+            });
+            setError(err.response?.data?.message || 'Failed to download balance sheet.');
         }
     };
 
-    const deleteReport = async (reportId) => {
-        const confirmDelete = window.confirm("Are you sure you want to delete this report?");
-        if (!confirmDelete) return;
+    const deleteBalanceSheet = async (balanceSheetId) => {
+        if (!window.confirm('Are you sure you want to delete this balance sheet?')) return;
 
         try {
-            const token = localStorage.getItem("authToken");
-            await axios.delete(`http://localhost:5000/api/financial-Statement/${reportId}`, {
+            const token = localStorage.getItem('authToken');
+            console.log('Deleting balance sheet:', balanceSheetId);
+            await axios.delete(`${API_URL}/financial-Statement/${balanceSheetId}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
-
-            await fetchFinancialReports(selectedBusiness);
+            setBalanceSheets(balanceSheets.filter((bs) => bs._id !== balanceSheetId));
+            console.log('Deleted balance sheet:', balanceSheetId);
         } catch (err) {
-            console.error("Delete failed", err);
-            alert("Failed to delete report.");
+            console.error('DeleteBalanceSheet Error:', {
+                message: err.message,
+                response: err.response?.data,
+                status: err.response?.status,
+            });
+            setError(err.response?.data?.message || 'Failed to delete balance sheet.');
         }
     };
 
     return (
-        <Container className="mt-5">
-            <Row className="justify-content-center">
-                <Card className="p-4 shadow">
-                    <h3>Financial Reports</h3>
+        <div className={styles.container}>
+            <div className={styles.content}>
+                <h1 className={styles.pageTitle}> Balance Sheet Creation</h1>
 
-                    {error && <div className="alert alert-danger">{error}</div>}
-                    {formError && <div className="alert alert-warning">{formError}</div>}
+                {error && (
+                    <div className={`bg-red-100 border border-red-400 text-red-700 p-4 ${styles.errorMessage} mb-6`}>
+                        {error}
+                    </div>
+                )}
 
-                    <FormGroup>
-                        <Label>Select Business Owner</Label>
-                        <Input
-                            type="select"
-                            value={selectedOwner}
-                            onChange={(e) => {
-                                const ownerId = e.target.value;
-                                setSelectedOwner(ownerId);
-                                setSelectedBusiness("");
-                                setFinancialReports([]);
-                                fetchBusinesses(ownerId);
-                            }}
-                        >
-                            <option value="">-- Select Owner --</option>
-                            {owners.length > 0 ? (
-                                owners.map((owner) => (
-                                    <option key={owner._id} value={owner._id}>
-                                        {owner.fullName}
-                                    </option>
-                                ))
-                            ) : (
-                                <option disabled>No business owners found</option>
-                            )}
-                        </Input>
-                    </FormGroup>
+                <form onSubmit={handleSubmit(onSubmit)} className={styles.formContainer}>
+                    <div className={styles.gridContainer}>
+                        <div>
+                            <label className={styles.inputLabel}>Business</label>
+                            <select
+                                {...register('businessId', { required: 'This field is required' })}
+                                className={styles.inputField}
+                            >
+                                <option value="">Select a business</option>
+                                {businesses.map((biz) => (
+                                    <option key={biz._id} value={biz._id}>{biz.name}</option>
+                                ))}
+                            </select>
+                            {errors.businessId && <span className={styles.validationError}>{errors.businessId.message}</span>}
+                        </div>
 
-                    <FormGroup>
-                        <Label>Select Business</Label>
-                        <Input
-                            type="select"
-                            value={selectedBusiness}
-                            onChange={(e) => {
-                                setSelectedBusiness(e.target.value);
-                                fetchFinancialReports(e.target.value);
-                            }}
-                            disabled={!selectedOwner}
-                        >
-                            <option value="">-- Select Business --</option>
-                            {businesses.length > 0 ? (
-                                businesses.map((biz) => (
-                                    <option key={biz._id} value={biz._id}>
-                                        {biz.name}
-                                    </option>
-                                ))
-                            ) : (
-                                <option disabled>No businesses found</option>
-                            )}
-                        </Input>
-                    </FormGroup>
-
-                    <Row className="mb-3">
-                        <FormGroup className="col-md-6">
-                            <Label>From Date</Label>
-                            <Input
+                        <div>
+                            <label className={styles.inputLabel}>Start Date</label>
+                            <input
                                 type="date"
-                                value={fromDate}
-                                onChange={(e) => {
-                                    setFromDate(e.target.value);
-                                    setTimeout(validateForm, 0);
-                                }}
-                                disabled={!selectedBusiness}
+                                {...register('periodStart', { required: 'This field is required' })}
+                                className={styles.inputField}
                             />
-                        </FormGroup>
-                        <FormGroup className="col-md-6">
-                            <Label>To Date</Label>
-                            <Input
-                                type="date"
-                                value={toDate}
-                                onChange={(e) => {
-                                    setToDate(e.target.value);
-                                    setTimeout(validateForm, 0);
-                                }}
-                                disabled={!selectedBusiness}
-                            />
-                        </FormGroup>
-                    </Row>
+                            {errors.periodStart && <span className={styles.validationError}>{errors.periodStart.message}</span>}
+                        </div>
 
-                    <Button
-                        color="primary"
-                        onClick={generateFinancialReport}
-                        disabled={loading || !selectedBusiness || !fromDate || !toDate}
+                        <div>
+                            <label className={styles.inputLabel}>End Date</label>
+                            <input
+                                type="date"
+                                {...register('periodEnd', { required: 'This field is required' })}
+                                className={styles.inputField}
+                            />
+                            {errors.periodEnd && <span className={styles.validationError}>{errors.periodEnd.message}</span>}
+                        </div>
+                    </div>
+
+                    <h2 className={styles.sectionHeading}>Assets</h2>
+                    <div className={styles.gridContainer}>
+                        <div>
+                            <label className={styles.inputLabel}>Tangible Fixed Assets (TND)</label>
+                            <input
+                                type="number"
+                                {...register('fixedAssetsTangible', {
+                                    min: { value: 0, message: 'Value cannot be negative' },
+                                    step: '0.001'
+                                })}
+                                className={styles.inputField}
+                                min="0"
+                                step="0.001"
+                            />
+                            {errors.fixedAssetsTangible && <span className={styles.validationError}>{errors.fixedAssetsTangible.message}</span>}
+                        </div>
+                        <div>
+                            <label className={styles.inputLabel}>Intangible Fixed Assets (TND)</label>
+                            <input
+                                type="number"
+                                {...register('fixedAssetsIntangible', {
+                                    min: { value: 0, message: 'Value cannot be negative' },
+                                    step: '0.001'
+                                })}
+                                className={styles.inputField}
+                                min="0"
+                                step="0.001"
+                            />
+                            {errors.fixedAssetsIntangible && <span className={styles.validationError}>{errors.fixedAssetsIntangible.message}</span>}
+                        </div>
+                        <div>
+                            <label className={styles.inputLabel}>Accounts Receivable (TND)</label>
+                            <input
+                                type="number"
+                                {...register('receivables', {
+                                    min: { value: 0, message: 'Value cannot be negative' },
+                                    step: '0.001'
+                                })}
+                                className={styles.inputField}
+                                min="0"
+                                step="0.001"
+                            />
+                            {errors.receivables && <span className={styles.validationError}>{errors.receivables.message}</span>}
+                        </div>
+                        <div>
+                            <label className={styles.inputLabel}>Cash (TND)</label>
+                            <input
+                                type="number"
+                                {...register('cash', {
+                                    min: { value: 0, message: 'Value cannot be negative' },
+                                    step: '0.001'
+                                })}
+                                className={styles.inputField}
+                                min="0"
+                                step="0.001"
+                            />
+                            {errors.cash && <span className={styles.validationError}>{errors.cash.message}</span>}
+                        </div>
+                    </div>
+
+                    <h2 className={styles.sectionHeading}>Liabilities</h2>
+                    <div className={`${styles.gridContainer} ${styles.passifGrid}`}>
+                        <div>
+                            <label className={styles.inputLabel}>Capital (TND)</label>
+                            <input
+                                type="number"
+                                {...register('capital', {
+                                    min: { value: 0, message: 'Value cannot be negative' },
+                                    step: '0.001'
+                                })}
+                                className={styles.inputField}
+                                min="0"
+                                step="0.001"
+                            />
+                            {errors.capital && <span className={styles.validationError}>{errors.capital.message}</span>}
+                        </div>
+                        <div>
+                            <label className={styles.inputLabel}>Supplier Debts (TND)</label>
+                            <input
+                                type="number"
+                                {...register('supplierDebts', {
+                                    min: { value: 0, message: 'Value cannot be negative' },
+                                    step: '0.001'
+                                })}
+                                className={styles.inputField}
+                                min="0"
+                                step="0.001"
+                            />
+                            {errors.supplierDebts && <span className={styles.validationError}>{errors.supplierDebts.message}</span>}
+                        </div>
+                        <div>
+                            <label className={styles.inputLabel}>Bank Debts (TND)</label>
+                            <input
+                                type="number"
+                                {...register('bankDebts', {
+                                    min: { value: 0, message: 'Value cannot be negative' },
+                                    step: '0.001'
+                                })}
+                                className={styles.inputField}
+                                min="0"
+                                step="0.001"
+                            />
+                            {errors.bankDebts && <span className={styles.validationError}>{errors.bankDebts.message}</span>}
+                        </div>
+                    </div>
+
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        className={styles.submitButton}
                     >
-                        {loading ? "Generating..." : "Generate New Report"}
-                    </Button>
+                        {loading ? 'Creating...' : 'Create Balance Sheet'}
+                    </button>
+                </form>
 
-                    <h5 className="mt-4">Available Reports</h5>
-                    <Table bordered responsive>
-                        <thead>
+                <h2 className={styles.existingBalancesTitle}>Existing Balance Sheets</h2>
+                <div className={styles.tableContainer}>
+                    <table className={styles.dataTable}>
+                        <thead className={styles.tableHeader}>
                         <tr>
-                            <th>#</th>
-                            <th>Type</th>
-                            <th>Period Start</th>
-                            <th>Period End</th>
-                            <th>Action</th>
+                            <th className={styles.tableHeaderCell}>No.</th>
+                            <th className={styles.tableHeaderCell}>Period Start</th>
+                            <th className={styles.tableHeaderCell}>Period End</th>
+                            <th className={styles.tableHeaderCell}>Total Assets (TND)</th>
+                            <th className={styles.tableHeaderCell}>Actions</th>
                         </tr>
                         </thead>
                         <tbody>
-                        {financialReports.length > 0 ? (
-                            financialReports.map((report, idx) => (
-                                <tr key={report._id}>
-                                    <td>{idx + 1}</td>
-                                    <td>{report.type}</td>
-                                    <td>{new Date(report.periodStart).toLocaleDateString()}</td>
-                                    <td>{new Date(report.periodEnd).toLocaleDateString()}</td>
-                                    <td className="d-flex gap-2">
-                                        <Button size="sm" color="success" onClick={() => downloadReport(report._id)}>
-                                            Download
-                                        </Button>
-                                        <Button size="sm" color="danger" onClick={() => deleteReport(report._id)}>
-                                            Delete
-                                        </Button>
+                        {balanceSheets.length > 0 ? (
+                            balanceSheets.map((sheet, idx) => (
+                                <tr key={sheet._id} className={styles.tableRow}>
+                                    <td className={styles.tableCell}>{idx + 1}</td>
+                                    <td className={styles.tableCell}>{new Date(sheet.periodStart).toLocaleDateString('en-US')}</td>
+                                    <td className={styles.tableCell}>{new Date(sheet.periodEnd).toLocaleDateString('en-US')}</td>
+                                    <td className={styles.tableCell}>{sheet.assets.totalAssets.toFixed(3)}</td>
+                                    <td className={styles.tableCell}>
+                                        <div className={styles.actionButtonsContainer}>
+                                            <button
+                                                onClick={() => downloadBalanceSheet(sheet._id)}
+                                                className={`${styles.actionButton} ${styles.downloadButton}`}
+                                            >
+                                                Download
+                                            </button>
+                                            <button
+                                                onClick={() => deleteBalanceSheet(sheet._id)}
+                                                className={`${styles.actionButton} ${styles.deleteButton}`}
+                                            >
+                                                Delete
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))
                         ) : (
-                            <tr><td colSpan="5" className="text-center">No reports found.</td></tr>
+                            <tr>
+                                <td colSpan="5" className={styles.emptyMessage}>
+                                    No balance sheets found.
+                                </td>
+                            </tr>
                         )}
                         </tbody>
-                    </Table>
-                </Card>
-            </Row>
-        </Container>
+                    </table>
+                </div>
+            </div>
+        </div>
     );
 };
 
-export default FinancialReports;
+export default ManualBalanceSheet;

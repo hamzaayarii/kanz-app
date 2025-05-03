@@ -62,9 +62,12 @@ app.use('/api/business', businessRoutes); /// api/business/add
 app.use('/api/journal', journalRoutes);
 app.use('/api/daily-revenue', dailyRevenueRoutes);
 app.use('/api/categories', categoryRoutes);
-app.use('/api/financial-Statement',financialStatementRoutes);
+app.use('/api/financial-Statement', financialStatementRoutes);
 app.use('/api/anomalies', anomalyDetectionRoutes);
 app.use('/api/predictCashFlow', predictCashFlowRoutes);
+
+// Serve static files for PDF downloads
+app.use('/Uploads/financial-reports', express.static('Uploads/financial-reports'));
 
 // Fetch user data by ID (API route)
 app.get('/api/users/:id', authenticate, async (req, res) => {
