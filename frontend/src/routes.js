@@ -32,6 +32,8 @@ import AccountantBusinessOwners from './views/examples/AccountantBusinessOwners.
 import OwnerFinancialReports from "./views/examples/OwnerFinancialReports.js";
 import BusinessUpdatePage from './views/buisness/BusinessUpdatePage.js';
 import Notifications from './views/examples/Notificaion.js';
+import FinancialCalendarPage from './views/calendar/FinancialCalendarPage.js';
+import { CalendarProvider } from './context/CalendarContext.js';
 
 
 
@@ -69,6 +71,22 @@ const routes = [
     icon: 'ni ni-money-coins text-success',
     description: 'Track your daily revenue flow',
     component: <AuthRoute><DailyRevenue /></AuthRoute>,
+    layout: '/admin',
+    category: 'Overview',
+    showInSidebar: () => true,
+  },
+  {
+    path: '/financial-calendar',
+    name: 'financial-calendar',
+    icon: 'ni ni-money-coins text-success',
+    description: 'Track your daily revenue flow',
+    component: (
+      <AuthRoute>
+        <CalendarProvider>
+          <FinancialCalendarPage />
+        </CalendarProvider>
+      </AuthRoute>
+    ),
     layout: '/admin',
     category: 'Overview',
     showInSidebar: () => true,

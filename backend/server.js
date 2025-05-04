@@ -30,7 +30,9 @@ const io = initializeSocket(server);
 
 const chatRoutes= require('./routes/chatRoutes.js');
 const chatBotRoutes = require('./routes/chatBot.js');
+const documentRoutes = require('./routes/documentRoutes.js');
 
+const calendarRoutes = require('./routes/calendarRoutes');
 // MongoDB connection
 mongoose.connect(dbConfig.mongodb.url, { useNewUrlParser: true, useUnifiedTopology: true })
     .then(() => console.log('Connected to MongoDB'))
@@ -70,7 +72,7 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/financial-Statement',financialStatementRoutes);
 app.use('/api/notifications', notificationRoutes); // Add notification routes
 app.use('/api/chat', chatRoutes);
-
+app.use('/api/calendar', calendarRoutes);
 // Fetch user data by ID (API route)
 app.get('/api/users/:id', authenticate, async (req, res) => {
     const { id } = req.params;
@@ -92,6 +94,7 @@ app.get('/', (req, res) => {
 });
 
 app.use('/api/chatBot', chatBotRoutes);
+app.use('/api/documents', documentRoutes);
 
 // Start the server
 const PORT = process.env.PORT || 5000;
