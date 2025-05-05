@@ -24,6 +24,7 @@ const categoryRoutes = require('./routes/categoryRoutes');
 const financialStatementRoutes = require('./routes/financialStatementRoutes');
 const anomalyDetectionRoutes = require('./routes/anomalyDetectionRoutes');
 const predictCashFlowRoutes = require('./routes/predictCashFlowRoutes');
+const treasuryRoutes = require('./routes/treasuryRoutes');
 
 const app = express();
 const initializeSocket = require('./middlewares/socketHandler');
@@ -65,6 +66,7 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/financial-Statement', financialStatementRoutes);
 app.use('/api/anomalies', anomalyDetectionRoutes);
 app.use('/api/predictCashFlow', predictCashFlowRoutes);
+app.use('/api/treasury', treasuryRoutes);
 
 // Serve static files for PDF downloads
 app.use('/Uploads/financial-reports', express.static('Uploads/financial-reports'));

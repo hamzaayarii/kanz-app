@@ -33,6 +33,7 @@ import OwnerFinancialReports from "./views/examples/OwnerFinancialReports.js";
 import BusinessUpdatePage from './views/buisness/BusinessUpdatePage.js';
 import AnomalyDetection from './views/examples/AnomalyDetection.js';
 import PredictCashFlow from "./views/examples/PredictCashFlow.js";
+import ManualTreasuryDashboard from "./views/examples/ManualTreasuryDashboard.js";
 
 // Grouped and enhanced routes for better UX
 const routes = [
@@ -174,7 +175,16 @@ const routes = [
     showInSidebar: true,
   },
 
-
+  {
+    path: '/treasury',
+    name: 'Treasury',
+    icon: 'ni ni-chart-bar-32 text-purple',
+    description: 'Detailed financial insights',
+    component: <AuthRoute><ManualTreasuryDashboard /></AuthRoute>,
+    layout: '/admin',
+    category: 'Finance',
+    showInSidebar: true,
+  },
 
   // Tax Management
   {
