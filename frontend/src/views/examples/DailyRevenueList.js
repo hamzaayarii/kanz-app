@@ -9,7 +9,8 @@ import {
     Col,
     Table,
     Button,
-    Badge
+    Badge,
+    UncontrolledTooltip
 } from 'reactstrap';
 import axios from 'axios';
 import Header from "components/Headers/Header.js";
@@ -19,9 +20,11 @@ const DailyRevenueList = () => {
     const [entries, setEntries] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [anomalies, setAnomalies] = useState({});
 
     useEffect(() => {
         fetchEntries();
+        checkAnomalies();
     }, []);
 
     const fetchEntries = async () => {
@@ -37,6 +40,42 @@ const DailyRevenueList = () => {
             setError('Failed to fetch daily revenue entries');
             setIsLoading(false);
             console.error('Error fetching daily revenue:', err);
+        }
+    };
+
+    // Fetch anomalies to indicate unusual entries
+    const checkAnomalies = async () => {
+        try {
+            const token = localStorage.getItem('authToken');
+            // Get user info to get business ID
+            const userResponse = await axios.get('http://localhost:5000/api/users/me', {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            
+            if (userResponse.data.business) {
+                const businessId = userResponse.data.business;
+                // Get last 90 days
+                const endDate = new Date();
+                const startDate = new Date();
+                startDate.setDate(startDate.getDate() - 90);
+                
+                // Call anomaly detection API
+                const anomalyResponse = await axios.get(
+                    `http://localhost:5000/api/anomalies/business/${businessId}/revenue?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`,
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
+                
+                // Create map of anomalies by date for easy lookup
+                const anomalyMap = {};
+                anomalyResponse.data.forEach(anomaly => {
+                    const date = new Date(anomaly.date).toISOString().split('T')[0];
+                    anomalyMap[date] = anomaly;
+                });
+                
+                setAnomalies(anomalyMap);
+            }
+        } catch (err) {
+            console.error('Error fetching anomalies:', err);
         }
     };
 
@@ -91,6 +130,12 @@ const DailyRevenueList = () => {
         }).format(amount);
     };
 
+    // Check if the entry is flagged as an anomaly
+    const isAnomaly = (entry) => {
+        const entryDate = new Date(entry.date).toISOString().split('T')[0];
+        return anomalies[entryDate] !== undefined;
+    };
+
     if (isLoading) {
         return <div>Loading...</div>;
     }
@@ -141,10 +186,27 @@ const DailyRevenueList = () => {
                                             const totalRevenue = calculateTotalRevenue(entry);
                                             const totalExpenses = calculateTotalExpenses(entry);
                                             const netAmount = totalRevenue - totalExpenses;
+                                            const entryIsAnomaly = isAnomaly(entry);
+                                            const anomalyId = `anomaly-${entry._id}`;
 
                                             return (
                                                 <tr key={entry._id}>
-                                                    <td>{formatDate(entry.date)}</td>
+                                                    <td>
+                                                        {formatDate(entry.date)}
+                                                        {entryIsAnomaly && (
+                                                            <>
+                                                                <Badge color="warning" className="ml-2" id={anomalyId}>
+                                                                    <i className="fas fa-exclamation-triangle"></i>
+                                                                </Badge>
+                                                                <UncontrolledTooltip
+                                                                    target={anomalyId}
+                                                                    placement="top"
+                                                                >
+                                                                    Unusual revenue amount detected. This may need verification.
+                                                                </UncontrolledTooltip>
+                                                            </>
+                                                        )}
+                                                    </td>
                                                     <td>
                                                         {formatCurrency(entry.revenues.cash.sales - entry.revenues.cash.returns)}
                                                     </td>
@@ -154,7 +216,7 @@ const DailyRevenueList = () => {
                                                     <td>
                                                         {formatCurrency(entry.revenues.other.reduce((sum, item) => sum + item.amount, 0))}
                                                     </td>
-                                                    <td className="text-success">
+                                                    <td className={`text-${entryIsAnomaly ? 'warning' : 'success'}`}>
                                                         {formatCurrency(totalRevenue)}
                                                     </td>
                                                     <td className="text-danger">

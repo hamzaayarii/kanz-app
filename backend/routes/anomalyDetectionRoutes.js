@@ -1,8 +1,7 @@
 const express = require('express');
-const { authenticate } = require('../middlewares/authMiddleware');
-const anomalyDetectionService = require('../services/anomalyDetectionService');
-
 const router = express.Router();
+const anomalyDetectionService = require('../services/anomalyDetectionService');
+const { authenticate } = require('../middlewares/authMiddleware');
 
 // Get all anomalies for a business
 router.get('/business/:businessId', authenticate, async (req, res) => {
