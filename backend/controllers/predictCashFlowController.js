@@ -2,6 +2,7 @@ const { spawn } = require('child_process');
 const Expense = require('../models/Expense');
 const DailyRevenue = require('../models/DailyRevenue');
 const TaxReport = require('../models/TaxReport');
+const Payroll = require("../models/Payroll");
 
 async function forecastCashflow(cashflowHistory) {
     return new Promise((resolve, reject) => {
@@ -39,7 +40,7 @@ async function forecastCashflow(cashflowHistory) {
 // Example call
 exports.runForecast = async (req, res) => {
     const raw = {};
-    const { business } = req.query;
+    const { business, userId } = req.query;
 
     // 1. Revenus journaliers (DailyRevenue)
     const revenues = await DailyRevenue.find({ business });
@@ -58,7 +59,7 @@ exports.runForecast = async (req, res) => {
     });
 
     // 4. Impôts journaliers estimés (TaxReport — répartis sur l’année)
-    /*const taxReports = await TaxReport.find({ userId });
+    const taxReports = await TaxReport.find({ userId });
     taxReports.forEach(tax => {
         const taxPerDay = (tax.calculatedTax || 0) / 365;
         for (let i = 0; i < 365; i++) {
@@ -66,26 +67,34 @@ exports.runForecast = async (req, res) => {
             raw[date] = raw[date] || { income: 0, expense: 0, tax: 0 };
             raw[date].tax += taxPerDay;
         }
-    });*/
+    });
+
+    // 4.5 Salaires (Payroll)
+    const payrolls = await Payroll.find({ businessId: business }); // businessId not "userId"
+    payrolls.forEach(pay => {
+        const date = pay.period.toISOString().split('T')[0];
+        raw[date] = raw[date] || { income: 0, expense: 0, tax: 0 };
+        raw[date].expense += pay.netSalary || 0; // Add to expenses
+    });
+
 
     // 5. Convertir au format Prophet : [{ ds, y }]
     const prophetData = Object.entries(raw).map(([date, { income, expense, tax }]) => ({
-        ds: date,
-        y: income - expense - tax
+        date: date,
+        inflows: income,
+        outflows: expense + tax
     }));
 
     // Tri chronologique
-    prophetData.sort((a, b) => new Date(a.ds) - new Date(b.ds));
+    prophetData.sort((a, b) => new Date(a.date) - new Date(b.date));
 
     try {
+        console.log(prophetData);
         const result = await forecastCashflow(prophetData);
-        console.log('Forecast:', result.forecast);
-        console.log('Alerts:', result.alerts);
-
+        console.log(result);
         // Send response with the forecast data and alerts to the frontend
         res.json({
-            forecast: result.forecast,
-            alerts: result.alerts
+            forecast: result
         });
 
     } catch (error) {
@@ -93,5 +102,3 @@ exports.runForecast = async (req, res) => {
         res.status(500).send('Error during forecast');
     }
 }
-
-//runForecast();
