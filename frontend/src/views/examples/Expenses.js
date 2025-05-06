@@ -163,6 +163,29 @@ const Expenses = () => {
         }
     };
 
+    const generateExpenseReport = async (businessId) => {
+        try {
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                navigate('/auth/login');
+                return;
+            }
+            const res = await axios.get(`http://localhost:5000/api/expenses/generate-expense-report?businessId=${businessId}`, {
+                headers: { 'Authorization': `Bearer ${token}` },
+                responseType: 'blob'
+            });
+            const blob = new Blob([res.data], { type: "application/pdf" });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `expense-report-${businessId}.pdf`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error("Error fetching other expenses", error);
+        }
+    };
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prevFormData => ({
@@ -429,7 +452,9 @@ const Expenses = () => {
                         </tr>
                         </tbody>
                     </Table>
-
+                    <hr/>
+                    <Button color="success" size="m"
+                            onClick={() => generateExpenseReport(selectedBusiness)}>Generate Expense Report</Button>
                 </Card>
             </Row>
         </Container>
