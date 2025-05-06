@@ -31,6 +31,7 @@ const io = initializeSocket(server);
 const chatRoutes= require('./routes/chatRoutes.js');
 const chatBotRoutes = require('./routes/chatBot.js');
 const documentRoutes = require('./routes/documentRoutes.js');
+const dashboardRoutes = require('./routes/dashboardRoutes');
 
 const calendarRoutes = require('./routes/calendarRoutes');
 // MongoDB connection
@@ -95,6 +96,8 @@ app.get('/', (req, res) => {
 
 app.use('/api/chatBot', chatBotRoutes);
 app.use('/api/documents', documentRoutes);
+
+app.use('/api/dashboard', dashboardRoutes);
 
 // Start the server
 const PORT = process.env.PORT || 5000;

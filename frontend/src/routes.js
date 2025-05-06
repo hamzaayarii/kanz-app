@@ -34,6 +34,8 @@ import BusinessUpdatePage from './views/buisness/BusinessUpdatePage.js';
 import Notifications from './views/examples/Notificaion.js';
 import FinancialCalendarPage from './views/calendar/FinancialCalendarPage.js';
 import { CalendarProvider } from './context/CalendarContext.js';
+import  Dashboard from './views/examples/Dashboard.jsx';
+import AllBusinessesDashboard from './views/examples/AllBusinessesDashboard.js';
 
 
 
@@ -91,6 +93,35 @@ const routes = [
     category: 'Overview',
     showInSidebar: () => true,
   },
+  {
+    path: '/dashboard',
+    name: 'dashboard.all',
+    icon: 'ni ni-chart-pie-35 text-primary',
+    description: 'Vue globale de toutes vos entreprises',
+    component: (
+      <AuthRoute>
+        <AllBusinessesDashboard />
+      </AuthRoute>
+    ),
+    layout: '/admin',
+    category: 'Overview',
+    showInSidebar: () => true,
+  },
+  {
+    path: '/dashboard/:businessId',
+    name: 'dashboard.business',
+    icon: 'ni ni-chart-bar-32 text-primary',
+    description: 'Get a high-level financial overview',
+    component: (
+      <AuthRoute>
+        <Dashboard />
+      </AuthRoute>
+    ),
+    layout: '/admin',
+    category: 'Overview',
+    showInSidebar: () => false, // Hide this from sidebar, will be accessed via business selector
+  },
+  
   {
     path: '/daily-revenue/edit/:id',
     name: 'Edit Daily Money Flow',
