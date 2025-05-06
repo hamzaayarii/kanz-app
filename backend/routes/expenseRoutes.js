@@ -50,6 +50,24 @@ router.get('/taxreport-expenses', authenticate, async (req, res) => {
     }
 });
 
+router.get('/total-expenses', authenticate, async (req, res) => {
+    const userId = req.user._id || req.user.id;
+    const { business } = req.query;
+    try {
+        const taxreports = await TaxReport.find({ userId });
+        const taxtotalExpenses = taxreports.reduce((acc, curr) => acc + curr.expenses, 0);
+        const query = business ? { business } : {};
+        const expenses = await Expense.find(query);
+        const normaltotalExpenses = expenses.reduce((acc, curr) => acc + curr.amount, 0);
+        const dailyexpenses = await DailyRevenue.find(query);
+        const dailytotalExpenses = dailyexpenses.reduce((acc, curr) => acc + curr.summary.totalExpenses, 0);
+        const totalExpenses = dailytotalExpenses + normaltotalExpenses + taxtotalExpenses;
+        res.json({normaltotalExpenses, taxtotalExpenses, dailytotalExpenses, totalExpenses});
+    } catch (error) {
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
 // Get single expense
 router.get('/:id', authenticate,async (req, res) => {
     try {
@@ -85,5 +103,7 @@ router.delete('/:id', authenticate, authorizeBusinessOwner,async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 });
+
+
 
 module.exports = router;

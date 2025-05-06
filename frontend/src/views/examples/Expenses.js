@@ -13,6 +13,7 @@ const Expenses = () => {
     const [showForm, setShowForm] = useState(false);
     const [editingExpense, setEditingExpense] = useState(null);
     const [formErrors, setFormErrors] = useState({});
+    const [totalExpenses, setTotalExpenses] = useState([]);
 
     const navigate = useNavigate();
 
@@ -59,6 +60,7 @@ const Expenses = () => {
         if (selectedBusiness) {
             fetchExpenses(selectedBusiness);
             fetchDailyExpenses(selectedBusiness);
+            fetchTotalExpenses(selectedBusiness);
         }
     }, [selectedBusiness]);
 
@@ -140,6 +142,22 @@ const Expenses = () => {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             setDailyExpenses(response.data);
+        } catch (error) {
+            console.error("Error fetching other expenses", error);
+        }
+    };
+
+    const fetchTotalExpenses = async (businessId) => {
+        try {
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                navigate('/auth/login');
+                return;
+            }
+            const response = await axios.get(`http://localhost:5000/api/expenses/total-expenses?business=${businessId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            setTotalExpenses(response.data);
         } catch (error) {
             console.error("Error fetching other expenses", error);
         }
@@ -385,6 +403,30 @@ const Expenses = () => {
                                 <td colSpan="3" className="text-center">No other expenses found</td>
                             </tr>
                         )}
+                        </tbody>
+                    </Table>
+                    <hr/>
+                    <h4>Summary</h4>
+                    <Table bordered>
+                        <tbody>
+                        <tr>
+                            <td><strong>Normal Expenses Total</strong></td>
+                            <td>${totalExpenses.normaltotalExpenses}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Daily Expenses Total</strong></td>
+                            <td>${totalExpenses.dailytotalExpenses}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Tax Report Expenses Total</strong></td>
+                            <td>${totalExpenses.taxtotalExpenses}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>All Expenses Total</strong></td>
+                            <td>
+                                ${totalExpenses.totalExpenses}
+                            </td>
+                        </tr>
                         </tbody>
                     </Table>
 
