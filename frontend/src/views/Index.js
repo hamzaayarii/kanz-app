@@ -7,7 +7,7 @@ import Chart from "chart.js";
 // react plugin used to create charts
 import { Line, Bar } from "react-chartjs-2";
 import InventoryInsightsChart from './examples/InventoryInsightsChart';
-import LatestMessages from '../components/chat/LatestMessages';
+import LatestMessages from '../components/SocketMessenger/LatestMessages';
 // reactstrap components
 import {
   Button,

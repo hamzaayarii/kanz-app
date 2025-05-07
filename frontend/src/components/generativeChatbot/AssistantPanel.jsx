@@ -1,6 +1,6 @@
 // components/chat/AssistantPanel.jsx
 import React, { useState } from 'react';
-import ChatComponent from './ChatComponent ';
+import ChatComponent from './ChatComponent';
 import DocumentUploader from './DocumentUploader';
 
 const AssistantPanel = () => {

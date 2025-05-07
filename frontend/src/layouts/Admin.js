@@ -58,7 +58,7 @@ const Admin = (props) => {
           <AdminFooter />
         </Container>
          {/* simple chat bot component */}
-         {isAuthenticated && <FloatingChatBot userContext={{ role: 'business_owner', businessName: 'Your Company' }} />}
+         {/* {isAuthenticated && <FloatingChatBot userContext={{ role: 'business_owner', businessName: 'Your Company' }} />} */}
 
          {/* rag chat-bot */}
          {isAuthenticated && <AssistantPanel />}
