@@ -1,85 +1,149 @@
-import React from 'react';
-import { TrendingDownIcon } from 'lucide-react';
-import { Card, CardHeader, CardBody } from '@material-tailwind/react';
-import { RadialBarChart, RadialBar, ResponsiveContainer } from 'recharts';
+// ExpensesOverview.jsx
+import React, { useState } from 'react';
 
-const ExpensesOverview = ({ data }) => {
+const ExpensesOverview = ({ data = { thisMonth: 1000, thisYear: 12000 } }) => {
+  const [selectedView, setSelectedView] = useState('month');
+  
+  // Simple formatter for Tunisian Dinar
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('fr-TN', {
-      style: 'currency',
-      currency: 'TND',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(amount);
+    return `${amount} DT`;
   };
 
-  const chartData = [
-    {
-      name: 'This Month',
-      value: Math.min(100, (data.thisMonth / 10000) * 100),
-      fill: '#EF4444'
-    },
-    {
-      name: 'This Year',
-      value: Math.min(100, (data.thisYear / 100000) * 100),
-      fill: '#F97316'
-    }
-  ];
-
   return (
-    <Card className="h-full shadow-lg rounded-xl">
-      <CardHeader floated={false} className="bg-gray-50 p-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-gray-800">Dépenses</h3>
-          <TrendingDownIcon className="h-5 w-5 text-red-500" />
-        </div>
-      </CardHeader>
-      <CardBody className="p-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="h-48">
-            <ResponsiveContainer width="100%" height="100%">
-              <RadialBarChart
-                innerRadius="60%"
-                outerRadius="100%"
-                data={chartData}
-                startAngle={180}
-                endAngle={0}
-              >
-                <RadialBar
-                  minAngle={15}
-                  background
-                  clockWise
-                  dataKey="value"
-                />
-                <text
-                  x="50%"
-                  y="50%"
-                  textAnchor="middle"
-                  dominantBaseline="middle"
-                  className="text-lg font-bold"
-                >
-                  {formatCurrency(data.thisMonth)}
-                </text>
-              </RadialBarChart>
-            </ResponsiveContainer>
-            <p className="text-center text-sm text-gray-500">Ce mois</p>
-          </div>
-          <div className="flex flex-col justify-center">
-            <div className="mb-4">
-              <p className="text-sm text-gray-500">Année en cours</p>
-              <p className="text-2xl font-bold text-orange-500">
-                {formatCurrency(data.thisYear)}
-              </p>
+    <div style={{ 
+      backgroundColor: 'white', 
+      borderRadius: '0.75rem', 
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', 
+      overflow: 'hidden'
+    }}>
+      {/* Header */}
+      <div style={{ padding: '1rem', borderBottom: '1px solid #f3f4f6' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div style={{ 
+              backgroundColor: '#fee2e2', 
+              borderRadius: '9999px', 
+              padding: '0.5rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              {/* Simple down arrow icon */}
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="23 18 13.5 8.5 8.5 13.5 1 6"></polyline>
+                <polyline points="17 18 23 18 23 12"></polyline>
+              </svg>
             </div>
-            <div className="bg-gray-100 p-3 rounded-lg">
-              <p className="text-xs text-gray-600">
-                <span className="font-semibold">Économies potentielles:</span> {formatCurrency(data.thisYear * 0.15)}
-              </p>
+            <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#1f2937' }}>Dépenses</h3>
+            <div style={{ position: 'relative', cursor: 'pointer' }}>
+              {/* Info icon */}
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+              </svg>
             </div>
           </div>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button
+              onClick={() => setSelectedView('month')}
+              style={{
+                padding: '0.25rem 0.75rem',
+                fontSize: '0.875rem',
+                borderRadius: '9999px',
+                transition: 'all 0.3s ease',
+                backgroundColor: selectedView === 'month' ? '#ef4444' : '#f3f4f6',
+                color: selectedView === 'month' ? 'white' : '#4b5563',
+                boxShadow: selectedView === 'month' ? '0 4px 6px -1px rgba(0, 0, 0, 0.1)' : 'none',
+                border: 'none',
+                cursor: 'pointer'
+              }}
+            >
+              Mois
+            </button>
+            <button
+              onClick={() => setSelectedView('year')}
+              style={{
+                padding: '0.25rem 0.75rem',
+                fontSize: '0.875rem',
+                borderRadius: '9999px',
+                transition: 'all 0.3s ease',
+                backgroundColor: selectedView === 'year' ? '#ef4444' : '#f3f4f6',
+                color: selectedView === 'year' ? 'white' : '#4b5563',
+                boxShadow: selectedView === 'year' ? '0 4px 6px -1px rgba(0, 0, 0, 0.1)' : 'none',
+                border: 'none',
+                cursor: 'pointer'
+              }}
+            >
+              Année
+            </button>
+          </div>
         </div>
-      </CardBody>
-    </Card>
+      </div>
+
+      {/* Content */}
+      <div style={{ padding: '1rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem' }}>
+          {/* Chart placeholder */}
+          <div style={{ 
+            height: '200px', 
+            backgroundColor: '#f9fafb', 
+            borderRadius: '0.5rem', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            color: '#6b7280',
+            fontSize: '0.875rem'
+          }}>
+            {selectedView === 'month' ? 'Graphique des dépenses mensuelles' : 'Graphique des dépenses annuelles'}
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            {/* Current expenses */}
+            <div style={{ 
+              backgroundColor: 'white', 
+              padding: '1rem', 
+              borderRadius: '0.75rem', 
+              boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)', 
+              border: '1px solid #f3f4f6' 
+            }}>
+              <p style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '0.25rem' }}>
+                {selectedView === 'month' ? 'Ce mois' : 'Cette année'}
+              </p>
+              <p style={{ fontSize: '1.5rem', fontWeight: '700', color: '#ef4444' }}>
+                {formatCurrency(selectedView === 'month' ? data.thisMonth : data.thisYear)}
+              </p>
+              <div style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', fontSize: '0.875rem', color: '#4b5563' }}>
+                {/* Down arrow icon */}
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '0.25rem' }}>
+                  <polyline points="23 18 13.5 8.5 8.5 13.5 1 6"></polyline>
+                  <polyline points="17 18 23 18 23 12"></polyline>
+                </svg>
+                <span>-12% par rapport à la période précédente</span>
+              </div>
+            </div>
+
+            {/* Saving opportunities */}
+            <div style={{ 
+              backgroundColor: '#fef2f2', 
+              padding: '1rem', 
+              borderRadius: '0.75rem', 
+              border: '1px solid #fee2e2' 
+            }}>
+              <h4 style={{ fontSize: '0.875rem', fontWeight: '600', color: '#b91c1c', marginBottom: '0.5rem' }}>
+                Opportunités d'économies
+              </h4>
+              <p style={{ fontSize: '0.875rem', color: '#dc2626' }}>
+                Potentiel d'économie estimé: {' '}
+                <span style={{ fontWeight: '600' }}>
+                  {formatCurrency((selectedView === 'month' ? data.thisMonth : data.thisYear) * 0.15)}
+                </span>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 

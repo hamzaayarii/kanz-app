@@ -14,21 +14,18 @@ import RecentActivity from '../../components/dashboard/RecentActivity';
 const Dashboard = () => {
   const { businessId } = useParams();
   const navigate = useNavigate();
+
   const [dashboardData, setDashboardData] = useState({
     revenue: { thisMonth: 0, thisYear: 0 },
     expenses: { thisMonth: 0, thisYear: 0 },
     netProfit: { thisMonth: 0, thisYear: 0 },
     transactionCount: { income: 0, expense: 0 },
     invoiceSummary: { paid: 0, unpaid: 0, overdue: 0, draft: 0 },
-    businessOverview: { 
-      accountantCount: 0, 
-      businessCount: 0, 
-      businessName: '', 
-      businessType: '' 
-    },
+    businessOverview: { accountantCount: 0, businessCount: 0, businessName: '', businessType: '' },
     financialTrends: [],
     recentActivity: []
   });
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -48,7 +45,6 @@ const Dashboard = () => {
           }
         });
 
-        // Map the API response to match your component expectations
         const apiData = response.data.data || {};
         setDashboardData({
           revenue: apiData.revenue || { thisMonth: 0, thisYear: 0 },
@@ -80,18 +76,18 @@ const Dashboard = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <p>Loading dashboard...</p>
+        <p className="text-lg text-gray-600">Loading dashboard...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-red-50 text-red-700 p-4 rounded-lg">
+      <div className="bg-red-100 text-red-700 p-6 rounded-xl shadow">
         <p>{error}</p>
         <button 
           onClick={() => window.location.reload()}
-          className="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          className="mt-4 px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
         >
           Retry
         </button>
@@ -100,14 +96,17 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-6 flex justify-between items-center">
-        <h1 className="text-2xl font-bold">
-          {dashboardData.businessOverview.businessName || 'Dashboard'}
-        </h1>
+    <div className="px-6 py-8 bg-gray-50 min-h-screen">
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h1 className="text-4xl font-bold text-indigo-800">
+            {dashboardData.businessOverview.businessName || 'Dashboard'}
+          </h1>
+          <p className="text-gray-500 text-sm mt-1">Overview of your financial performance</p>
+        </div>
         <BusinessSelector />
       </div>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <TransactionSummary data={dashboardData.transactionCount} />
         <RevenueOverview data={dashboardData.revenue} />

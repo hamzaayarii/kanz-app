@@ -36,6 +36,8 @@ import FinancialCalendarPage from './views/calendar/FinancialCalendarPage.js';
 import { CalendarProvider } from './context/CalendarContext.js';
 import  Dashboard from './views/examples/Dashboard.jsx';
 import AllBusinessesDashboard from './views/examples/AllBusinessesDashboard.js';
+import SimpleDashboard from './views/examples/SimpleDashboard.js';
+import InlineStyledDashboard from './views/examples/InlineStyledDashboard.js';
 
 
 
@@ -114,7 +116,7 @@ const routes = [
     description: 'Get a high-level financial overview',
     component: (
       <AuthRoute>
-        <Dashboard />
+        <InlineStyledDashboard />
       </AuthRoute>
     ),
     layout: '/admin',

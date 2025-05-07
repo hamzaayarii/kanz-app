@@ -4,7 +4,9 @@ import { FileTextIcon, CheckCircleIcon, ClockIcon, AlertCircleIcon, XCircleIcon 
 const RecentActivity = ({ activities }) => {
   // Format date
   const formatDate = (dateString) => {
+    if (!dateString) return 'Date inconnue';
     const date = new Date(dateString);
+    if (isNaN(date)) return 'Date invalide';
     return new Intl.DateTimeFormat('fr-TN', {
       day: 'numeric',
       month: 'short',
@@ -12,6 +14,7 @@ const RecentActivity = ({ activities }) => {
       minute: '2-digit'
     }).format(date);
   };
+  
 
   // Format currency
   const formatCurrency = (amount) => {
@@ -72,7 +75,8 @@ const RecentActivity = ({ activities }) => {
             >
               <div className="flex-shrink-0 mr-3">
                 <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                  <FileTextIcon className="h-5 w-5 text-blue-600" />
+                {getStatusIcon(activity.status)}
+
                 </div>
               </div>
               
