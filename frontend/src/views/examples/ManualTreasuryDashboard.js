@@ -133,7 +133,7 @@ const ManualTreasuryDashboard = () => {
                     <div className={styles.gridContainer}>
                         <div>
                             <label className={styles.inputLabel}>Business</label>
-                            <select {...register('businessId', { required: true })} className={styles.inputField}>
+                            <select {...register('businessId', {required: true})} className={styles.inputField}>
                                 <option value="">Select business</option>
                                 {businesses.map((biz) => (
                                     <option key={biz._id} value={biz._id}>{biz.name}</option>
@@ -143,12 +143,14 @@ const ManualTreasuryDashboard = () => {
                         </div>
                         <div>
                             <label className={styles.inputLabel}>Start Date</label>
-                            <input type="date" {...register('periodStart', { required: true })} className={styles.inputField} />
+                            <input type="date" {...register('periodStart', {required: true})}
+                                   className={styles.inputField}/>
                             {errors.periodStart && <span className={styles.validationError}>Required</span>}
                         </div>
                         <div>
                             <label className={styles.inputLabel}>End Date</label>
-                            <input type="date" {...register('periodEnd', { required: true })} className={styles.inputField} />
+                            <input type="date" {...register('periodEnd', {required: true})}
+                                   className={styles.inputField}/>
                             {errors.periodEnd && <span className={styles.validationError}>Required</span>}
                         </div>
                     </div>
@@ -156,50 +158,67 @@ const ManualTreasuryDashboard = () => {
                         {loading ? 'Submitting...' : 'Generate Report'}
                     </button>
                 </form>
-
-                <h2 className={styles.sectionHeading}>Previous Treasury Reports</h2>
-                <table className="min-w-full table-auto border mt-4">
-                    <thead className="bg-gray-100">
-                    <tr>
-                        <th className="border px-4 py-2 text-left">Period</th>
-                        <th className="border px-4 py-2 text-left">Opening Balance</th>
-                        <th className="border px-4 py-2 text-left">Total Inflows (Revenue)</th>
-                        <th className="border px-4 py-2 text-left">Total Outflows (Expenses + Payroll)</th>
-                        <th className="border px-4 py-2 text-left">Closing Balance</th>
-                        <th className="border px-4 py-2 text-left">Revenue from Daily Sales</th>
-                        <th className="border px-4 py-2 text-left">Variable Costs (from Daily Revenue)</th>
-                        <th className="border px-4 py-2 text-left">Fixed Charges (from Expense Records)</th>
-                        <th className="border px-4 py-2 text-left">Payroll Payments</th>
-                        <th className="border px-4 py-2 text-left">Actions</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {treasuryReports.map((report) => (
-                        <tr key={report._id} className="hover:bg-gray-50">
-                            <td className="border px-4 py-2">
-                                {new Date(report.dateRange.start).toLocaleDateString()} -<br/>
-                                {new Date(report.dateRange.end).toLocaleDateString()}
-                            </td>
-                            <td className="border px-4 py-2">{report.openingBalance} DT</td>
-                            <td className="border px-4 py-2">{report.totalInflows} DT</td>
-                            <td className="border px-4 py-2">{report.totalOutflows} DT</td>
-                            <td className="border px-4 py-2">{report.closingBalance} DT</td>
-                            <td className="border px-4 py-2">{report.details?.revenueFromDaily} DT</td>
-                            <td className="border px-4 py-2">{report.details?.expensesFromDaily} DT</td>
-                            <td className="border px-4 py-2">{report.details?.expensesFromExpenses} DT</td>
-                            <td className="border px-4 py-2">{report.details?.payrollOutflows} DT</td>
-                            <td className="border px-4 py-2 space-x-2">
-                                <button onClick={() => downloadReport(report._id)}
-                                        className="text-blue-600 hover:underline">Download
-                                </button>
-                                <button onClick={() => deleteReport(report._id)}
-                                        className="text-red-600 hover:underline">Delete
-                                </button>
-                            </td>
+                <h2 className={styles.existingBalancesTitle}>Existing Treasury Reports</h2>
+                <div className={styles.tableContainer}>
+                    <table className={styles.dataTable}>
+                        <thead className={styles.tableHeader}>
+                        <tr>
+                            <th className={styles.tableHeaderCell}>Period</th>
+                            <th className={styles.tableHeaderCell}>Opening Balance</th>
+                            <th className={styles.tableHeaderCell}>Total Inflows</th>
+                            <th className={styles.tableHeaderCell}>Total Outflows</th>
+                            <th className={styles.tableHeaderCell}>Closing Balance</th>
+                            <th className={styles.tableHeaderCell}>Revenue from Daily Sales</th>
+                            <th className={styles.tableHeaderCell}>Variable Costs</th>
+                            <th className={styles.tableHeaderCell}>Fixed Charges</th>
+                            <th className={styles.tableHeaderCell}>Payroll Payments</th>
+                            <th className={styles.tableHeaderCell}>Actions</th>
                         </tr>
-                    ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                        {treasuryReports.length > 0 ? (
+                            treasuryReports.map((report, index) => (
+                                <tr key={report._id} className={styles.tableRow}>
+                                    <td className={styles.tableCell}>
+                                        {new Date(report.dateRange.start).toLocaleDateString()} -<br/>
+                                        {new Date(report.dateRange.end).toLocaleDateString()}
+                                    </td>
+                                    <td className={styles.tableCell}>{report.openingBalance} DT</td>
+                                    <td className={styles.tableCell}>{report.totalInflows} DT</td>
+                                    <td className={styles.tableCell}>{report.totalOutflows} DT</td>
+                                    <td className={styles.tableCell}>{report.closingBalance} DT</td>
+                                    <td className={styles.tableCell}>{report.details?.revenueFromDaily} DT</td>
+                                    <td className={styles.tableCell}>{report.details?.expensesFromDaily} DT</td>
+                                    <td className={styles.tableCell}>{report.details?.expensesFromExpenses} DT</td>
+                                    <td className={styles.tableCell}>{report.details?.payrollOutflows} DT</td>
+                                    <td className={styles.tableCell}>
+                                        <div className={styles.actionButtonsContainer}>
+                                            <button
+                                                onClick={() => downloadReport(report._id)}
+                                                className={`${styles.actionButton} ${styles.downloadButton}`}
+                                            >
+                                                Download
+                                            </button>
+                                            <button
+                                                onClick={() => deleteReport(report._id)}
+                                                className={`${styles.actionButton} ${styles.deleteButton}`}
+                                            >
+                                                Delete
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))
+                        ) : (
+                            <tr>
+                                <td colSpan="10" className={styles.emptyMessage}>
+                                    No treasury reports found.
+                                </td>
+                            </tr>
+                        )}
+                        </tbody>
+                    </table>
+                </div>
 
             </div>
         </div>

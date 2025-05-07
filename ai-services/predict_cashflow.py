@@ -4,11 +4,11 @@ from prophet import Prophet
 import json
 
 # Read JSON input passed via stdin
-input_data = json.loads(sys.stdin.read())
+#input_data = json.loads(sys.stdin.read())
 
 # Create DataFrame
-df = pd.DataFrame(input_data)
-#df = pd.read_csv('C:/Users/GnaR26/Downloads/synthetic_cash_flow_data.csv')
+#df = pd.DataFrame(input_data)
+df = pd.read_csv('C:/Users/GnaR26/Downloads/synthetic_cash_flow_data.csv')
 
 # Ensure columns: date, inflows, outflows
 df['date'] = pd.to_datetime(df['date'])
