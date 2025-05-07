@@ -31,6 +31,28 @@ const ensureReportsDir = async () => {
 // Helper to format currency in TND
 const formatCurrency = (value) => `${Number(value).toFixed(3)} TND`;
 
+// Helper function to format dates consistently
+const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-GB', { 
+        day: '2-digit', 
+        month: '2-digit', 
+        year: 'numeric'
+    });
+};
+
+// Helper function to draw horizontal line
+const drawHorizontalLine = (doc, y = null) => {
+    const pageWidth = doc.page.width;
+    const margin = 50;
+    const lineY = y || doc.y;
+    doc.moveTo(margin, lineY)
+        .lineTo(pageWidth - margin, lineY)
+        .strokeColor('#cccccc')
+        .stroke();
+    doc.moveDown(0.5);
+};
+
 // Validation for create income statement
 const createIncomeStatementValidation = [
     check('businessId').isMongoId().withMessage('Valid business ID is required'),
@@ -181,8 +203,16 @@ router.post('/create', createIncomeStatementValidation, async (req, res) => {
         doc.fontSize(20).text('Income Statement', { align: 'center' });
         doc.moveDown();
         doc.fontSize(12).text(`Business: ${business.name}`);
-        doc.fontSize(12).text(`Period: ${new Date(periodStart).toLocaleDateString()} - ${new Date(periodEnd).toLocaleDateString()}`);
+        doc.fontSize(12).text(`RNE Number: ${business.rneNumber || 'N/A'}`);
+        doc.fontSize(12).text(`Tax Number: ${business.taxNumber || 'N/A'}`);
+        doc.fontSize(12).text(`Address: ${business.address || 'N/A'}, ${business.state || ''}, ${business.country || ''}`);
+        doc.fontSize(12).text(`Phone: ${business.phone || 'N/A'}`);
+        doc.fontSize(12).text(`Email: ${business.email || 'N/A'}`);
+        doc.fontSize(12).text(`Period: ${formatDate(periodStart)} - ${formatDate(periodEnd)}`);
         doc.moveDown();
+
+        // Add separator line
+        drawHorizontalLine(doc);
 
         // Revenue section
         doc.fontSize(14).text('Revenue', { underline: true });
@@ -191,26 +221,84 @@ router.post('/create', createIncomeStatementValidation, async (req, res) => {
         doc.fontSize(12).text(`Total Revenue: ${formatCurrency(totalRevenue)}`, { bold: true });
         doc.moveDown();
 
+        // Add separator line
+        drawHorizontalLine(doc);
+
         // Expenses section
         doc.fontSize(14).text('Expenses', { underline: true });
-        doc.fontSize(10).text(`Cost of Goods Sold: ${formatCurrency(expenses.costOfGoodsSold)}`);
+        doc.fontSize(10).text(`Cost of Goods Sold: ${formatCurrency(expenses.costOfGoodsSold)} (${((costOfGoodsSold/totalRevenue)*100).toFixed(1)}% of revenue)`);
         doc.fontSize(12).text(`Gross Profit: ${formatCurrency(grossProfit)}`, { bold: true });
         doc.moveDown();
         
-        doc.fontSize(10).text(`Salaries: ${formatCurrency(expenses.salaries)}`);
-        doc.fontSize(10).text(`Rent: ${formatCurrency(expenses.rent)}`);
-        doc.fontSize(10).text(`Utilities: ${formatCurrency(expenses.utilities)}`);
-        doc.fontSize(10).text(`Marketing: ${formatCurrency(expenses.marketing)}`);
-        doc.fontSize(10).text(`Other Expenses: ${formatCurrency(expenses.otherExpenses)}`);
-        doc.fontSize(12).text(`Total Expenses: ${formatCurrency(totalExpenses)}`, { bold: true });
+        doc.fontSize(10).text(`Salaries: ${formatCurrency(expenses.salaries)} (${((salariesExpense/totalRevenue)*100).toFixed(1)}% of revenue)`);
+        doc.fontSize(10).text(`Rent: ${formatCurrency(expenses.rent)} (${((rentExpense/totalRevenue)*100).toFixed(1)}% of revenue)`);
+        doc.fontSize(10).text(`Utilities: ${formatCurrency(expenses.utilities)} (${((utilitiesExpense/totalRevenue)*100).toFixed(1)}% of revenue)`);
+        doc.fontSize(10).text(`Marketing: ${formatCurrency(expenses.marketing)} (${((marketingExpense/totalRevenue)*100).toFixed(1)}% of revenue)`);
+        doc.fontSize(10).text(`Other Expenses: ${formatCurrency(expenses.otherExpenses)} (${((otherExpensesValue/totalRevenue)*100).toFixed(1)}% of revenue)`);
+        doc.fontSize(12).text(`Total Expenses: ${formatCurrency(totalExpenses)} (${((totalExpenses/totalRevenue)*100).toFixed(1)}% of revenue)`, { bold: true });
         doc.moveDown();
+
+        // Add separator line before Summary
+        drawHorizontalLine(doc);
 
         // Summary section
         doc.fontSize(14).text('Summary', { underline: true });
         doc.fontSize(12).text(`Operating Income: ${formatCurrency(operatingIncome)}`, { bold: true });
-        doc.fontSize(10).text(`Taxes: ${formatCurrency(taxes)}`);
-        doc.fontSize(14).text(`Net Income: ${formatCurrency(netIncome)}`, { bold: true });
-        
+        doc.fontSize(10).text(`Taxes: ${formatCurrency(taxes)} (${((taxesValue/operatingIncome)*100).toFixed(1)}% of operating income)`);
+        doc.fontSize(16).fillColor('blue').text(`Net Income: ${formatCurrency(netIncome)}`, { bold: true });
+        doc.fontSize(10).fillColor('black').text(`(${((netIncome/totalRevenue)*100).toFixed(1)}% of revenue)`, { align: 'center' });
+        doc.moveDown(2);
+
+        // Add a notes section
+        doc.moveDown();
+        drawHorizontalLine(doc);
+        doc.fontSize(12).text('Additional Notes:', { underline: true });
+        doc.moveDown(0.5);
+        // Check if there are validation errors to show
+        if (validationErrors.length > 0) {
+            doc.fontSize(10).fillColor('red').text('Validation Messages:');
+            validationErrors.forEach(error => {
+                doc.fontSize(9).text(`• ${error}`);
+            });
+            doc.fillColor('black');
+        } else {
+            doc.fontSize(10).text('No additional notes.', { italic: true });
+        }
+        doc.moveDown(2);
+
+        // Add financial health indicators
+        doc.fontSize(12).text('Financial Health Indicators:', { underline: true });
+        doc.moveDown(0.5);
+
+        // Calculate profit margin
+        const profitMargin = (netIncome / totalRevenue) * 100;
+        let profitColor = 'red';
+        if (profitMargin > 20) profitColor = 'green';
+        else if (profitMargin > 10) profitColor = 'blue';
+        else if (profitMargin > 0) profitColor = 'orange';
+
+        // Calculate expense ratio
+        const expenseRatio = (totalExpenses / totalRevenue) * 100;
+        let expenseColor = 'red';
+        if (expenseRatio < 60) expenseColor = 'green';
+        else if (expenseRatio < 80) expenseColor = 'blue';
+        else if (expenseRatio < 100) expenseColor = 'orange';
+
+        // Display indicators
+        doc.fontSize(10).text(`Profit Margin: `, { continued: true })
+           .fillColor(profitColor).text(`${profitMargin.toFixed(1)}%`, { continued: true })
+           .fillColor('black').text(` (Net Income as % of Revenue)`);
+
+        doc.fontSize(10).text(`Expense Ratio: `, { continued: true })
+           .fillColor(expenseColor).text(`${expenseRatio.toFixed(1)}%`, { continued: true })
+           .fillColor('black').text(` (Total Expenses as % of Revenue)`);
+
+        doc.moveDown(2);
+
+        // Add a compliance footer
+        doc.fontSize(8).text('This income statement was prepared in compliance with Tunisian accounting standards.', { align: 'center' });
+        doc.fontSize(8).text(`Generated on: ${formatDate(new Date())} ${new Date().toLocaleTimeString()}`, { align: 'center' });
+
         // Finalize PDF
         doc.end();
 
