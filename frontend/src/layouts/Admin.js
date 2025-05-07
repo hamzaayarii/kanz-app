@@ -6,8 +6,8 @@ import AdminFooter from 'components/Footers/AdminFooter.js';
 import Sidebar from 'components/Sidebar/Sidebar.js';
 import ChatWindow from 'components/SocketMessenger/ChatWindow.jsx'; // Import the ChatWindow component
 import routes from 'routes.js';
-import FloatingChatBot from 'components/BasicChatBot/FloatingChatBot';
-import AssistantPanel from 'components/generativeChatbot/AssistantPanel';
+import ChatbotWindow from 'components/generativeChatbot/ChatbotWindow'; // Import the ChatbotWindow component
+
 
 const Admin = (props) => {
   const mainContent = React.useRef(null);
@@ -61,9 +61,9 @@ const Admin = (props) => {
          {/* {isAuthenticated && <FloatingChatBot userContext={{ role: 'business_owner', businessName: 'Your Company' }} />} */}
 
          {/* rag chat-bot */}
-         {isAuthenticated && <AssistantPanel />}
-
-        {/*  m */}
+        <ChatbotWindow />
+        
+        {/*  messenger */}
         {isAuthenticated && <ChatWindow />}
       </div>
     </>
