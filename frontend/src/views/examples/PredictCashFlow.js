@@ -130,16 +130,45 @@ const PredictCashFlow = () => {
                                     <div className="chart mt-4">
                                         <Line
                                             data={{
-                                                labels: forecastData.forecast.map(item => item.ds),
-                                                datasets: [{
-                                                    label: 'Forecasted Cashflow',
-                                                    data: forecastData.forecast.map(item => item.yhat),
-                                                    fill: true,
-                                                    borderColor: '#f5365c',
-                                                    backgroundColor: 'rgba(245, 54, 92, 0.3)',
-                                                    pointBackgroundColor: '#f5365c',
-                                                    tension: 0.4,
-                                                }]
+                                                labels: forecastData.forecast.map(item => item.date),
+                                                datasets: [
+                                                    {
+                                                        label: 'Inflows',
+                                                        data: forecastData.forecast.map(item => item.totalInflows),
+                                                        fill: false,
+                                                        borderColor: '#00c6ff',
+                                                        backgroundColor: 'rgba(0, 198, 255, 0.2)',
+                                                        pointBackgroundColor: '#00c6ff',
+                                                        tension: 0.4,
+                                                    },
+                                                    {
+                                                        label: 'Outflows',
+                                                        data: forecastData.forecast.map(item => item.totalOutflows),
+                                                        fill: false,
+                                                        borderColor: '#f5365c',
+                                                        backgroundColor: 'rgba(245, 54, 92, 0.3)',
+                                                        pointBackgroundColor: '#f5365c',
+                                                        tension: 0.4,
+                                                    },
+                                                    {
+                                                        label: 'Opening Balance',
+                                                        data: forecastData.forecast.map(item => item.openingBalance),
+                                                        fill: false,
+                                                        borderColor: '#6dbe45',
+                                                        backgroundColor: 'rgba(109, 190, 69, 0.2)',
+                                                        pointBackgroundColor: '#6dbe45',
+                                                        tension: 0.4,
+                                                    },
+                                                    {
+                                                        label: 'Closing Balance',
+                                                        data: forecastData.forecast.map(item => item.closingBalance),
+                                                        fill: true,
+                                                        borderColor: '#f4b400',
+                                                        backgroundColor: 'rgba(244, 180, 0, 0.3)',
+                                                        pointBackgroundColor: '#f4b400',
+                                                        tension: 0.4,
+                                                    }
+                                                ]
                                             }}
                                             options={chartOptions()}
                                         />
@@ -172,3 +201,4 @@ const PredictCashFlow = () => {
 };
 
 export default PredictCashFlow;
+
