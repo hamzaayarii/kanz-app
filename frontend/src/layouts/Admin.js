@@ -4,8 +4,10 @@ import { Container } from 'reactstrap';
 import AdminNavbar from 'components/Navbars/AdminNavbar.js';
 import AdminFooter from 'components/Footers/AdminFooter.js';
 import Sidebar from 'components/Sidebar/Sidebar.js';
-import ChatWindow from 'components/chat/ChatWindow.jsx'; // Import the ChatWindow component
+import ChatWindow from 'components/SocketMessenger/ChatWindow.jsx'; // Import the ChatWindow component
 import routes from 'routes.js';
+import ChatbotWindow from 'components/generativeChatbot/ChatbotWindow'; // Import the ChatbotWindow component
+
 
 const Admin = (props) => {
   const mainContent = React.useRef(null);
@@ -55,8 +57,13 @@ const Admin = (props) => {
         <Container fluid>
           <AdminFooter />
         </Container>
+         {/* simple chat bot component */}
+         {/* {isAuthenticated && <FloatingChatBot userContext={{ role: 'business_owner', businessName: 'Your Company' }} />} */}
+
+         {/* rag chat-bot */}
+        <ChatbotWindow />
         
-        {/* Add the ChatWindow component here */}
+        {/*  messenger */}
         {isAuthenticated && <ChatWindow />}
       </div>
     </>

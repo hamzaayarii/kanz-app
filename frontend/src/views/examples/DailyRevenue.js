@@ -200,6 +200,7 @@ const DailyRevenue = () => {
             
             if (isEditMode) {
                 response = await api.put(`/daily-revenue/${id}`, entry);
+                console.log("Edit response:", response.data);
                 setNotification({
                     show: true,
                     message: 'Daily revenue entry updated successfully',
@@ -207,6 +208,7 @@ const DailyRevenue = () => {
                 });
             } else {
                 response = await api.post('/daily-revenue', entry);
+                console.log("Create response:", response.data);
                 setNotification({
                     show: true,
                     message: 'Daily revenue entry saved successfully',
@@ -228,14 +230,36 @@ const DailyRevenue = () => {
                     autoJournalEntry: true
                 });
             }
+            
+            // Check if an anomaly was detected
+            console.log("Checking for anomaly in response:", response.data);
+            if (response.data.anomalyDetected) {
+                console.log("Anomaly detected!", response.data.anomalyDetails);
+                const anomaly = response.data.anomalyDetails;
+                // Display warning notification with anomaly information
+                setTimeout(() => {
+                    const message = anomaly.isExtreme 
+                        ? `⚠️ EXTREME VALUE DETECTED: This revenue amount (${anomaly.value.toFixed(2)} TND) is more than 5x your historical average of ${anomaly.mean.toFixed(2)} TND! Please verify this is correct.`
+                        : `⚠️ ANOMALY DETECTED: This revenue amount (${anomaly.value.toFixed(2)} TND) is unusual compared to your historical data. Average is ${anomaly.mean.toFixed(2)} TND with standard deviation of ${anomaly.stdDev.toFixed(2)} TND. Please verify if this is correct.`;
+                    
+                    setNotification({
+                        show: true,
+                        message: message,
+                        type: anomaly.isExtreme ? 'danger' : 'warning'
+                    });
+                }, 1500); // Show after the success message
+            } else {
+                console.log("No anomaly detected in response");
+            }
 
             // Navigate back to list after successful update
-            if (isEditMode) {
+            if (isEditMode && !response.data.anomalyDetected) {
                 setTimeout(() => {
                     navigate('/admin/daily-revenue-list');
                 }, 1500);
             }
         } catch (error) {
+            console.error("Error submitting daily revenue:", error);
             setNotification({
                 show: true,
                 message: error.response?.data?.message || 'Error saving daily revenue',

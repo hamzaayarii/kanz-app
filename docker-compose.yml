@@ -1,27 +1,18 @@
-version: '3.8'
+version: "3.4"
 services:
-  db:
-    image: mongo:4.2
-    container_name: db
-    restart: always
-
+  weaviate:
+    image: semitechnologies/weaviate:1.23.0
+    ports:
+      - "8080:8080"
+    restart: on-failure:0
     environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: example
-    ports:
-      - 27017:27017
+      QUERY_DEFAULTS_LIMIT: 25
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: "true"
+      PERSISTENCE_DATA_PATH: "/var/lib/weaviate"
+      DEFAULT_VECTORIZER_MODULE: "none"
+      CLUSTER_HOSTNAME: "node1"
     volumes:
-      - ./data/dump:/dump
+      - weaviate_data:/var/lib/weaviate
 
-  app:
-    build:
-      context: ./backend
-    image: 192.168.33.10:8083/repository/docker-repo/nodemongoapp:6.0
-    restart: always
-    container_name: back
-    ports:
-      - '5000:5000'
-    depends_on:
-      - db
 volumes:
-  mongo-data:
+  weaviate_data:

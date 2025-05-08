@@ -201,7 +201,7 @@ const Profile = () => {
 
   return (
       <>
-        <AdminNavbar profilePic={user.avatar} userName={user.fullName} />
+      
         <UserHeader userName={user.fullName} profilePicture={user.avatar} />
         <Container className="mt--7" fluid>
           <Row>

@@ -5,12 +5,16 @@ import { useNavigate } from 'react-router-dom';
 
 const Expenses = () => {
     const [expenses, setExpenses] = useState([]);
+    const [dailyExpenses, setDailyExpenses] = useState([]);
+    const [taxReportExpenses , setTaxReportExpenses] = useState([]);
     const [businesses, setBusinesses] = useState([]);
     const [categories, setCategories] = useState([]);
     const [selectedBusiness, setSelectedBusiness] = useState("");
     const [showForm, setShowForm] = useState(false);
     const [editingExpense, setEditingExpense] = useState(null);
     const [formErrors, setFormErrors] = useState({});
+    const [totalExpenses, setTotalExpenses] = useState([]);
+
     const navigate = useNavigate();
 
     const [formData, setFormData] = useState({
@@ -24,14 +28,39 @@ const Expenses = () => {
         description: "",
     });
 
+    const validationRules = {
+        category: { required: true, message: "Category is required" },
+        date: { required: true, message: "Date is required" },
+        amount: { required: true, min: 0.01, message: "Amount must be greater than 0" },
+        tax: { required: true, message: "Tax is required" },
+        vendor: { required: true, message: "Vendor is required" },
+        reference: { required: true, message: "Reference is required" },
+    };
+
+    const validateForm = () => {
+        const errors = {};
+        Object.entries(validationRules).forEach(([field, rule]) => {
+            const value = formData[field];
+            if (rule.required && (value === "" || value === undefined || value === null)) {
+                errors[field] = rule.message;
+            } else if (rule.min !== undefined && parseFloat(value) < rule.min) {
+                errors[field] = rule.message;
+            }
+        });
+        return errors;
+    };
+
     useEffect(() => {
         fetchBusinesses();
         fetchCategories();
+        fetchTaxReportExpenses();
     }, []);
 
     useEffect(() => {
         if (selectedBusiness) {
             fetchExpenses(selectedBusiness);
+            fetchDailyExpenses(selectedBusiness);
+            fetchTotalExpenses(selectedBusiness);
         }
     }, [selectedBusiness]);
 
@@ -70,6 +99,22 @@ const Expenses = () => {
         }
     };
 
+    const fetchTaxReportExpenses = async () => {
+        try {
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                navigate('/auth/login');
+                return;
+            }
+            const response = await axios.get("http://localhost:5000/api/expenses/taxreport-expenses", {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            setTaxReportExpenses(response.data);
+        } catch (error) {
+            console.error("Error fetching tax report expenses", error);
+        }
+    };
+
     const fetchExpenses = async (businessId) => {
         try {
             const token = localStorage.getItem('authToken');
@@ -86,24 +131,84 @@ const Expenses = () => {
         }
     };
 
-    const validateForm = () => {
-        const errors = {};
-        if (!formData.category) errors.category = "Category is required";
-        if (!formData.date) errors.date = "Date is required";
-        if (!formData.amount || Number(formData.amount) <= 0) errors.amount = "Amount must be greater than 0";
-        if (!formData.tax && formData.tax !== 0) errors.tax = "Tax is required";
-        if (!formData.vendor) errors.vendor = "Vendor is required";
-        if (!formData.reference) errors.reference = "Reference is required";
-        return errors;
+    const fetchDailyExpenses = async (businessId) => {
+        try {
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                navigate('/auth/login');
+                return;
+            }
+            const response = await axios.get(`http://localhost:5000/api/expenses/daily-expenses?business=${businessId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            setDailyExpenses(response.data);
+        } catch (error) {
+            console.error("Error fetching other expenses", error);
+        }
+    };
+
+    const fetchTotalExpenses = async (businessId) => {
+        try {
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                navigate('/auth/login');
+                return;
+            }
+            const response = await axios.get(`http://localhost:5000/api/expenses/total-expenses?business=${businessId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            setTotalExpenses(response.data);
+        } catch (error) {
+            console.error("Error fetching other expenses", error);
+        }
+    };
+
+    const generateExpenseReport = async (businessId) => {
+        try {
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                navigate('/auth/login');
+                return;
+            }
+            const res = await axios.get(`http://localhost:5000/api/expenses/generate-expense-report?businessId=${businessId}`, {
+                headers: { 'Authorization': `Bearer ${token}` },
+                responseType: 'blob'
+            });
+            const blob = new Blob([res.data], { type: "application/pdf" });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `expense-report-${businessId}.pdf`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error("Error fetching other expenses", error);
+        }
     };
 
     const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        setFormData(prevFormData => ({
+            ...prevFormData,
+            [name]: value
+        }));
+
+        const rule = validationRules[name];
+        if (rule) {
+            setFormErrors(prevErrors => {
+                const updatedErrors = { ...prevErrors };
+                if (rule.required && (value === "" || value === undefined || value === null)) {
+                    updatedErrors[name] = rule.message;
+                } else if (rule.min !== undefined && parseFloat(value) < rule.min) {
+                    updatedErrors[name] = rule.message;
+                } else {
+                    delete updatedErrors[name];
+                }
+                return updatedErrors;
+            });
+        }
     };
 
-   
-
-    // Handle form submission (Create or Update)
     const handleSubmit = async (e) => {
         e.preventDefault();
         const errors = validateForm();
@@ -129,6 +234,8 @@ const Expenses = () => {
         const formattedDate = new Date(expense.date).toISOString().split('T')[0];
         setFormData({ ...expense, date: formattedDate });
         setEditingExpense(expense);
+        const initialErrors = validateForm();
+        setFormErrors(initialErrors);
         setShowForm(true);
     };
 
@@ -163,7 +270,8 @@ const Expenses = () => {
 
                     <FormGroup>
                         <Label>Select Business</Label>
-                        <Input type="select" value={selectedBusiness} onChange={(e) => setSelectedBusiness(e.target.value)}>
+                        <Input type="select" value={selectedBusiness}
+                               onChange={(e) => setSelectedBusiness(e.target.value)}>
                             {businesses.map((biz) => (
                                 <option key={biz._id} value={biz._id}>{biz.name}</option>
                             ))}
@@ -176,60 +284,55 @@ const Expenses = () => {
 
                     {showForm && (
                         <Form onSubmit={handleSubmit} className="mt-3">
-                            <FormGroup>
-                                <Label>Category</Label>
-                                <Input
-                                    type="select"
-                                    name="category"
-                                    value={formData.category}
-                                    onChange={handleChange}
-                                    invalid={!!formErrors.category}
-                                    required
-                                >
-                                    <option value="">Select a category</option>
-                                    {categories.map((category) => (
-                                        <option key={category._id} value={category._id}>{category.name}</option>
-                                    ))}
-                                </Input>
-                                {formErrors.category && <div className="text-danger">{formErrors.category}</div>}
-                            </FormGroup>
-                            <FormGroup>
-                                <Label>Date</Label>
-                                <Input type="date" name="date" value={formData.date} onChange={handleChange} invalid={!!formErrors.date} required />
-                                {formErrors.date && <div className="text-danger">{formErrors.date}</div>}
-                            </FormGroup>
-                            <FormGroup>
-                                <Label>Amount</Label>
-                                <Input type="number" name="amount" value={formData.amount} onChange={handleChange} invalid={!!formErrors.amount} required />
-                                {formErrors.amount && <div className="text-danger">{formErrors.amount}</div>}
-                            </FormGroup>
-                            <FormGroup>
-                                <Label>Tax</Label>
-                                <Input type="number" name="tax" value={formData.tax} onChange={handleChange} invalid={!!formErrors.tax} required />
-                                {formErrors.tax && <div className="text-danger">{formErrors.tax}</div>}
-                            </FormGroup>
-                            <FormGroup>
-                                <Label>Vendor</Label>
-                                <Input type="text" name="vendor" value={formData.vendor} onChange={handleChange} invalid={!!formErrors.vendor} required />
-                                {formErrors.vendor && <div className="text-danger">{formErrors.vendor}</div>}
-                            </FormGroup>
-                            <FormGroup>
-                                <Label>Reference</Label>
-                                <Input type="text" name="reference" value={formData.reference} onChange={handleChange} invalid={!!formErrors.reference} required />
-                                {formErrors.reference && <div className="text-danger">{formErrors.reference}</div>}
-                            </FormGroup>
-                            <FormGroup>
-                                <Label>Description</Label>
-                                <Input type="text" name="description" value={formData.description} onChange={handleChange} />
-                            </FormGroup>
-                            <Button type="submit" color="success">{editingExpense ? "Update Expense" : "Submit"}</Button>
-                            {editingExpense && <Button color="secondary" onClick={resetForm} className="ml-2">Cancel</Button>}
+                            {[
+                                {name: "category", label: "Category", type: "select"},
+                                {name: "date", label: "Date", type: "date"},
+                                {name: "amount", label: "Amount", type: "number"},
+                                {name: "tax", label: "Tax", type: "number"},
+                                {name: "vendor", label: "Vendor", type: "text"},
+                                {name: "reference", label: "Reference", type: "text"},
+                                {name: "description", label: "Description", type: "text", optional: true}
+                            ].map(({name, label, type, optional}) => (
+                                <FormGroup key={name}>
+                                    <Label>{label}</Label>
+                                    {type === "select" ? (
+                                        <Input
+                                            type="select"
+                                            name={name}
+                                            value={formData[name]}
+                                            onChange={handleChange}
+                                            invalid={!!formErrors[name]}
+                                            required={!optional}
+                                        >
+                                            <option value="">Select a category</option>
+                                            {categories.map((category) => (
+                                                <option key={category._id} value={category._id}>{category.name}</option>
+                                            ))}
+                                        </Input>
+                                    ) : (
+                                        <Input
+                                            type={type}
+                                            name={name}
+                                            value={formData[name]}
+                                            onChange={handleChange}
+                                            invalid={!!formErrors[name]}
+                                            required={!optional}
+                                        />
+                                    )}
+                                    {formErrors[name] && <div className="text-danger">{formErrors[name]}</div>}
+                                </FormGroup>
+                            ))}
+
+                            <Button type="submit"
+                                    color="success">{editingExpense ? "Update Expense" : "Submit"}</Button>
+                            {editingExpense &&
+                                <Button color="secondary" onClick={resetForm} className="ml-2">Cancel</Button>}
                         </Form>
                     )}
 
-                    <hr />
+                    <hr/>
 
-                    <h4>Expenses List</h4>
+                    <h4>Normal Expenses</h4>
                     <Table bordered responsive>
                         <thead>
                         <tr>
@@ -255,8 +358,10 @@ const Expenses = () => {
                                     <td>{expense.reference}</td>
                                     <td>{expense.description}</td>
                                     <td>
-                                        <Button color="warning" size="sm" onClick={() => handleEdit(expense)}>Edit</Button>
-                                        <Button color="danger" size="sm" className="ml-2" onClick={() => handleDelete(expense._id)}>Delete</Button>
+                                        <Button color="warning" size="sm"
+                                                onClick={() => handleEdit(expense)}>Edit</Button>
+                                        <Button color="danger" size="sm" className="ml-2"
+                                                onClick={() => handleDelete(expense._id)}>Delete</Button>
                                     </td>
                                 </tr>
                             ))
@@ -267,6 +372,89 @@ const Expenses = () => {
                         )}
                         </tbody>
                     </Table>
+
+                    <hr/>
+
+                    <h4>Daily Expenses</h4>
+                    <Table bordered responsive>
+                        <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Amount</th>
+                            <th>Notes</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {dailyExpenses.length > 0 ? (
+                            dailyExpenses.map((expense) => (
+                                <tr key={expense._id}>
+                                    <td>{new Date(expense.date).toLocaleDateString()}</td>
+                                    <td>${expense.summary.totalExpenses}</td>
+                                    <td>{expense.notes}</td>
+                                </tr>
+                            ))
+                        ) : (
+                            <tr>
+                                <td colSpan="3" className="text-center">No other expenses found</td>
+                            </tr>
+                        )}
+                        </tbody>
+                    </Table>
+
+                    <hr/>
+
+                    <h4>Tax Report Expenses</h4>
+                    <Table bordered responsive>
+                        <thead>
+                        <tr>
+                            <th>Year</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {taxReportExpenses.length > 0 ? (
+                            taxReportExpenses.map((expense) => (
+                                <tr key={expense._id}>
+                                    <td>{expense.year}</td>
+                                    <td>${expense.expenses}</td>
+                                    <td>{expense.status}</td>
+                                </tr>
+                            ))
+                        ) : (
+                            <tr>
+                                <td colSpan="3" className="text-center">No other expenses found</td>
+                            </tr>
+                        )}
+                        </tbody>
+                    </Table>
+                    <hr/>
+                    <h4>Summary</h4>
+                    <Table bordered>
+                        <tbody>
+                        <tr>
+                            <td><strong>Normal Expenses Total</strong></td>
+                            <td>${totalExpenses.normaltotalExpenses}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Daily Expenses Total</strong></td>
+                            <td>${totalExpenses.dailytotalExpenses}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Tax Report Expenses Total</strong></td>
+                            <td>${totalExpenses.taxtotalExpenses}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>All Expenses Total</strong></td>
+                            <td>
+                                ${totalExpenses.totalExpenses}
+                            </td>
+                        </tr>
+                        </tbody>
+                    </Table>
+                    <hr/>
+                    <Button color="success" size="m"
+                            onClick={() => generateExpenseReport(selectedBusiness)}>Generate Expense Report</Button>
                 </Card>
             </Row>
         </Container>
@@ -274,6 +462,3 @@ const Expenses = () => {
 };
 
 export default Expenses;
-
-
-

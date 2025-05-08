@@ -11,6 +11,8 @@ import AuthLayout from "layouts/Auth.js";
 import StandaloneLayout from "./views/buisness/StandaloneLayout";
 import BusinessRegistrationGuard from "./views/buisness/BusinessRegistrationGuard";
 
+
+
 const root = ReactDOM.createRoot(document.getElementById("root"));
 
 root.render(

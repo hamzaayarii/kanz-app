@@ -1,0 +1,124 @@
+Kanz – Application de gestion comptable pour les PME en Tunisie
+👥 À qui s’adresse Kanz ?
+Kanz est une application web de comptabilité destinée aux :
+
+Petites et Moyennes Entreprises (PME)
+
+Artisans et indépendants
+
+Cabinets comptables qui accompagnent des clients tunisiens
+
+L’application est pensée pour les non-experts, avec une interface simple et intuitive. Elle permet de gagner du temps, de réduire les erreurs fiscales, et de faciliter la collaboration entre chefs d’entreprises et comptables.
+
+🎯 Objectif de Kanz
+Automatiser la gestion comptable des PME
+
+Suivre les revenus, dépenses, factures et soldes
+
+Générer des états financiers fiables
+
+Aider à respecter les obligations fiscales tunisiennes
+
+Fournir un chatbot intelligent pour répondre aux questions comptables
+
+⚙️ Fonctionnalités principales
+1. 🔐 Authentification et rôles
+Création de compte (propriétaire d’entreprise, comptable)
+
+Connexion sécurisée
+
+Attribution de rôles : un propriétaire peut inviter un comptable
+
+2. 🏢 Gestion d’entreprise
+Un utilisateur peut enregistrer une ou plusieurs entreprises
+
+Informations : nom, activité, matricule fiscal, etc.
+
+3. 📦 Gestion des factures
+Création de factures client et fournisseur
+
+Suivi des paiements
+
+Exportation en PDF
+
+4. 💵 Suivi des revenus et dépenses
+Ajout de revenus manuels ou automatiques via ventes
+
+Saisie de dépenses liées à l’entreprise
+
+Visualisation par période
+
+5. 📊 Tableau de bord (Dashboard)
+Vue d’ensemble : revenus, dépenses, bénéfice net
+
+Graphiques mensuels et annuels
+
+Activité récente
+
+6. 📄 États financiers
+Génération de :
+
+Bilan
+
+Compte de résultat
+
+Journal comptable
+
+Export en PDF ou Excel
+
+7. 🤖 Chatbot intelligent (RAG avec IA)
+Les utilisateurs peuvent poser des questions comme :
+
+“Quels sont mes revenus pour 2024 ?”
+
+“Quels documents dois-je fournir pour ma déclaration ?”
+
+“Quelle est la TVA applicable ?”
+
+Le chatbot analyse les documents téléversés par l’entreprise (rapports, obligations, etc.)
+
+Basé sur Cohere + Weaviate, avec une recherche vectorielle
+
+🚀 Comment utiliser Kanz (guide simplifié)
+Étape 1 : Créer un compte
+Choisir un rôle : propriétaire ou comptable
+
+Se connecter à la plateforme
+
+Étape 2 : Ajouter son entreprise
+Fournir les informations fiscales et commerciales
+
+Charger les documents importants (PDF, TXT…)
+
+Étape 3 : Ajouter des factures, revenus et dépenses
+Gérer les flux comptables
+
+Lier les éléments à une entreprise
+
+Étape 4 : Accéder au tableau de bord
+Suivre la performance en temps réel
+
+Générer les documents légaux
+
+Étape 5 : Poser des questions au chatbot
+Exemple : “Quand dois-je payer l’IS ?”
+
+Il recherche dans les documents de l’entreprise
+
+Il répond en utilisant les textes pertinents
+
+🧠 Technologies utilisées
+Frontend : React + TailwindCSS
+
+Backend : Express.js + MongoDB
+
+Chatbot RAG : Cohere API (embedding + génération) + Weaviate (vector DB)
+
+Sécurité : JWT, contrôle des rôles
+
+DevOps : Docker, CI/CD, Sonar, Nexus
+
+👨‍💻 Développé par :
+Chill Guys Team
+Projet académique de gestion comptable – ESPRIT
+Application : KANZ

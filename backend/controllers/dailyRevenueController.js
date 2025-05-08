@@ -2,6 +2,7 @@ const DailyRevenue = require('../models/DailyRevenue');
 const JournalEntry = require('../models/JournalEntry');
 const Business = require('../models/Business');
 const User = require('../models/User');
+const anomalyDetectionService = require('../services/anomalyDetectionService');
 
 // Helper function to get businesses for current user
 const getBusinessesForUser = async (user) => {
@@ -14,6 +15,40 @@ const getBusinessesForUser = async (user) => {
     } else {
         // Business owner: just their own businesses
         return await Business.find({ owner: user._id });
+    }
+};
+
+// Helper function to check for anomalies in daily revenue
+const checkForAnomalies = async (dailyRevenue) => {
+    try {
+        console.log('===== ANOMALY DETECTION STARTED =====');
+        console.log('Checking anomalies for daily revenue:', dailyRevenue._id);
+        console.log('Revenue amount being checked:', dailyRevenue.summary.totalRevenue);
+        
+        // Get the last 30 days for context
+        const endDate = new Date(dailyRevenue.date);
+        const startDate = new Date(endDate);
+        startDate.setDate(startDate.getDate() - 30);
+        
+        console.log('Checking period:', startDate, 'to', endDate);
+        
+        // Detect anomalies for this revenue entry
+        const anomalies = await anomalyDetectionService.detectRevenueAnomalies(
+            dailyRevenue.business, 
+            startDate, 
+            endDate
+        );
+        
+        console.log('Anomalies found:', anomalies.length);
+        if (anomalies.length > 0) {
+            console.log('Anomaly details:', JSON.stringify(anomalies[0], null, 2));
+        }
+        console.log('===== ANOMALY DETECTION FINISHED =====');
+        
+        return anomalies;
+    } catch (error) {
+        console.error('Error detecting anomalies:', error);
+        return [];
     }
 };
 
@@ -127,7 +162,22 @@ exports.create = async (req, res) => {
 
         // Save the daily revenue
         const savedDailyRevenue = await dailyRevenue.save();
-        res.status(201).json(savedDailyRevenue);
+        
+        // Check for anomalies
+        const anomalies = await checkForAnomalies(savedDailyRevenue);
+        const hasAnomaly = anomalies.length > 0;
+        
+        // Create response object 
+        const responseObj = {
+            success: true,
+            data: savedDailyRevenue,
+            anomalyDetected: hasAnomaly,
+            anomalyDetails: hasAnomaly ? anomalies[0] : null
+        };
+        
+        console.log('Final response:', JSON.stringify(responseObj, null, 2));
+        
+        res.status(201).json(responseObj);
     } catch (error) {
         console.error('Error creating daily revenue:', error);
         res.status(400).json({
@@ -217,15 +267,28 @@ exports.update = async (req, res) => {
         // Update the entry
         Object.assign(dailyRevenue, req.body);
         await dailyRevenue.save();
+        
         // Update or create journal entry if needed
         if (dailyRevenue.autoJournalEntry) {
             // Similar journal entry creation logic as in create function
             // You might want to update the existing journal entry or create a new one
         }
-        res.json({
+        
+        // Check for anomalies
+        const anomalies = await checkForAnomalies(dailyRevenue);
+        const hasAnomaly = anomalies.length > 0;
+        
+        // Create response object
+        const responseObj = {
             success: true,
-            data: dailyRevenue
-        });
+            data: dailyRevenue,
+            anomalyDetected: hasAnomaly,
+            anomalyDetails: hasAnomaly ? anomalies[0] : null
+        };
+        
+        console.log('Update response:', JSON.stringify(responseObj, null, 2));
+        
+        res.json(responseObj);
     } catch (error) {
         res.status(400).json({
             success: false,

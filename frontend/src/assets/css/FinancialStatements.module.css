@@ -1,0 +1,242 @@
+/* FinancialStatements.module.css */
+
+.container {
+    background: linear-gradient(135deg, #f0f4f8 0%, #d9e2ec 100%);
+    min-height: 100vh;
+    padding: 2rem;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.content {
+    width: 100%;
+    max-width: 64rem;
+}
+
+.pageTitle {
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: #1e40af;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
+    text-align: center;
+    background: linear-gradient(90deg, #1e40af, #3b82f6);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: gradientShift 5s ease infinite;
+}
+
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.errorMessage {
+    border-radius: 0.75rem;
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    box-shadow: 0 4px 6px rgba(220, 38, 38, 0.1);
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+}
+
+.formContainer {
+    background: #ffffff;
+    padding: 2rem;
+    border-radius: 1rem;
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+    border: 2px solid #bfdbfe;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.formContainer:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 25px rgba(0, 0, 0, 0.15);
+}
+
+.sectionHeading {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #1e3a8a;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    border-bottom: 2px solid #93c5fd;
+    padding-bottom: 0.5rem;
+    position: relative;
+}
+
+.sectionHeading::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 50px;
+    height: 4px;
+    background: #3b82f6;
+    border-radius: 2px;
+    animation: slide 2s infinite;
+}
+
+@keyframes slide {
+    0% { width: 0; }
+    50% { width: 50px; }
+    100% { width: 0; }
+}
+
+.inputField {
+    border: 2px solid #d1d5db;
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    font-size: 1rem;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    width: 100%;
+}
+
+.inputField:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    outline: none;
+}
+
+.inputLabel {
+    display: block;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+}
+
+.submitButton {
+    background: linear-gradient(90deg, #2563eb, #3b82f6);
+    color: #ffffff;
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);
+    width: 100%;
+    cursor: pointer;
+    margin-top: 2rem;
+}
+
+.submitButton:hover {
+    background: linear-gradient(90deg, #1d4ed8, #2563eb);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(29, 78, 216, 0.3);
+}
+
+.submitButton:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+}
+
+.tableContainer {
+    background: #ffffff;
+    padding: 1.5rem;
+    border-radius: 1rem;
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+    border: 2px solid #bfdbfe;
+    overflow-x: auto;
+    margin-top: 3rem;
+}
+
+.dataTable {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 0.5rem;
+}
+
+.tableHeader {
+    background: #dbeafe;
+}
+
+.tableHeaderCell {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1e3a8a;
+    padding: 1rem 1.5rem;
+    text-align: left;
+}
+
+.tableCell {
+    padding: 1rem 1.5rem;
+    background: #ffffff;
+    transition: background-color 0.3s ease;
+}
+
+.tableRow:hover .tableCell {
+    background: #f1f5f9;
+}
+
+.actionButton {
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    color: white;
+    font-weight: 600;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.downloadButton {
+    background-color: #16a34a;
+}
+
+.downloadButton:hover {
+    background-color: #166534;
+    transform: translateY(-2px);
+}
+
+.deleteButton {
+    background-color: #dc2626;
+}
+
+.deleteButton:hover {
+    background-color: #991b1b;
+    transform: translateY(-2px);
+}
+
+.actionButtonsContainer {
+    display: flex;
+    gap: 1rem;
+}
+
+.gridContainer {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+    .gridContainer {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .passifGrid {
+        grid-template-columns: 1fr 1fr 1fr;
+    }
+}
+
+.validationError {
+    color: #ef4444;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+.emptyMessage {
+    text-align: center;
+    color: #6b7280;
+    padding: 1.5rem;
+    font-style: italic;
+}
+
+.existingBalancesTitle {
+    font-size: 1.875rem;
+    font-weight: 700;
+    text-align: center;
+    color: #1e3a8a;
+    margin: 3rem 0 1.5rem;
+}

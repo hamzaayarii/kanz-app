@@ -1,222 +1,343 @@
 const express = require('express');
 const PDFDocument = require('pdfkit');
-const fs = require('fs');
+const fs = require('fs'); // Main fs module for createWriteStream
+const fsPromises = require('fs').promises; // Promises API for mkdir, access
 const path = require('path');
-const { authenticate } = require('../middlewares/authMiddleware');
-const TaxReport = require('../models/TaxReport');
-const DailyRevenue = require('../models/DailyRevenue');
-const Expense = require('../models/Expense');
-const Invoice = require('../models/Invoice');
-const Payroll = require('../models/Payroll');
-const FinancialStatement = require('../models/FinancialStatement');
+const Business = require('../models/Business');
+const BalanceSheet = require('../models/financial-Statement');
+const { validationResult } = require('express-validator');
+const { check } = require('express-validator');
 
 const router = express.Router();
 
+// Configure reports directory with absolute path
+const reportsDir = path.join(process.cwd(), 'Uploads/financial-reports');
 
+// Ensure reports directory exists (async)
+const ensureReportsDir = async () => {
+    try {
+        await fsPromises.mkdir(reportsDir, { recursive: true });
+        await fsPromises.access(reportsDir, fs.constants.W_OK);
+        console.log('Reports directory ensured:', reportsDir);
+    } catch (error) {
+        console.error('Failed to create or access reports directory:', {
+            message: error.message,
+            path: reportsDir
+        });
+        throw new Error(`Unable to initialize storage directory: ${error.message}`);
+    }
+};
 
-router.get('/generate-financial-statement', authenticate, async (req, res) => {
-    const userId = req.user._id;
-    const { businessId, from, to } = req.query;
+// Helper to format currency in TND
+const formatCurrency = (value) => `${Number(value).toFixed(3)} TND`;
 
-    if (!businessId || !from || !to) {
-        return res.status(400).json({ message: 'Missing parameters' });
+// Helper to format date
+const formatDate = (date) => new Date(date).toLocaleDateString('fr-FR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+});
+
+// Validation middleware for /create endpoint
+const validateBalanceSheet = [
+    check('businessId').isMongoId().withMessage('Invalid business ID'),
+    check('periodStart').isDate().withMessage('Invalid start date'),
+    check('periodEnd').isDate().withMessage('Invalid end date'),
+    check('fixedAssetsTangible').optional().isFloat({ min: 0 }).withMessage('Tangible assets must be a non-negative number'),
+    check('fixedAssetsIntangible').optional().isFloat({ min: 0 }).withMessage('Intangible assets must be a non-negative number'),
+    check('receivables').optional().isFloat({ min: 0 }).withMessage('Receivables must be a non-negative number'),
+    check('cash').optional().isFloat({ min: 0 }).withMessage('Cash must be a non-negative number'),
+    check('capital').optional().isFloat({ min: 0 }).withMessage('Capital must be a non-negative number'),
+    check('supplierDebts').optional().isFloat({ min: 0 }).withMessage('Supplier debts must be a non-negative number'),
+    check('bankDebts').optional().isFloat({ min: 0 }).withMessage('Bank debts must be a non-negative number'),
+];
+
+// Create Manual Balance Sheet
+router.post('/create', validateBalanceSheet, async (req, res) => {
+    console.log('POST /api/financial-Statement/create called', { body: req.body });
+
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        console.log('Validation errors:', errors.array());
+        return res.status(400).json({ message: 'Validation failed', errors: errors.array() });
     }
 
-    const startDate = new Date(from);
-    const endDate = new Date(to);
+    const {
+        businessId,
+        periodStart,
+        periodEnd,
+        fixedAssetsTangible = 0,
+        fixedAssetsIntangible = 0,
+        receivables = 0,
+        cash = 0,
+        capital = 0,
+        supplierDebts = 0,
+        bankDebts = 0,
+    } = req.body;
+
+    const startDate = new Date(periodStart);
+    const endDate = new Date(periodEnd);
+    if (startDate > endDate) {
+        console.log('Date validation failed:', { startDate, endDate });
+        return res.status(400).json({ message: 'Start date cannot be after end date' });
+    }
 
     try {
-        const [taxReports, revenues, expenses, invoices, payrolls] = await Promise.all([
-            TaxReport.find({ userId/*, createdAt: { $gte: startDate, $lte: endDate }*/ }),
-            DailyRevenue.find({ business: businessId/*, date: { $gte: startDate, $lte: endDate }*/ }),
-            Expense.find({ business:businessId/*, date: { $gte: startDate, $lte: endDate }*/ }),
-            Invoice.find({ userId, businessId/*, date: { $gte: startDate, $lte: endDate } */}),
-            Payroll.find({ businessId/*, createdAt: { $gte: startDate, $lte: endDate }*/ })
-        ]);
+        // Verify business exists
+        console.log('Fetching business:', businessId);
+        const business = await Business.findById(businessId);
+        if (!business) {
+            console.log('Business not found:', businessId);
+            return res.status(404).json({ message: 'Business not found' });
+        }
 
-        const totalRevenue = revenues.reduce((acc, r) => acc + r.summary.totalRevenue, 0);
-        const totalExpenses = expenses.reduce((acc, e) => acc + e.amount, 0);
-        const totalPayroll = payrolls.reduce((acc, p) => acc + p.grossSalary, 0);
-        const totalInvoices = invoices.reduce((acc, inv) => acc + inv.total, 0);
-        const totalTax = taxReports.reduce((acc, r) => acc + r.calculatedTax, 0);
+        // Calculate totals
+        const totalAssets = Number(fixedAssetsTangible) + Number(fixedAssetsIntangible) + Number(receivables) + Number(cash);
+        const totalLiabilities = Number(supplierDebts) + Number(bankDebts);
+        const totalEquity = Number(capital);
+        console.log('Calculated totals:', { totalAssets, totalLiabilities, totalEquity });
 
-        const profit = totalRevenue - (totalExpenses + totalPayroll + totalTax);
+        // Validate NCT compliance
+        const validationErrors = [];
+        const totalCheck = totalAssets - (totalLiabilities + totalEquity);
+        if (Math.abs(totalCheck) > 0.01) {
+            validationErrors.push('Total assets do not match total liabilities and equity');
+        }
+        if (totalAssets < 0) {
+            validationErrors.push('Total assets cannot be negative');
+        }
+        if (validationErrors.length > 0) {
+            console.log('NCT validation errors:', validationErrors);
+        }
 
-        const doc = new PDFDocument({ size: 'A4', margin: 50, bufferPages: true });
-        const reportsDir = path.join(__dirname, '..', 'uploads', 'financial-reports');
-        if (!fs.existsSync(reportsDir)) fs.mkdirSync(reportsDir, { recursive: true });
+        // Ensure reports directory exists
+        console.log('Ensuring reports directory');
+        await ensureReportsDir();
 
-        const fileName = `financial-statement-${Date.now()}.pdf`;
+        // Generate PDF
+        console.log('Initializing PDFDocument');
+        const doc = new PDFDocument({ size: 'A4', margin: 50 });
+        const fileName = `bilan-${businessId}-${Date.now()}.pdf`;
         const filePath = path.join(reportsDir, fileName);
+        console.log('Creating PDF at:', filePath);
         const writeStream = fs.createWriteStream(filePath);
+        console.log('Write stream created for:', filePath);
+
+        // Handle stream errors
+        writeStream.on('error', (error) => {
+            console.error('Write stream error:', {
+                message: error.message,
+                filePath
+            });
+            throw new Error(`Failed to write PDF file: ${error.message}`);
+        });
+
         doc.pipe(writeStream);
 
-        // Replace 'fr-FR' by 'en-GB' or use default 'en-US' if needed
-        const formatDate = (d) => new Date(d).toLocaleDateString('en-GB');
-        const formatCurrency = (n) => `${Number(n).toFixed(2)} TND`;
-
-// Header
-        doc.rect(0, 0, 612, 90).fill('#4facfe');
-        doc.fillColor('white').fontSize(24).font('Helvetica-Bold').text('Complete Financial Report', 50, 30);
-        doc.fontSize(10).font('Helvetica')
-            .text(`Period: ${formatDate(startDate)} to ${formatDate(endDate)}`, 400, 65, { align: 'right' });
-        doc.moveDown(4);
-
-// Summary
-        doc.fillColor('#333').fontSize(14).font('Helvetica-Bold').text('Overall Summary:', 50);
-        doc.moveDown(0.5).fontSize(12).font('Helvetica').fillColor('#000')
-            .text(`Total Revenue (Daily): ${formatCurrency(totalRevenue)}`)
-            .text(`Total Invoices: ${formatCurrency(totalInvoices)}`)
-            .text(`Total Expenses: ${formatCurrency(totalExpenses)}`)
-            .text(`Payroll: ${formatCurrency(totalPayroll)}`)
-            .text(`Taxes: ${formatCurrency(totalTax)}`)
-            .text(`Net Profit: ${formatCurrency(profit)}`);
+        doc.font('Helvetica-Bold').fontSize(16).text('Bilan Comptable', { align: 'center' });
+        doc.fontSize(12)
+            .text(`Société: ${business.name}`, { align: 'center' })
+            .text(`Matricule Fiscal: ${business.taxNumber || 'N/A'}`, { align: 'center' })
+            .text(`Période: ${formatDate(startDate)} - ${formatDate(endDate)}`, { align: 'center' });
         doc.moveDown(2);
 
-// Detailed Sections
-        const addSection = (title, items, formatter) => {
-            doc.addPage();
-            doc.fontSize(14).font('Helvetica-Bold').fillColor('#333').text(title, 50);
-            doc.moveDown(1);
-            items.forEach((item, i) => {
-                doc.fontSize(11).font('Helvetica').fillColor('#000')
-                    .text(`${i + 1}. ${formatter(item)}`, { continued: false });
-            });
-        };
-
-        if (expenses.length)
-            addSection('Expenses', expenses, e => `${formatDate(e.date)} - ${e.category}: ${formatCurrency(e.amount)}`);
-
-        if (invoices.length)
-            addSection('Invoices', invoices, i => `${formatDate(i.date)} - Client: ${i.clientName || 'N/A'}, Total: ${formatCurrency(i.total)}`);
-
-        if (payrolls.length)
-            addSection('Payrolls', payrolls, p => `Period: ${formatDate(p.createdAt)} - Employees Paid: ${p.employees.length}, Total: ${formatCurrency(p.totalAmount)}`);
-
-        if (taxReports.length)
-            addSection('Tax Reports', taxReports, r => `Year ${r.year} - Income: ${formatCurrency(r.income)}, Expenses: ${formatCurrency(r.expenses)}, Tax: ${formatCurrency(r.calculatedTax)}`);
-
+        doc.fontSize(14).text('ACTIF', { underline: true });
+        doc.moveDown(0.5);
+        doc.fontSize(12)
+            .text(`Immobilisations corporelles: ${formatCurrency(fixedAssetsTangible)}`)
+            .text(`Immobilisations incorporelles: ${formatCurrency(fixedAssetsIntangible)}`)
+            .text(`Créances clients: ${formatCurrency(receivables)}`)
+            .text(`Trésorerie: ${formatCurrency(cash)}`)
+            .font('Helvetica-Bold')
+            .text(`Total Actif: ${formatCurrency(totalAssets)}`);
         doc.moveDown(2);
-        doc.fontSize(10).fillColor('#888').text('Document generated automatically.', 50, 750, { align: 'center' });
 
+        doc.fontSize(14).text('PASSIF', { underline: true });
+        doc.moveDown(0.5);
+        doc.fontSize(12)
+            .text(`Capital: ${formatCurrency(capital)}`)
+            .text(`Dettes fournisseurs: ${formatCurrency(supplierDebts)}`)
+            .text(`Dettes bancaires: ${formatCurrency(bankDebts)}`)
+            .font('Helvetica-Bold')
+            .text(`Total Passif et Capitaux Propres: ${formatCurrency(totalLiabilities + totalEquity)}`);
+        doc.moveDown(2);
+
+        if (validationErrors.length > 0) {
+            doc.fontSize(12).fillColor('red').text('Validation Errors:', { underline: true });
+            validationErrors.forEach((err) => doc.text(`- ${err}`));
+            doc.fillColor('black');
+        }
+
+        doc.fontSize(10)
+            .text('Conforme aux normes comptables tunisiennes (NCT)', { align: 'center' })
+            .text(`Généré le: ${formatDate(new Date())}`, { align: 'center' });
+
+        console.log('Finalainment de la PDF');
         doc.end();
 
-        writeStream.on('finish', async () => {
-            try {
-                const statement = await FinancialStatement.create({
-                    userId,
-                    businessId,
-                    periodStart: startDate,
-                    periodEnd: endDate,
-                    type: 'complete_financial_statement',
-                    fileName,
-                    data: {
-                        totalRevenue,
-                        totalExpenses,
-                        totalInvoices,
-                        totalPayroll,
-                        totalTax,
-                        profit,
-                        counts: {
-                            expenses: expenses.length,
-                            invoices: invoices.length,
-                            payrolls: payrolls.length,
-                            taxReports: taxReports.length
-                        }
-                    }
-                });
-
-                res.status(200).json({
-                    message: 'Rapport généré et sauvegardé avec succès.',
-                    statementId: statement._id,
-                    downloadUrl: `/uploads/financial-reports/${fileName}`
-                });
-            } catch (err) {
-                console.error('Erreur DB:', err);
-                res.status(500).json({ message: 'Erreur lors de la sauvegarde du rapport.', error: err.message });
-            }
+        // Wait for PDF to finish writing
+        await new Promise((resolve, reject) => {
+            writeStream.on('finish', () => {
+                console.log('PDF written successfully:', filePath);
+                resolve();
+            });
+            writeStream.on('error', reject);
         });
 
-        writeStream.on('error', (err) => {
-            console.error('Erreur PDF:', err);
-            res.status(500).json({ message: 'Erreur lors de la génération du PDF', error: err.message });
+        // Save balance sheet to database
+        console.log('Saving balance sheet to database');
+        const balanceSheet = new BalanceSheet({
+            businessId,
+            periodStart: startDate,
+            periodEnd: endDate,
+            assets: {
+                fixedAssets: {
+                    tangible: Number(fixedAssetsTangible),
+                    intangible: Number(fixedAssetsIntangible),
+                },
+                receivables: Number(receivables),
+                cash: Number(cash),
+                totalAssets,
+            },
+            liabilities: {
+                capital: Number(capital),
+                supplierDebts: Number(supplierDebts),
+                bankDebts: Number(bankDebts),
+                totalLiabilities,
+            },
+            totalEquity,
+            fileName,
+            validationErrors,
         });
 
+        await balanceSheet.save();
+        console.log('Balance sheet saved:', balanceSheet._id);
+
+        // Use environment variable for base URL
+        const baseUrl = process.env.SERVER_BASE_URL || 'http://localhost:5000';
+        const downloadUrl = `${baseUrl}/Uploads/financial-reports/${fileName}`;
+        console.log('Generated download URL:', downloadUrl);
+
+        res.status(201).json({
+            message: 'Balance sheet created successfully',
+            balanceSheetId: balanceSheet._id,
+            downloadUrl,
+            validationErrors,
+        });
     } catch (error) {
-        console.error('Erreur lors de la récupération des données:', error);
-        res.status(500).json({ message: 'Erreur serveur', error: error.message });
+        console.error('CreateBalanceSheet Error:', {
+            message: error.message,
+            stack: error.stack,
+            requestBody: req.body
+        });
+        res.status(500).json({
+            message: 'Server error',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
     }
 });
 
+// List Balance Sheets
+router.get('/list', async (req, res) => {
+    const { businessId } = req.query;
+    console.log('GET /api/financial-Statement/list called', { businessId });
 
-router.get('/list', authenticate, async (req, res) => {
-    try {
-        const { businessId } = req.query;
-
-        if (!businessId) {
-            return res.status(400).json({ message: 'Missing businessId.' });
-        }
-
-
-        const statements = await FinancialStatement.find({ businessId }).sort({ createdAt: -1 });
-
-        return res.status(200).json(statements);
-    } catch (err) {
-        console.error("Error fetching financial statement list:", err);
-        return res.status(500).json({ message: "Failed to fetch statements." });
+    if (!businessId) {
+        console.log('Missing businessId');
+        return res.status(400).json({ message: 'Business ID is required' });
     }
-});
 
-router.get('/download/:reportId', async (req, res) => {
     try {
-        const reportId = req.params.reportId;
-
-        const report = await FinancialStatement.findById(reportId);
-        if (!report) return res.status(404).json({ message: "Report not found." });
-
-        const filePath = path.resolve(__dirname, '..', 'uploads', 'financial-reports', report.fileName);
-
-        if (!fs.existsSync(filePath)) {
-            return res.status(404).json({ message: "File not found on server." });
+        const business = await Business.findById(businessId);
+        if (!business) {
+            console.log('Business not found:', businessId);
+            return res.status(404).json({ message: 'Business not found' });
         }
 
-        res.download(filePath, `financial-statement-${reportId}.pdf`);
-    } catch (err) {
-        console.error('Error in download:', err);
-        res.status(500).json({ message: "Internal server error." });
-    }
-});
+        const balanceSheets = await BalanceSheet.find({ businessId })
+            .select('periodStart periodEnd assets.totalAssets fileName validationErrors createdAt')
+            .sort({ createdAt: -1 });
+        console.log('Fetched balance sheets:', balanceSheets.length);
 
-router.delete('/:id', authenticate, async (req, res) => {
-    try {
-        const { id } = req.params;
-        const userId = req.user._id || req.user.id;
-
-        const report = await FinancialStatement.findOneAndDelete({ _id: id, userId });
-        if (!report) {
-            return res.status(404).json({ message: 'Financial report not found or not authorized.' });
-        }
-
-        // Ensure fileUrl exists before attempting to delete the file
-        if (report.fileUrl) {
-            const filePath = path.join(__dirname, '../uploads', report.fileUrl.split('/uploads/')[1]);
-            if (fs.existsSync(filePath)) {
-                fs.unlinkSync(filePath);
-            } else {
-                console.log("File not found:", filePath);  // Log if file doesn't exist
-            }
-        } else {
-            console.log("No file URL associated with this report.");
-        }
-
-        return res.status(200).json({ message: 'Report deleted successfully.' });
+        res.status(200).json(balanceSheets);
     } catch (error) {
-        console.error('Delete report error:', error);
-        return res.status(500).json({ message: 'Error deleting report.' });
+        console.error('ListBalanceSheets Error:', {
+            message: error.message,
+            stack: error.stack
+        });
+        res.status(500).json({
+            message: 'Server error',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
     }
 });
 
+// Download Balance Sheet
+router.get('/download/:balanceSheetId', async (req, res) => {
+    const { balanceSheetId } = req.params;
+    console.log('GET /api/financial-Statement/download called', { balanceSheetId });
+
+    try {
+        const balanceSheet = await BalanceSheet.findById(balanceSheetId);
+        if (!balanceSheet) {
+            console.log('Balance sheet not found:', balanceSheetId);
+            return res.status(404).json({ message: 'Balance sheet not found' });
+        }
+
+        const filePath = path.join(reportsDir, balanceSheet.fileName);
+        const fileExists = await fsPromises.access(filePath).then(() => true).catch(() => false);
+        if (!fileExists) {
+            console.log('PDF file not found:', filePath);
+            return res.status(404).json({ message: 'PDF file not found' });
+        }
+
+        console.log('Downloading file:', filePath);
+        res.download(filePath, `bilan-${balanceSheetId}.pdf`);
+    } catch (error) {
+        console.error('DownloadBalanceSheet Error:', {
+            message: error.message,
+            stack: error.stack
+        });
+        res.status(500).json({
+            message: 'Server error',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+    }
+});
+
+// Delete Balance Sheet
+router.delete('/:id', async (req, res) => {
+    const { id } = req.params;
+    console.log('DELETE /api/financial-Statement called', { id });
+
+    try {
+        const balanceSheet = await BalanceSheet.findById(id);
+        if (!balanceSheet) {
+            console.log('Balance sheet not found:', id);
+            return res.status(404).json({ message: 'Balance sheet not found' });
+        }
+
+        const filePath = path.join(reportsDir, balanceSheet.fileName);
+        const fileExists = await fsPromises.access(filePath).then(() => true).catch(() => false);
+        if (fileExists) {
+            await fsPromises.unlink(filePath);
+            console.log('Deleted file:', filePath);
+        }
+
+        await BalanceSheet.deleteOne({ _id: id });
+        console.log('Balance sheet deleted:', id);
+
+        res.status(200).json({ message: 'Balance sheet deleted successfully' });
+    } catch (error) {
+        console.error('DeleteBalanceSheet Error:', {
+            message: error.message,
+            stack: error.stack
+        });
+        res.status(500).json({
+            message: 'Server error',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+    }
+});
 
 module.exports = router;
-
-

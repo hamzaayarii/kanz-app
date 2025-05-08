@@ -1,14 +1,14 @@
-/* Conteneur principal avec un dégradé vibrant */
 .container {
     padding: 40px;
     max-width: 1400px;
     margin: 0 auto;
-    background: linear-gradient(135deg, #1e3a8a 0%, #6b21a8 50%, #db2777 100%);
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
     min-height: 100vh;
     border-radius: 20px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-    color: #ffffff; /* Texte blanc pour contraste */
+    color: #ffffff;
 }
+
 
 /* Titre principal */
 .title {
@@ -115,7 +115,7 @@
     padding: 12px 25px;
     border-radius: 25px;
     font-weight: 600;
-    background: linear-gradient(45deg, #db2777, #6b21a8); /* Rose et violet */
+    background: linear-gradient(45deg, #4facfe, #4facfe); /* Rose et violet */
     color: #fff;
     border: none;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -317,47 +317,47 @@
     color: #e67e22;
 
 
-        /* Styles responsives */
+    /* Styles responsives */
     @media (max-width: 768px) {
-    .container {
-        padding: 20px;
-    }
+        .container {
+            padding: 20px;
+        }
 
-    .form {
-        grid-template-columns: 1fr;
-    }
+        .form {
+            grid-template-columns: 1fr;
+        }
 
-    .title {
-        font-size: 2.2rem;
-    }
+        .title {
+            font-size: 2.2rem;
+        }
 
-    .subtitle {
-        font-size: 1.6rem;
-    }
+        .subtitle {
+            font-size: 1.6rem;
+        }
 
-    .listHeader {
-        flex-direction: column;
-        gap: 20px;
-        align-items: flex-start;
-    }
+        .listHeader {
+            flex-direction: column;
+            gap: 20px;
+            align-items: flex-start;
+        }
 
-    .searchContainer {
-        max-width: 100%;
-    }
+        .searchContainer {
+            max-width: 100%;
+        }
 
-    .employeeTable th, .employeeTable td {
-        padding: 12px 15px;
-    }
+        .employeeTable th, .employeeTable td {
+            padding: 12px 15px;
+        }
 
-    .actionButtons button {
-        margin-right: 5px;
-    }
+        .actionButtons button {
+            margin-right: 5px;
+        }
 
-    .pagination {
-        flex-direction: column;
-        gap: 15px;
+        .pagination {
+            flex-direction: column;
+            gap: 15px;
+        }
     }
-}
 
     @media (max-width: 480px) {
         .title {

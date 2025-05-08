@@ -31,6 +31,21 @@ import EmailVerification from './views/examples/EmailVerification.js';
 import AccountantBusinessOwners from './views/examples/AccountantBusinessOwners.js';
 import OwnerFinancialReports from "./views/examples/OwnerFinancialReports.js";
 import BusinessUpdatePage from './views/buisness/BusinessUpdatePage.js';
+import AnomalyDetection from './views/examples/AnomalyDetection.js';
+import PredictCashFlow from "./views/examples/PredictCashFlow.js";
+import ManualTreasuryDashboard from "./views/examples/ManualTreasuryDashboard.js";
+import IncomeStatement from './views/examples/IncomeStatement';
+import Notifications from './views/examples/Notificaion.js';
+import FinancialCalendarPage from './views/calendar/FinancialCalendarPage.js';
+import { CalendarProvider } from './context/CalendarContext.js';
+import  Dashboard from './views/examples/Dashboard.jsx';
+import AllBusinessesDashboard from './views/examples/AllBusinessesDashboard.js';
+import SimpleDashboard from './views/examples/SimpleDashboard.js';
+import InlineStyledDashboard from './views/examples/InlineStyledDashboard.js';
+
+
+
+
 
 // Grouped and enhanced routes for better UX
 const routes = [
@@ -56,6 +71,8 @@ const routes = [
    // showInSidebar: () => true, 
     showInSidebar: isUserAccountant,
   },
+
+
   {
     path: '/daily-revenue',
     name: 'Daily Money Flow',
@@ -66,6 +83,51 @@ const routes = [
     category: 'Overview',
     showInSidebar: () => true,
   },
+  {
+    path: '/financial-calendar',
+    name: 'financial-calendar',
+    icon: 'ni ni-money-coins text-success',
+    description: 'Track your daily revenue flow',
+    component: (
+      <AuthRoute>
+        <CalendarProvider>
+          <FinancialCalendarPage />
+        </CalendarProvider>
+      </AuthRoute>
+    ),
+    layout: '/admin',
+    category: 'Overview',
+    showInSidebar: () => true,
+  },
+  {
+    path: '/dashboard',
+    name: 'dashboard.all',
+    icon: 'ni ni-chart-pie-35 text-primary',
+    description: 'Vue globale de toutes vos entreprises',
+    component: (
+      <AuthRoute>
+        <AllBusinessesDashboard />
+      </AuthRoute>
+    ),
+    layout: '/admin',
+    category: 'Overview',
+    showInSidebar: () => true,
+  },
+  {
+    path: '/dashboard/:businessId',
+    name: 'dashboard.business',
+    icon: 'ni ni-chart-bar-32 text-primary',
+    description: 'Get a high-level financial overview',
+    component: (
+      <AuthRoute>
+        <InlineStyledDashboard />
+      </AuthRoute>
+    ),
+    layout: '/admin',
+    category: 'Overview',
+    showInSidebar: () => false, // Hide this from sidebar, will be accessed via business selector
+  },
+  
   {
     path: '/daily-revenue/edit/:id',
     name: 'Edit Daily Money Flow',
@@ -118,6 +180,25 @@ const routes = [
     category: 'Finance',
     showInSidebar: isUserBusinessOwner,
   },
+
+  {
+    path: '/notifications',
+    name: 'notifications',
+    component: <AuthRoute><Notifications /></AuthRoute>,
+    layout: '/admin',
+   
+    showInSidebar: isUserBusinessOwner,
+  },
+  {
+    path: '/predictCashFlow',
+    name: 'Cash FLow Prediction',
+    icon: 'ni ni-credit-card text-red',
+    description: 'Predict Cash Flow',
+    component: <AuthRoute><PredictCashFlow /></AuthRoute>,
+    layout: '/admin',
+    category: 'Finance',
+    showInSidebar: isUserBusinessOwner,
+  },
   {
     path: '/invoices1',
     name: 'Invoice Tracker',
@@ -154,21 +235,32 @@ const routes = [
     name: 'Financial Reports',
     icon: 'ni ni-chart-bar-32 text-purple',
     description: 'Detailed financial insights',
-    component: <AuthRoute><FinancialStatements /></AuthRoute>,
+    component: <BusinessOwnerRoute><FinancialStatements /></BusinessOwnerRoute>,
     layout: '/admin',
     category: 'Finance',
-    showInSidebar: isUserAccountant,
+    showInSidebar: true,
   },
 
   {
-    path: '/financial-statements-list',
-    name: 'Financial Reports',
-    icon: 'ni ni-chart-bar-32 text-purple',
-    description: 'Detailed financial insights',
-    component: <AuthRoute><OwnerFinancialReports /></AuthRoute>,
+    path: '/income-statement',
+    name: 'Income Statement',
+    icon: 'ni ni-money-coins text-green',
+    description: 'Revenue and expense reports',
+    component: <BusinessOwnerRoute><IncomeStatement /></BusinessOwnerRoute>,
     layout: '/admin',
     category: 'Finance',
-    showInSidebar: isUserBusinessOwner,
+    showInSidebar: true,
+  },
+
+  {
+    path: '/treasury',
+    name: 'Treasury',
+    icon: 'ni ni-chart-bar-32 text-purple',
+    description: 'Detailed financial insights',
+    component: <AuthRoute><ManualTreasuryDashboard /></AuthRoute>,
+    layout: '/admin',
+    category: 'Finance',
+    showInSidebar: true,
   },
 
   // Tax Management
@@ -336,6 +428,16 @@ const routes = [
     ),
     layout: '/admin',
     showInSidebar: isUserAdmin,
+  },
+  {
+    path: '/anomaly-detection',
+    name: 'Anomaly Detection',
+    icon: 'ni ni-chart-bar-32 text-red',
+    description: 'Detect financial anomalies',
+    component: <AuthRoute><AnomalyDetection /></AuthRoute>,
+    layout: '/admin',
+    category: 'Finance',
+    showInSidebar: isUserAccountant || isUserBusinessOwner,
   },
 ];
 

@@ -7,7 +7,7 @@ import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 import cookie from 'cookie-parser';
 dotenv.config();
-import axios from 'axios';
+// import axios from 'axios';
 
 
 const SECRET_KEY = process.env.SECRET_KEY || 'your_secret_key';
@@ -372,8 +372,12 @@ export const googleAuth = async (req, res) => {
                 verificationToken,
                 verificationTokenExpiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
             });
-            await user.save();
+
         }
+
+        user.isVerified = true;
+        await user.save();
+
         const token = jwt.sign(
             {
                 _id: user._id,
