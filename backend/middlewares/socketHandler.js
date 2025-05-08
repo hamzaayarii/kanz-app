@@ -93,7 +93,7 @@ function initializeSocket(server) {
         io.to(conversationId).emit('receive_message', savedMessage);
         
         // Create notifications and notify participants who might not be in the conversation room
-        conversation.participants.forEach(async (participant) => {
+        await Promise.all(conversation.participants.map(async (participant) => {
           if (participant._id.toString() !== socket.userId) {
             // Create notification
             const notification = new Notification({
