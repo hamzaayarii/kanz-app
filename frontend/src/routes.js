@@ -35,6 +35,17 @@ import AnomalyDetection from './views/examples/AnomalyDetection.js';
 import PredictCashFlow from "./views/examples/PredictCashFlow.js";
 import ManualTreasuryDashboard from "./views/examples/ManualTreasuryDashboard.js";
 import IncomeStatement from './views/examples/IncomeStatement';
+import Notifications from './views/examples/Notificaion.js';
+import FinancialCalendarPage from './views/calendar/FinancialCalendarPage.js';
+import { CalendarProvider } from './context/CalendarContext.js';
+import  Dashboard from './views/examples/Dashboard.jsx';
+import AllBusinessesDashboard from './views/examples/AllBusinessesDashboard.js';
+import SimpleDashboard from './views/examples/SimpleDashboard.js';
+import InlineStyledDashboard from './views/examples/InlineStyledDashboard.js';
+
+
+
+
 
 // Grouped and enhanced routes for better UX
 const routes = [
@@ -72,6 +83,51 @@ const routes = [
     category: 'Overview',
     showInSidebar: () => true,
   },
+  {
+    path: '/financial-calendar',
+    name: 'financial-calendar',
+    icon: 'ni ni-money-coins text-success',
+    description: 'Track your daily revenue flow',
+    component: (
+      <AuthRoute>
+        <CalendarProvider>
+          <FinancialCalendarPage />
+        </CalendarProvider>
+      </AuthRoute>
+    ),
+    layout: '/admin',
+    category: 'Overview',
+    showInSidebar: () => true,
+  },
+  {
+    path: '/dashboard',
+    name: 'dashboard.all',
+    icon: 'ni ni-chart-pie-35 text-primary',
+    description: 'Vue globale de toutes vos entreprises',
+    component: (
+      <AuthRoute>
+        <AllBusinessesDashboard />
+      </AuthRoute>
+    ),
+    layout: '/admin',
+    category: 'Overview',
+    showInSidebar: () => true,
+  },
+  {
+    path: '/dashboard/:businessId',
+    name: 'dashboard.business',
+    icon: 'ni ni-chart-bar-32 text-primary',
+    description: 'Get a high-level financial overview',
+    component: (
+      <AuthRoute>
+        <InlineStyledDashboard />
+      </AuthRoute>
+    ),
+    layout: '/admin',
+    category: 'Overview',
+    showInSidebar: () => false, // Hide this from sidebar, will be accessed via business selector
+  },
+  
   {
     path: '/daily-revenue/edit/:id',
     name: 'Edit Daily Money Flow',
@@ -122,6 +178,15 @@ const routes = [
     component: <AuthRoute><Expenses /></AuthRoute>,
     layout: '/admin',
     category: 'Finance',
+    showInSidebar: isUserBusinessOwner,
+  },
+
+  {
+    path: '/notifications',
+    name: 'notifications',
+    component: <AuthRoute><Notifications /></AuthRoute>,
+    layout: '/admin',
+   
     showInSidebar: isUserBusinessOwner,
   },
   {

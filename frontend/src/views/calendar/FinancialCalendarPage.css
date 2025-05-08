@@ -1,0 +1,133 @@
+.financial-calendar-container {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  
+  .calendar-navigation {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  
+  .nav-button {
+    padding: 8px 16px;
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+  }
+  
+  .nav-button:hover {
+    background-color: #e0e0e0;
+  }
+  
+  /* Day cell styling */
+  .financial-day-profit {
+    background-color: rgba(76, 175, 80, 0.15) !important;
+  }
+  
+  .financial-day-loss {
+    background-color: rgba(244, 67, 54, 0.15) !important;
+  }
+  
+  .financial-day-neutral {
+    background-color: rgba(255, 193, 7, 0.15) !important;
+  }
+  
+  .financial-day-content {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 4px;
+  }
+  
+  .day-number {
+    font-weight: bold;
+    margin-bottom: 4px;
+  }
+  
+  .revenue-indicator {
+    color: #4caf50;
+    font-size: 0.85em;
+    margin-bottom: 2px;
+  }
+  
+  .expense-indicator {
+    color: #f44336;
+    font-size: 0.85em;
+    margin-bottom: 2px;
+  }
+  
+  .net-amount {
+    font-weight: bold;
+    font-size: 0.9em;
+    margin-top: auto;
+  }
+  
+  .net-amount.positive {
+    color: #2e7d32;
+  }
+  
+  .net-amount.negative {
+    color: #c62828;
+  }
+  
+  /* Calendar legend */
+  .calendar-legend {
+    display: flex;
+    margin-bottom: 15px;
+    gap: 20px;
+  }
+  
+  .legend-item {
+    display: flex;
+    align-items: center;
+  }
+  
+  .legend-color {
+    width: 20px;
+    height: 20px;
+    margin-right: 8px;
+    border-radius: 4px;
+  }
+  
+  .legend-color.profit {
+    background-color: rgba(76, 175, 80, 0.3);
+    border: 1px solid rgba(76, 175, 80, 0.7);
+  }
+  
+  .legend-color.loss {
+    background-color: rgba(244, 67, 54, 0.3);
+    border: 1px solid rgba(244, 67, 54, 0.7);
+  }
+  
+  .legend-color.neutral {
+    background-color: rgba(255, 193, 7, 0.3);
+    border: 1px solid rgba(255, 193, 7, 0.7);
+  }
+  
+  /* Loading and error states */
+  .loading-spinner {
+    text-align: center;
+    padding: 20px;
+    color: #666;
+  }
+  
+  .error-message {
+    background-color: #ffebee;
+    color: #c62828;
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 15px;
+  }
+  
+  /* Custom day cell styles */
+  .custom-day-cell {
+    height: 100%;
+    position: relative;
+  }
+  
+  /* Modal styles will be in the DayDetailsModal component */

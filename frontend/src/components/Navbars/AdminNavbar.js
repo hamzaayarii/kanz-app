@@ -20,6 +20,7 @@ import {
 import { useState, useEffect } from "react";
 import axios from "axios";
 import {jwtDecode} from 'jwt-decode';
+import NotificationDropdown from '../notification/NotificationDropDown';
 
 const AdminNavbar = (props) => {
   const navigate = useNavigate();
@@ -141,11 +142,11 @@ const AdminNavbar = (props) => {
                   style={{ top: "100%", right: 0, zIndex: 1000, minWidth: "200px" }}>
                   {/* If user has multiple businesses, map through them here */}
                   {business && (
-  <div className="px-3 py-2">
-    <div className="font-weight-bold">{business.name}</div>
-    <div className="text-muted small">{business.type}</div>
-  </div>
-)}
+                          <div className="px-3 py-2">
+                            <div className="font-weight-bold">{business.name}</div>
+                            <div className="text-muted small">{business.type}</div>
+                          </div>
+                        )}
                   <div className="border-top mt-2 pt-2 px-3">
                     <Link to="/standalone/business-registration" className="text-primary d-block py-1">
                       <i className="ni ni-fat-add mr-2"></i> Add New Business
@@ -158,8 +159,8 @@ const AdminNavbar = (props) => {
               )}
             </div>
 
-
-
+            {/* Notification Dropdown */}
+            <NotificationDropdown           />
             {/* User Profile Dropdown */}
             <UncontrolledDropdown nav>
               <DropdownToggle className="pr-0" nav>

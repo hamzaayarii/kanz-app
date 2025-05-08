@@ -1,6 +1,7 @@
 import Message from '../models/Message.js';
 import Conversation from '../models/Conversation.js';
 import mongoose from 'mongoose';
+import { createNotificationHelper } from '../controllers/notificationController.js';
 
 export const getConversations = async (req, res) => {
     try {
@@ -105,34 +106,51 @@ export const sendMessage = async (req, res) => {
   try {
     const { conversationId, content } = req.body;
     const sender = req.user._id;
-    
+
     // Create new message
     const newMessage = new Message({
       conversationId,
       sender,
       content
     });
-    
+
     const savedMessage = await newMessage.save();
-    
+
     // Update conversation's lastMessage and updatedAt
     await Conversation.findByIdAndUpdate(conversationId, {
       lastMessage: savedMessage._id,
       updatedAt: Date.now()
     });
-    
-    // Populate the sender info
+
+    // Populate sender and conversation
     await savedMessage.populate('sender', 'name avatar');
-    
-    // Emit via socket.io
+    const conversation = await Conversation.findById(conversationId).populate('participants', 'name');
+
+    // Emit the message
     req.io.to(conversationId).emit('receive_message', savedMessage);
-    
+
+    // Create a notification for the recipient (not the sender)
+    const recipient = conversation.participants.find(p => p._id.toString() !== sender.toString());
+    if (recipient) {
+      await createNotificationHelper(req.io, {
+        recipient: recipient._id,
+        sender: sender,
+        type: 'message',
+        title: 'New Message Received',
+        content: `${req.user.name} sent you a message`,
+        relatedId: savedMessage._id,
+        onModel: 'Message',
+        url: `/chat/${conversationId}`
+      });
+    }
+
     res.status(201).json(savedMessage);
   } catch (error) {
     console.error('Error sending message:', error);
     res.status(500).json({ message: 'Failed to send message' });
   }
 };
+
 export const createConversation = async (req, res) => {
   try {
     const { participantId } = req.body;
