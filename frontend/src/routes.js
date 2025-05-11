@@ -84,6 +84,16 @@ const routes = [
     showInSidebar: () => true,
   },
   {
+    path: '/daily-revenue-list',
+    name: 'Daily Money Flow History',
+    icon: 'ni ni-chart-pie-35 text-info',
+    description: 'View all daily revenue entries',
+    component: <AuthRoute><DailyRevenueList /></AuthRoute>,
+    layout: '/admin',
+    category: 'Overview',
+    showInSidebar: () => true,
+  },
+  {
     path: '/financial-calendar',
     name: 'financial-calendar',
     icon: 'ni ni-money-coins text-success',
@@ -138,17 +148,7 @@ const routes = [
     category: 'Overview',
     showInSidebar: () => false, // Hide from sidebar
   },
-  {
-    path: '/daily-revenue-list',
-    name: 'Daily Money Flow History',
-    icon: 'ni ni-chart-pie-35 text-info',
-    description: 'View all daily revenue entries',
-    component: <AuthRoute><DailyRevenueList /></AuthRoute>,
-    layout: '/admin',
-    category: 'Overview',
-    showInSidebar: () => true,
-  },
-
+  
   // Financial Management
   {
     path: '/journal',
@@ -249,7 +249,7 @@ const routes = [
     component: <BusinessOwnerRoute><IncomeStatement /></BusinessOwnerRoute>,
     layout: '/admin',
     category: 'Finance',
-    showInSidebar: true,
+    showInSidebar: (user) => user && user.role !== 'business_owner',
   },
 
   {

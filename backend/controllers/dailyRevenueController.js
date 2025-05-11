@@ -163,16 +163,30 @@ exports.create = async (req, res) => {
         // Save the daily revenue
         const savedDailyRevenue = await dailyRevenue.save();
         
-        // Check for anomalies
-        const anomalies = await checkForAnomalies(savedDailyRevenue);
-        const hasAnomaly = anomalies.length > 0;
+        // Ensure the summary data is calculated properly for anomaly detection
+        // Sometimes the pre-save middleware might not update the values as expected
+        const totalRevenue = (savedDailyRevenue.revenues.cash.sales - savedDailyRevenue.revenues.cash.returns) +
+                            (savedDailyRevenue.revenues.card.sales - savedDailyRevenue.revenues.card.returns) +
+                            savedDailyRevenue.revenues.other.reduce((sum, item) => sum + item.amount, 0);
+                            
+        console.log("Calculated total revenue before anomaly check:", totalRevenue);
+        // Make sure the summary has the right revenue value
+        if (savedDailyRevenue.summary.totalRevenue !== totalRevenue) {
+            console.log("Summary revenue doesn't match calculated total! Updating for anomaly check.");
+            savedDailyRevenue.summary.totalRevenue = totalRevenue;
+            await savedDailyRevenue.save();
+        }
+        
+        // Check for anomalies (for any date)
+        const anomaly = await anomalyDetectionService.detectAnomalyForEntry(savedDailyRevenue._id);
+        const hasAnomaly = !!anomaly;
         
         // Create response object 
         const responseObj = {
             success: true,
             data: savedDailyRevenue,
             anomalyDetected: hasAnomaly,
-            anomalyDetails: hasAnomaly ? anomalies[0] : null
+            anomalyDetails: anomaly
         };
         
         console.log('Final response:', JSON.stringify(responseObj, null, 2));
@@ -266,24 +280,34 @@ exports.update = async (req, res) => {
         }
         // Update the entry
         Object.assign(dailyRevenue, req.body);
-        await dailyRevenue.save();
+        const updatedDailyRevenue = await dailyRevenue.save();
+        console.log('Daily revenue updated:', updatedDailyRevenue._id);
+        console.log('Total revenue in updated entry:', updatedDailyRevenue.summary?.totalRevenue);
         
-        // Update or create journal entry if needed
-        if (dailyRevenue.autoJournalEntry) {
-            // Similar journal entry creation logic as in create function
-            // You might want to update the existing journal entry or create a new one
+        // Ensure the summary data is calculated properly for anomaly detection
+        // Sometimes the pre-save middleware might not update the values as expected
+        const totalRevenue = (updatedDailyRevenue.revenues.cash.sales - updatedDailyRevenue.revenues.cash.returns) +
+                            (updatedDailyRevenue.revenues.card.sales - updatedDailyRevenue.revenues.card.returns) +
+                            updatedDailyRevenue.revenues.other.reduce((sum, item) => sum + item.amount, 0);
+                            
+        console.log("Calculated total revenue before anomaly check:", totalRevenue);
+        // Make sure the summary has the right revenue value
+        if (updatedDailyRevenue.summary.totalRevenue !== totalRevenue) {
+            console.log("Summary revenue doesn't match calculated total! Updating for anomaly check.");
+            updatedDailyRevenue.summary.totalRevenue = totalRevenue;
+            await updatedDailyRevenue.save();
         }
         
-        // Check for anomalies
-        const anomalies = await checkForAnomalies(dailyRevenue);
-        const hasAnomaly = anomalies.length > 0;
+        // Check for anomalies (for any date)
+        const anomaly = await anomalyDetectionService.detectAnomalyForEntry(updatedDailyRevenue._id);
+        const hasAnomaly = !!anomaly;
         
         // Create response object
         const responseObj = {
             success: true,
-            data: dailyRevenue,
+            data: updatedDailyRevenue,
             anomalyDetected: hasAnomaly,
-            anomalyDetails: hasAnomaly ? anomalies[0] : null
+            anomalyDetails: anomaly
         };
         
         console.log('Update response:', JSON.stringify(responseObj, null, 2));

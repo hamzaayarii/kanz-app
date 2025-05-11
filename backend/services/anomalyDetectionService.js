@@ -7,10 +7,10 @@ const TaxReport = require('../models/TaxReport');
 class AnomalyDetectionService {
     constructor() {
         this.thresholds = {
-            revenueDeviation: 1.0, // Standard deviations (lowered for testing)
-            expenseDeviation: 1.0, // Lowered for testing
-            invoiceAmountDeviation: 1.0, // Lowered for testing
-            taxDeviation: 1.0 // Lowered for testing
+            revenueDeviation: 2.5, // Less sensitive (was 2.0)
+            expenseDeviation: 2.5,
+            invoiceAmountDeviation: 2.5,
+            taxDeviation: 2.5
         };
     }
 
@@ -48,6 +48,19 @@ class AnomalyDetectionService {
         
         if (baselineEntries.length === 0) {
             console.log('Not enough historical data for comparison');
+            // First entry: can't determine if it's an anomaly without baseline
+            // But if it's over certain amount, flag it anyway
+            if (newestEntry.summary.totalRevenue > 1000) {
+                return [{
+                    date: newestEntry.date,
+                    value: newestEntry.summary.totalRevenue,
+                    isAnomaly: true,
+                    zScore: 2.0, // Default z-score
+                    mean: 0,
+                    stdDev: 0,
+                    isExtreme: true
+                }];
+            }
             return [];
         }
 
@@ -63,8 +76,12 @@ class AnomalyDetectionService {
         
         console.log(`Newest entry: value=${newestValue}, zScore=${zScore}, threshold=${this.thresholds.revenueDeviation}`);
         
-        // More aggressive anomaly detection for extreme values
+        // Standard anomaly detection
         const isExtreme = newestValue > mean * 5; // 5x average is definitely extreme
+        
+        // Consider something an anomaly if:
+        // 1. It's statistically unusual (z-score)
+        // 2. It's extremely high relative to average
         const isAnomaly = zScore > this.thresholds.revenueDeviation || isExtreme;
         
         console.log(`Anomaly detection result: isAnomaly=${isAnomaly}, isExtreme=${isExtreme}`);
@@ -186,6 +203,35 @@ class AnomalyDetectionService {
             totalAnomalies: revenueAnomalies.length + expenseAnomalies.length + 
                            invoiceAnomalies.length + taxAnomalies.length
         };
+    }
+
+    // Detect anomaly for any specific entry (by ID)
+    async detectAnomalyForEntry(entryId) {
+        const entry = await DailyRevenue.findById(entryId);
+        if (!entry) return null;
+        const allEntries = await DailyRevenue.find({ business: entry.business }).sort({ date: 1 });
+        if (allEntries.length < 2) return null;
+
+        // Exclude the entry itself from baseline
+        const baseline = allEntries.filter(e => !e._id.equals(entry._id)).map(e => e.summary.totalRevenue);
+        const { mean, stdDev } = this.calculateStats(baseline);
+        const value = entry.summary.totalRevenue;
+        const zScore = stdDev === 0 ? 0 : Math.abs((value - mean) / stdDev);
+        const isExtreme = value > mean * 7; // Less sensitive (was 5x)
+        const isAnomaly = zScore > this.thresholds.revenueDeviation || isExtreme;
+
+        if (isAnomaly) {
+            return {
+                date: entry.date,
+                value,
+                isAnomaly: true,
+                zScore,
+                mean,
+                stdDev,
+                isExtreme
+            };
+        }
+        return null;
     }
 }
 

@@ -33,7 +33,7 @@ import {
 } from "@mui/icons-material";
 import { useTTS } from "../../components/TTS/TTSContext";
 import HoverSpeakText from "../../components/TTS/HoverSpeakText";
-import { Helmet } from "react-helmet";
+// import { Helmet } from "react-helmet";
 
 // New component for accountant cards
 const AccountantCard = ({ 
@@ -343,10 +343,10 @@ const AssignAccountant = () => {
   return (
     <>
       {/* Add page title for screen readers (WCAG 2.4.2) */}
-      <Helmet>
+      {/* <Helmet>
         <title>Assign an Accountant | Argon Dashboard</title>
         <meta name="description" content="Assign or manage your accountant connections" />
-      </Helmet>
+      </Helmet> */}
       
       <div className="px-6 py-4" role="main" aria-label="Assign accountant page">
         <Card className="shadow-lg border-0" sx={{ borderRadius: '0.5rem', overflow: 'visible' }}>
