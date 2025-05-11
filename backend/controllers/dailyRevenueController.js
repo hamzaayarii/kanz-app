@@ -415,4 +415,49 @@ exports.updateStatus = async (req, res) => {
             message: error.message
         });
     }
+};
+
+// Get daily revenue entries for a specific business
+exports.getByBusiness = async (req, res) => {
+    try {
+        const { businessId } = req.params;
+        
+        // Check if user has access to this business
+        let hasAccess = false;
+        
+        if (req.user.role === 'business_owner') {
+            // Check if business belongs to this owner
+            const business = await Business.findOne({ _id: businessId, owner: req.user._id });
+            hasAccess = !!business;
+        } else if (req.user.role === 'accountant') {
+            // Check if business belongs to an owner assigned to this accountant
+            const owners = await User.find({ role: 'business_owner', assignedTo: req.user._id }).select('_id');
+            const ownerIds = owners.map(o => o._id);
+            const business = await Business.findOne({ _id: businessId, owner: { $in: ownerIds } });
+            hasAccess = !!business;
+        }
+        
+        if (!hasAccess) {
+            return res.status(403).json({ 
+                success: false, 
+                message: 'You do not have access to this business' 
+            });
+        }
+        
+        // Fetch daily revenue entries for the business
+        const dailyRevenues = await DailyRevenue.find({ business: businessId })
+            .sort({ date: -1 })
+            .populate('journalEntry');
+            
+        res.json({
+            success: true,
+            data: dailyRevenues
+        });
+    } catch (error) {
+        console.error('Error fetching business daily revenues:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message || 'Error fetching daily revenue entries'
+        });
+    }
 }; 

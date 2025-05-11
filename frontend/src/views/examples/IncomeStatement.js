@@ -57,21 +57,54 @@ const IncomeStatement = () => {
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const navigate = useNavigate();
+  const [owners, setOwners] = useState([]);
+  const [selectedOwner, setSelectedOwner] = useState('');
+  const [isAccountant, setIsAccountant] = useState(false);
 
-  // Fetch businesses
+  // Detect user role from localStorage
+  useEffect(() => {
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      const user = JSON.parse(userStr);
+      setIsAccountant(user.role === 'accountant');
+    }
+  }, []);
+
+  // Fetch business owners for accountants
+  useEffect(() => {
+    if (!isAccountant) return;
+    const fetchOwners = async () => {
+      try {
+        const token = localStorage.getItem('authToken');
+        const res = await axios.get('http://localhost:5000/api/users/assigned-business-owners', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setOwners(res.data || []);
+      } catch (err) {
+        setError('Failed to load business owners.');
+      }
+    };
+    fetchOwners();
+  }, [isAccountant]);
+
+  // Fetch businesses (for business owner or for selected owner if accountant)
   useEffect(() => {
     const fetchBusinesses = async () => {
       try {
         const token = localStorage.getItem('authToken');
-        if (!token) {
-          throw new Error('You must be logged in to fetch businesses');
+        if (!token) throw new Error('You must be logged in to fetch businesses');
+        let url = '';
+        if (isAccountant && selectedOwner) {
+          url = `http://localhost:5000/api/business/getUserBusinessesByAccountant?ownerId=${selectedOwner}`;
+        } else if (!isAccountant) {
+          url = 'http://localhost:5000/api/business/user-businesses';
+        } else {
+          setBusinesses([]);
+          return;
         }
-
-        const response = await axios.get(`${API_URL}/business/user-businesses`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        const businesses = response.data.businesses || [];
+        const response = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
+        // Handle both array and object response
+        const businesses = Array.isArray(response.data) ? response.data : (response.data.businesses || []);
         setBusinesses(businesses);
         if (businesses.length > 0) {
           setValue('businessId', businesses[0]._id);
@@ -82,9 +115,14 @@ const IncomeStatement = () => {
         setError(err.response?.data?.message || 'Error fetching businesses');
       }
     };
-
-    fetchBusinesses();
-  }, [setValue]);
+    if (isAccountant && !selectedOwner) {
+      setBusinesses([]);
+      return;
+    }
+    if ((isAccountant && selectedOwner) || !isAccountant) {
+      fetchBusinesses();
+    }
+  }, [isAccountant, selectedOwner, setValue]);
 
   // Update selected business
   useEffect(() => {
@@ -355,6 +393,28 @@ const IncomeStatement = () => {
                 <Form onSubmit={handleSubmit(onSubmit)}>
                   <h6 className="heading-small text-muted mb-4">Business Information</h6>
                   <div className="pl-lg-4">
+                    {isAccountant && (
+                      <Row>
+                        <Col lg="6">
+                          <FormGroup>
+                            <Label for="ownerId">Select Business Owner</Label>
+                            <Input
+                              type="select"
+                              id="ownerId"
+                              value={selectedOwner}
+                              onChange={e => setSelectedOwner(e.target.value)}
+                            >
+                              <option value="">-- Select Owner --</option>
+                              {owners.map(owner => (
+                                <option key={owner._id} value={owner._id}>
+                                  {owner.fullName || owner.email}
+                                </option>
+                              ))}
+                            </Input>
+                          </FormGroup>
+                        </Col>
+                      </Row>
+                    )}
                     <Row>
                       <Col lg="6">
                         <FormGroup>
