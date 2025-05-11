@@ -8,17 +8,13 @@ import {jwtDecode} from 'jwt-decode';
 
 // reactstrap components
 import {
-  Button,
-  Card,
-  CardHeader,
-  CardBody,
-  CardTitle,
+
   Collapse,
   DropdownMenu,
   DropdownItem,
   UncontrolledDropdown,
   DropdownToggle,
-  FormGroup,
+ 
   Form,
   Input,
   InputGroupAddon,
@@ -30,18 +26,18 @@ import {
   NavItem,
   NavLink,
   Nav,
-  Progress,
-  Table,
+ 
   Container,
   Row,
   Col,
 } from "reactstrap";
+import { useTTS } from "../TTS/TTSContext";
 
-var ps;
 
 const Sidebar = (props) => {
   const [collapseOpen, setCollapseOpen] = useState();
   const [user, setUser] = useState(null);
+  const { speak } = useTTS();
 
   // Fetch user data from the backend
   useEffect(() => {
@@ -96,14 +92,16 @@ const Sidebar = (props) => {
       .map((prop, key) => {
         return (
           <NavItem key={key}>
-            <NavLink
-              to={prop.layout + prop.path}
-              tag={NavLinkRRD}
-              onClick={closeCollapse}
-            >
-              <i className={prop.icon} />
-              {prop.name}
-            </NavLink>
+           <NavLink
+  to={prop.layout + prop.path}
+  tag={NavLinkRRD}
+  onClick={closeCollapse}
+  onMouseEnter={() => speak(prop.name)} // 👈 TTS here
+>
+  <i className={prop.icon} />
+  {prop.name}
+</NavLink>
+
           </NavItem>
         );
       });

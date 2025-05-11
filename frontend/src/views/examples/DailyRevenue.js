@@ -17,11 +17,15 @@ import {
 } from 'reactstrap';
 import axios from 'axios';
 import Header from "components/Headers/Header.js";
+import HoverSpeakText from '../../components/TTS/HoverSpeakText'; // Adjust path as needed
+import TTSButton from '../../components/TTS/TTSButton'; // Adjust path as needed
+import { useTTS } from '../../components/TTS/TTSContext'; // Adjust path as needed
 
 const DailyRevenue = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const isEditMode = !!id;
+    const { isTTSEnabled, speak, stop } = useTTS();
 
     const [entry, setEntry] = useState({
         date: new Date().toISOString().split('T')[0],
@@ -43,7 +47,13 @@ const DailyRevenue = () => {
     const [notification, setNotification] = useState({ show: false, message: '', type: 'success' });
     const [isLoading, setIsLoading] = useState(false);
 
-    // Get token from localStorage
+    // Speak notification when it changes
+    useEffect(() => {
+        if (isTTSEnabled && notification.show) {
+            speak(notification.message);
+        }
+    }, [notification, isTTSEnabled, speak]);
+
     const getAuthToken = () => {
         return localStorage.getItem('authToken');
     };
@@ -281,27 +291,43 @@ const DailyRevenue = () => {
                                 <Row className="align-items-center">
                                     <Col xs="8">
                                         <h3 className="mb-0">
-                                            {isEditMode ? 'Edit Daily Money Flow' : 'New Daily Money Flow'}
+                                            <HoverSpeakText>
+                                                {isEditMode ? 'Edit Daily Money Flow' : 'New Daily Money Flow'}
+                                            </HoverSpeakText>
                                         </h3>
+                                        {isTTSEnabled && (
+                                           <TTSButton 
+    elementId="daily-revenue-form" 
+    className="mt-2 custom-tts-button" 
+    label="Read entire form"
+/>
+                                        )}
                                     </Col>
                                     <Col className="text-right" xs="4">
-                                        <Button
-                                            color="secondary"
-                                            onClick={() => navigate('/admin/daily-revenue-list')}
-                                            size="sm"
-                                        >
-                                            Back to List
-                                        </Button>
+                                        <HoverSpeakText textToSpeak="Back to list">
+                                            <Button
+                                                color="secondary"
+                                                onClick={() => navigate('/admin/daily-revenue-list')}
+                                                size="sm"
+                                            >
+                                                Back to List
+                                            </Button>
+                                        </HoverSpeakText>
                                     </Col>
                                 </Row>
                             </CardHeader>
-                            <CardBody>
+                            <CardBody id="daily-revenue-form">
                                 {notification.show && (
                                     <Alert 
                                         color={notification.type}
-                                        toggle={() => setNotification({ ...notification, show: false })}
+                                        toggle={() => {
+                                            stop();
+                                            setNotification({ ...notification, show: false });
+                                        }}
                                     >
-                                        {notification.message}
+                                        <HoverSpeakText>
+                                            {notification.message}
+                                        </HoverSpeakText>
                                     </Alert>
                                 )}
 
@@ -309,7 +335,9 @@ const DailyRevenue = () => {
                                     <Row>
                                         <Col md="6">
                                             <FormGroup>
-                                                <Label>Date</Label>
+                                                <HoverSpeakText textToSpeak="Date">
+                                                    <Label>Date</Label>
+                                                </HoverSpeakText>
                                                 <Input
                                                     type="date"
                                                     value={entry.date}
@@ -320,13 +348,23 @@ const DailyRevenue = () => {
                                         </Col>
                                     </Row>
 
-                                    <h4 className="mb-3">Revenue</h4>
+                                    <h4 className="mb-3">
+                                        <HoverSpeakText>
+                                            Revenue
+                                        </HoverSpeakText>
+                                    </h4>
                                     <Row>
                                         <Col md="6">
                                             <Card className="p-3">
-                                                <h5>Cash</h5>
+                                                <h5>
+                                                    <HoverSpeakText>
+                                                        Cash
+                                                    </HoverSpeakText>
+                                                </h5>
                                                 <FormGroup>
-                                                    <Label>Sales</Label>
+                                                    <HoverSpeakText textToSpeak="Cash sales">
+                                                        <Label>Sales</Label>
+                                                    </HoverSpeakText>
                                                     <Input
                                                         type="number"
                                                         value={entry.revenues.cash.sales}
@@ -336,7 +374,9 @@ const DailyRevenue = () => {
                                                     />
                                                 </FormGroup>
                                                 <FormGroup>
-                                                    <Label>Returns</Label>
+                                                    <HoverSpeakText textToSpeak="Cash returns">
+                                                        <Label>Returns</Label>
+                                                    </HoverSpeakText>
                                                     <Input
                                                         type="number"
                                                         value={entry.revenues.cash.returns}
@@ -349,9 +389,15 @@ const DailyRevenue = () => {
                                         </Col>
                                         <Col md="6">
                                             <Card className="p-3">
-                                                <h5>Card</h5>
+                                                <h5>
+                                                    <HoverSpeakText>
+                                                        Card
+                                                    </HoverSpeakText>
+                                                </h5>
                                                 <FormGroup>
-                                                    <Label>Sales</Label>
+                                                    <HoverSpeakText textToSpeak="Card sales">
+                                                        <Label>Sales</Label>
+                                                    </HoverSpeakText>
                                                     <Input
                                                         type="number"
                                                         value={entry.revenues.card.sales}
@@ -361,7 +407,9 @@ const DailyRevenue = () => {
                                                     />
                                                 </FormGroup>
                                                 <FormGroup>
-                                                    <Label>Returns</Label>
+                                                    <HoverSpeakText textToSpeak="Card returns">
+                                                        <Label>Returns</Label>
+                                                    </HoverSpeakText>
                                                     <Input
                                                         type="number"
                                                         value={entry.revenues.card.returns}
@@ -374,30 +422,45 @@ const DailyRevenue = () => {
                                         </Col>
                                     </Row>
 
-                                    <h5 className="mt-4">Other Revenue</h5>
+                                    <h5 className="mt-4">
+                                        <HoverSpeakText>
+                                            Other Revenue
+                                        </HoverSpeakText>
+                                        <TTSButton 
+                                            text="Other Revenue section. Add additional revenue types and amounts here."
+                                            className="ml-2"
+                                            size="sm"
+                                        />
+                                    </h5>
                                     <Row className="mb-3">
                                         <Col md="5">
-                                            <Input
-                                                type="text"
-                                                value={otherRevenue.type}
-                                                onChange={(e) => setOtherRevenue(prev => ({ ...prev, type: e.target.value }))}
-                                                placeholder="Type"
-                                            />
+                                            <HoverSpeakText textToSpeak="Other revenue type">
+                                                <Input
+                                                    type="text"
+                                                    value={otherRevenue.type}
+                                                    onChange={(e) => setOtherRevenue(prev => ({ ...prev, type: e.target.value }))}
+                                                    placeholder="Type"
+                                                />
+                                            </HoverSpeakText>
                                         </Col>
                                         <Col md="5">
-                                            <Input
-                                                type="number"
-                                                value={otherRevenue.amount}
-                                                onChange={(e) => setOtherRevenue(prev => ({ ...prev, amount: parseFloat(e.target.value) || 0 }))}
-                                                placeholder="Amount"
-                                                min="0"
-                                                step="0.01"
-                                            />
+                                            <HoverSpeakText textToSpeak="Other revenue amount">
+                                                <Input
+                                                    type="number"
+                                                    value={otherRevenue.amount}
+                                                    onChange={(e) => setOtherRevenue(prev => ({ ...prev, amount: parseFloat(e.target.value) || 0 }))}
+                                                    placeholder="Amount"
+                                                    min="0"
+                                                    step="0.01"
+                                                />
+                                            </HoverSpeakText>
                                         </Col>
                                         <Col md="2">
-                                            <Button color="primary" onClick={addOtherRevenue} block>
-                                                Add
-                                            </Button>
+                                            <HoverSpeakText textToSpeak="Add other revenue">
+                                                <Button color="primary" onClick={addOtherRevenue} block>
+                                                    Add
+                                                </Button>
+                                            </HoverSpeakText>
                                         </Col>
                                     </Row>
 
@@ -405,24 +468,26 @@ const DailyRevenue = () => {
                                         <Table>
                                             <thead>
                                                 <tr>
-                                                    <th>Type</th>
-                                                    <th>Amount</th>
-                                                    <th>Action</th>
+                                                    <th><HoverSpeakText>Type</HoverSpeakText></th>
+                                                    <th><HoverSpeakText>Amount</HoverSpeakText></th>
+                                                    <th><HoverSpeakText>Action</HoverSpeakText></th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {entry.revenues.other.map((item, index) => (
                                                     <tr key={index}>
-                                                        <td>{item.type}</td>
-                                                        <td>{item.amount} TND</td>
+                                                        <td><HoverSpeakText>{item.type}</HoverSpeakText></td>
+                                                        <td><HoverSpeakText>{item.amount} TND</HoverSpeakText></td>
                                                         <td>
-                                                            <Button
-                                                                color="danger"
-                                                                size="sm"
-                                                                onClick={() => removeOtherRevenue(index)}
-                                                            >
-                                                                Remove
-                                                            </Button>
+                                                            <HoverSpeakText textToSpeak={`Remove ${item.type}`}>
+                                                                <Button
+                                                                    color="danger"
+                                                                    size="sm"
+                                                                    onClick={() => removeOtherRevenue(index)}
+                                                                >
+                                                                    Remove
+                                                                </Button>
+                                                            </HoverSpeakText>
                                                         </td>
                                                     </tr>
                                                 ))}
@@ -430,11 +495,17 @@ const DailyRevenue = () => {
                                         </Table>
                                     )}
 
-                                    <h4 className="mt-4 mb-3">Expenses</h4>
+                                    <h4 className="mt-4 mb-3">
+                                        <HoverSpeakText>
+                                            Expenses
+                                        </HoverSpeakText>
+                                    </h4>
                                     <Row>
                                         <Col md="6">
                                             <FormGroup>
-                                                <Label>Petty Cash Expenses</Label>
+                                                <HoverSpeakText textToSpeak="Petty cash expenses">
+                                                    <Label>Petty Cash Expenses</Label>
+                                                </HoverSpeakText>
                                                 <Input
                                                     type="number"
                                                     value={entry.expenses.petty}
@@ -452,30 +523,45 @@ const DailyRevenue = () => {
                                         </Col>
                                     </Row>
 
-                                    <h5 className="mt-4">Other Expenses</h5>
+                                    <h5 className="mt-4">
+                                        <HoverSpeakText>
+                                            Other Expenses
+                                        </HoverSpeakText>
+                                        <TTSButton 
+                                            text="Other Expenses section. Add additional expense descriptions and amounts here."
+                                            className="ml-2"
+                                            size="sm"
+                                        />
+                                    </h5>
                                     <Row className="mb-3">
                                         <Col md="5">
-                                            <Input
-                                                type="text"
-                                                value={otherExpense.description}
-                                                onChange={(e) => setOtherExpense(prev => ({ ...prev, description: e.target.value }))}
-                                                placeholder="Description"
-                                            />
+                                            <HoverSpeakText textToSpeak="Other expense description">
+                                                <Input
+                                                    type="text"
+                                                    value={otherExpense.description}
+                                                    onChange={(e) => setOtherExpense(prev => ({ ...prev, description: e.target.value }))}
+                                                    placeholder="Description"
+                                                />
+                                            </HoverSpeakText>
                                         </Col>
                                         <Col md="5">
-                                            <Input
-                                                type="number"
-                                                value={otherExpense.amount}
-                                                onChange={(e) => setOtherExpense(prev => ({ ...prev, amount: parseFloat(e.target.value) || 0 }))}
-                                                placeholder="Amount"
-                                                min="0"
-                                                step="0.01"
-                                            />
+                                            <HoverSpeakText textToSpeak="Other expense amount">
+                                                <Input
+                                                    type="number"
+                                                    value={otherExpense.amount}
+                                                    onChange={(e) => setOtherExpense(prev => ({ ...prev, amount: parseFloat(e.target.value) || 0 }))}
+                                                    placeholder="Amount"
+                                                    min="0"
+                                                    step="0.01"
+                                                />
+                                            </HoverSpeakText>
                                         </Col>
                                         <Col md="2">
-                                            <Button color="primary" onClick={addOtherExpense} block>
-                                                Add
-                                            </Button>
+                                            <HoverSpeakText textToSpeak="Add other expense">
+                                                <Button color="primary" onClick={addOtherExpense} block>
+                                                    Add
+                                                </Button>
+                                            </HoverSpeakText>
                                         </Col>
                                     </Row>
 
@@ -483,24 +569,26 @@ const DailyRevenue = () => {
                                         <Table>
                                             <thead>
                                                 <tr>
-                                                    <th>Description</th>
-                                                    <th>Amount</th>
-                                                    <th>Action</th>
+                                                    <th><HoverSpeakText>Description</HoverSpeakText></th>
+                                                    <th><HoverSpeakText>Amount</HoverSpeakText></th>
+                                                    <th><HoverSpeakText>Action</HoverSpeakText></th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {entry.expenses.other.map((item, index) => (
                                                     <tr key={index}>
-                                                        <td>{item.description}</td>
-                                                        <td>{item.amount} TND</td>
+                                                        <td><HoverSpeakText>{item.description}</HoverSpeakText></td>
+                                                        <td><HoverSpeakText>{item.amount} TND</HoverSpeakText></td>
                                                         <td>
-                                                            <Button
-                                                                color="danger"
-                                                                size="sm"
-                                                                onClick={() => removeOtherExpense(index)}
-                                                            >
-                                                                Remove
-                                                            </Button>
+                                                            <HoverSpeakText textToSpeak={`Remove ${item.description}`}>
+                                                                <Button
+                                                                    color="danger"
+                                                                    size="sm"
+                                                                    onClick={() => removeOtherExpense(index)}
+                                                                >
+                                                                    Remove
+                                                                </Button>
+                                                            </HoverSpeakText>
                                                         </td>
                                                     </tr>
                                                 ))}
@@ -509,7 +597,9 @@ const DailyRevenue = () => {
                                     )}
 
                                     <FormGroup className="mt-4">
-                                        <Label>Notes</Label>
+                                        <HoverSpeakText textToSpeak="Notes">
+                                            <Label>Notes</Label>
+                                        </HoverSpeakText>
                                         <Input
                                             type="textarea"
                                             value={entry.notes}
@@ -519,32 +609,38 @@ const DailyRevenue = () => {
                                     </FormGroup>
 
                                     <FormGroup check className="mb-3">
-                                        <Label check>
-                                            <Input
-                                                type="checkbox"
-                                                checked={entry.autoJournalEntry}
-                                                onChange={(e) => setEntry(prev => ({ ...prev, autoJournalEntry: e.target.checked }))}
-                                            />{' '}
-                                            Automatically create journal entry
-                                        </Label>
+                                        <HoverSpeakText textToSpeak="Automatically create journal entry">
+                                            <Label check>
+                                                <Input
+                                                    type="checkbox"
+                                                    checked={entry.autoJournalEntry}
+                                                    onChange={(e) => setEntry(prev => ({ ...prev, autoJournalEntry: e.target.checked }))}
+                                                />{' '}
+                                                Automatically create journal entry
+                                            </Label>
+                                        </HoverSpeakText>
                                     </FormGroup>
 
                                     <Row className="mt-4">
                                         <Col>
-                                            <Button 
-                                                color="secondary" 
-                                                onClick={() => navigate('/admin/daily-revenue-list')}
-                                                className="mr-2"
-                                            >
-                                                Cancel
-                                            </Button>
-                                            <Button 
-                                                color="primary" 
-                                                type="submit"
-                                                disabled={isLoading}
-                                            >
-                                                {isLoading ? 'Saving...' : (isEditMode ? 'Update' : 'Save')}
-                                            </Button>
+                                            <HoverSpeakText textToSpeak="Cancel">
+                                                <Button 
+                                                    color="secondary" 
+                                                    onClick={() => navigate('/admin/daily-revenue-list')}
+                                                    className="mr-2"
+                                                >
+                                                    Cancel
+                                                </Button>
+                                            </HoverSpeakText>
+                                            <HoverSpeakText textToSpeak={isEditMode ? 'Update' : 'Save'}>
+                                                <Button 
+                                                    color="primary" 
+                                                    type="submit"
+                                                    disabled={isLoading}
+                                                >
+                                                    {isLoading ? 'Saving...' : (isEditMode ? 'Update' : 'Save')}
+                                                </Button>
+                                            </HoverSpeakText>
                                         </Col>
                                     </Row>
                                 </Form>
@@ -557,4 +653,4 @@ const DailyRevenue = () => {
     );
 };
 
-export default DailyRevenue; 
+export default DailyRevenue;

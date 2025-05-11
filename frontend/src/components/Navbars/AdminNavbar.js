@@ -1,213 +1,245 @@
+import React, { useEffect, useState, useCallback, useMemo, Suspense, lazy } from "react";
 import { Link, useNavigate } from "react-router-dom";
-// reactstrap components
 import {
   DropdownMenu,
   DropdownItem,
   UncontrolledDropdown,
   DropdownToggle,
-  Form,
-  FormGroup,
-  InputGroupAddon,
-  InputGroupText,
-  Input,
-  InputGroup,
   Navbar,
   Nav,
   Container,
   Media,
   Button,
 } from "reactstrap";
-import { useState, useEffect } from "react";
 import axios from "axios";
-import {jwtDecode} from 'jwt-decode';
-import NotificationDropdown from '../notification/NotificationDropDown';
+import { jwtDecode } from "jwt-decode";
+import debounce from "lodash/debounce";
+import { useTTS } from '../TTS/TTSContext';
+import HoverSpeakText from '../TTS/HoverSpeakText';
+import TTSButton from '../TTS/TTSButton';
+import "../TTS/button.css";
+const NotificationDropdown = lazy(() => import("../notification/NotificationDropDown"));
 
-const AdminNavbar = (props) => {
+const AdminNavbar = ({ brandText, userData }) => {
+  const { isTTSEnabled, toggleTTS } = useTTS();
+  const [ttsEnabled, setTtsEnabled] = useState(false);
+  
   const navigate = useNavigate();
-  const [business, setBusiness] = useState(null);
-  const [showBusinessDropdown, setShowBusinessDropdown] = useState(false);
-  const [user, setUser] = useState(null);
+  const [state, setState] = useState({
+    business: null,
+    user: null,
+    showBusinessDropdown: false,
+  });
 
-  // Fetch user data from the backend
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const token = localStorage.getItem("authToken");
-        if (!token) return;
-
-        const decoded = jwtDecode(token);
-        const userId = decoded._id;
-
-        const response = await axios.get(`http://localhost:5000/api/users/${userId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        if (response.data && response.data.user) {
-          setUser(response.data.user);
-        }
-      } catch (err) {
-        console.error("Error fetching user data:", err);
-      }
-    };
-
-    fetchUserData();
-  }, []);
-
-  // Fetch business data - update this according to your API structure
-  useEffect(() => {
-    // Example: If your user data already contains business info
-    if (props.userData && props.userData.business) {
-      setBusiness(props.userData.business);
-    } else {
-      // Or fetch it separately if needed
-      fetchUserBusiness();
-    }
-  }, [props.userData]);
-
-
-
-  // Function to fetch user's business data
-  const fetchUserBusiness = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const token = localStorage.getItem("authToken");
       if (!token) return;
 
-      const response = await axios.get("http://localhost:5000/api/business/user-businesses", {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const decoded = jwtDecode(token);
+      const userId = decoded._id;
+      const headers = { Authorization: `Bearer ${token}` };
 
-      if (response.data.businesses && response.data.businesses.length > 0) {
-        setBusiness(response.data.businesses[0]);
-      }
+      const [userRes, businessRes] = await Promise.all([
+        axios.get(`http://localhost:5000/api/users/${userId}`, { headers }),
+        axios.get("http://localhost:5000/api/business/user-businesses", { headers }),
+      ]);
+
+      setState((prev) => ({
+        ...prev,
+        user: userRes.data.user || null,
+        business: businessRes.data.businesses?.[0] || userData?.business || null,
+      }));
     } catch (error) {
-      console.error("Error fetching business:", error);
+      console.error("Error fetching data:", error);
     }
-  };
-  const handleLogout = (e) => {
+  }, [userData]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const handleLogout = useCallback((e) => {
     e.preventDefault();
-    // Clear user session or authentication token here
-    // For example, if you are using localStorage:
     localStorage.removeItem("authToken");
-
-    // Redirect to login page and replace the current history entry
     navigate("/auth/login", { replace: true });
-  };
+  }, [navigate]);
 
+  const toggleBusinessDropdown = useMemo(
+    () =>
+      debounce(() => {
+        setState((prev) => ({ ...prev, showBusinessDropdown: !prev.showBusinessDropdown }));
+      }, 200),
+    []
+  );
 
-  const toggleBusinessDropdown = () => {
-    setShowBusinessDropdown(!showBusinessDropdown);
-  };
+  const navigateToBusiness = useCallback(
+    (businessId) => {
+      navigate(`/admin/business-management/${businessId}`);
+      setState((prev) => ({ ...prev, showBusinessDropdown: false }));
+    },
+    [navigate]
+  );
 
-  const navigateToBusiness = (businessId) => {
-    navigate(`/admin/business-management/${businessId}`);
-    setShowBusinessDropdown(false);
-  };
-
-  const redirectToBusinessRegistration = () => {
+  const redirectToBusinessRegistration = useCallback(() => {
     navigate("/standalone/business-registration");
-    setShowBusinessDropdown(false);
-  };
+    setState((prev) => ({ ...prev, showBusinessDropdown: false }));
+  }, [navigate]);
 
+  const BusinessDropdown = useMemo(
+    () =>
+      ({ isOpen, business, onNavigate, onRegister }) =>
+        isOpen && (
+          <div
+            className="position-absolute bg-white rounded shadow-lg py-2"
+            style={{ top: "100%", right: 0, zIndex: 1000, minWidth: "200px" }}
+          >
+            {business && (
+              <div className="px-3 py-2" onClick={() => onNavigate(business._id)}>
+                <HoverSpeakText textToSpeak={`Select business ${business.name}`}>
+                  <div className="font-weight-bold">{business.name}</div>
+                  <div className="text-muted small">{business.type}</div>
+                </HoverSpeakText>
+              </div>
+            )}
+            <div className="border-top mt-2 pt-2 px-3">
+              <HoverSpeakText textToSpeak="Add New Business">
+                <Link to="/standalone/business-registration" className="text-primary d-block py-1" onClick={onRegister}>
+                  <i className="ni ni-fat-add mr-2"></i> Add New Business
+                </Link>
+              </HoverSpeakText>
+              <HoverSpeakText textToSpeak="Manage Businesses">
+                <Link to="/admin/business-management" className="text-primary d-block py-1">
+                  <i className="ni ni-settings mr-2"></i> Manage Businesses
+                </Link>
+              </HoverSpeakText>
+            </div>
+          </div>
+        ),
+    []
+  );
 
   return (
-    <>
-      <Navbar className="navbar-top navbar-dark" expand="md" id="navbar-main" style={{ zIndex: 2000, position: 'relative' }}>
-        <Container fluid>
-          <Link
-            className="h4 mb-0 text-white text-uppercase d-none d-lg-inline-block"
-            to="/"
-          >
-            {props.brandText}
+    <Navbar className="navbar-top navbar-dark" expand="md" id="navbar-main" style={{ zIndex: 2000, position: "relative" }}>
+      <Container fluid>
+        <HoverSpeakText textToSpeak="Navigate to dashboard">
+          <Link className="h4 mb-0 text-white text-uppercase d-none d-lg-inline-block" to="/">
+            {brandText}
           </Link>
-          <Nav className="align-items-center d-none d-md-flex" navbar>
-
-
-            {/* Business Selector */}
-            <div className="business-selector mr-4 position-relative">
+        </HoverSpeakText>
+        {isTTSEnabled && (
+          <TTSButton
+            elementId="navbar-main"
+            className="ml-2"
+            size="sm"
+            label="Read all navigation bar information"
+          />
+        )}
+        <Nav className="align-items-center d-none d-md-flex" navbar>
+          <div className="business-selector mr-4 position-relative">
+            <HoverSpeakText textToSpeak={state.business ? `Select business ${state.business.name}` : "Select Business"}>
               <Button
                 color="primary"
                 className="d-flex align-items-center"
                 onClick={toggleBusinessDropdown}
+                aria-label={state.business ? `Select business ${state.business.name}` : "Select Business"}
               >
                 <i className="ni ni-building mr-2"></i>
-                <span className="mr-2">
-                  {business ? business.name : "Select Business"}
-                </span>
-                <i className={`ni ni-bold-${showBusinessDropdown ? 'up' : 'down'}`}></i>
+                <span className="mr-2">{state.business ? state.business.name : "Select Business"}</span>
+                <i className={`ni ni-bold-${state.showBusinessDropdown ? "up" : "down"}`}></i>
               </Button>
+            </HoverSpeakText>
+            <BusinessDropdown
+              isOpen={state.showBusinessDropdown}
+              business={state.business}
+              onNavigate={navigateToBusiness}
+              onRegister={redirectToBusinessRegistration}
+            />
+          </div>
 
-              {/* Business Dropdown */}
-              {showBusinessDropdown && (
-                <div className="position-absolute bg-white rounded shadow-lg py-2"
-                  style={{ top: "100%", right: 0, zIndex: 1000, minWidth: "200px" }}>
-                  {/* If user has multiple businesses, map through them here */}
-                  {business && (
-                          <div className="px-3 py-2">
-                            <div className="font-weight-bold">{business.name}</div>
-                            <div className="text-muted small">{business.type}</div>
-                          </div>
-                        )}
-                  <div className="border-top mt-2 pt-2 px-3">
-                    <Link to="/standalone/business-registration" className="text-primary d-block py-1">
-                      <i className="ni ni-fat-add mr-2"></i> Add New Business
-                    </Link>
-                    <Link to="/admin/business-management" className="text-primary d-block py-1">
-                      <i className="ni ni-settings mr-2"></i> Manage Businesses
-                    </Link>
-                  </div>
-                </div>
+          <HoverSpeakText textToSpeak={isTTSEnabled ? "Disable Text to Speech" : "Enable Text to Speech"}>
+            <Button
+              className={`tts-toggle-button mr-3 ${isTTSEnabled ? "active" : ""}`}
+              color="link"
+              onClick={toggleTTS}
+              aria-label={isTTSEnabled ? "Disable Text to Speech" : "Enable Text to Speech"}
+              style={{
+                border: "none",
+                background: "none",
+                fontSize: "1.7rem",
+                color: isTTSEnabled ? "#2dce89" : "#adb5bd",
+                position: "relative",
+                transition: "color 0.3s ease",
+                padding: 0
+              }}
+            >
+              <i 
+                className={`fas fa-ear-listen ${isTTSEnabled ? "tts-glow" : ""}`} 
+                style={{ background: "transparent" }}
+              />
+              {isTTSEnabled && (
+                <span
+                  style={{
+                    position: "absolute",
+                    top: "-0.5rem",
+                    right: "-0.5rem",
+                    width: "10px",
+                    height: "10px",
+                    borderRadius: "50%",
+                    backgroundColor: "#2dce89",
+                    boxShadow: "0 0 10px rgba(45, 206, 137, 0.9)",
+                  }}
+                />
               )}
-            </div>
+            </Button>
+          </HoverSpeakText>
 
-            {/* Notification Dropdown */}
-            <NotificationDropdown           />
-            {/* User Profile Dropdown */}
-            <UncontrolledDropdown nav>
-              <DropdownToggle className="pr-0" nav>
+          <Suspense fallback={<HoverSpeakText>Loading notifications...</HoverSpeakText>}>
+            <NotificationDropdown />
+          </Suspense>
+          <UncontrolledDropdown nav>
+            <HoverSpeakText textToSpeak={`User menu for ${state.user?.name || "user"}`}>
+              <DropdownToggle className="pr-0" nav aria-label={`User menu for ${state.user?.name || "user"}`}>
                 <Media className="align-items-center">
                   <span className="avatar avatar-sm rounded-circle">
                     <img
                       alt="Profile"
-                      src={user?.avatar || require("../../assets/img/theme/team-1-800x800.jpg")}
+                      src={state.user?.avatar || require("../../assets/img/theme/team-1-800x800.jpg")}
                     />
                   </span>
                   <Media className="ml-2 d-none d-lg-block">
-                    <span className="mb-0 text-sm font-weight-bold">
-                    </span>
+                    <span className="mb-0 text-sm font-weight-bold">{state.user?.name || ""}</span>
                   </Media>
                 </Media>
               </DropdownToggle>
-              <DropdownMenu className="dropdown-menu-arrow" right>
-                <DropdownItem className="noti-title" header tag="div">
-                  <h6 className="text-overflow m-0">Welcome!</h6>
+            </HoverSpeakText>
+            <DropdownMenu className="dropdown-menu-arrow" right>
+              <DropdownItem className="noti-title" header tag="div">
+                <h6 className="text-overflow m-0">
+                  <HoverSpeakText>Welcome!</HoverSpeakText>
+                </h6>
+              </DropdownItem>
+              {[
+                { to: "/admin/user-profile", icon: "ni ni-single-02", text: "My profile" },
+                { to: "/admin/user-profile", icon: "ni ni-settings-gear-65", text: "Settings" },
+                { to: "/admin/user-profile", icon: "ni ni-calendar-grid-58", text: "Activity" },
+                { to: "/admin/user-profile", icon: "ni ni-support-16", text: "Support" },
+              ].map(({ to, icon, text }) => (
+                <DropdownItem to={to} tag={Link} key={text}>
+                  <i className={icon} />
+                  <HoverSpeakText>{text}</HoverSpeakText>
                 </DropdownItem>
-                <DropdownItem to="/admin/user-profile" tag={Link}>
-                  <i className="ni ni-single-02" />
-                  <span>My profile</span>
-                </DropdownItem>
-                <DropdownItem to="/admin/user-profile" tag={Link}>
-                  <i className="ni ni-settings-gear-65" />
-                  <span>Settings</span>
-                </DropdownItem>
-                <DropdownItem to="/admin/user-profile" tag={Link}>
-                  <i className="ni ni-calendar-grid-58" />
-                  <span>Activity</span>
-                </DropdownItem>
-                <DropdownItem to="/admin/user-profile" tag={Link}>
-                  <i className="ni ni-support-16" />
-                  <span>Support</span>
-                </DropdownItem>
-                <DropdownItem divider />
-                <DropdownItem href="#pablo" onClick={handleLogout}>
-                  <i className="ni ni-user-run" />
-                  <span>Logout</span>
-                </DropdownItem>
-              </DropdownMenu>
-            </UncontrolledDropdown>
-          </Nav>
-        </Container>
-      </Navbar>
-    </>
+              ))}
+              <DropdownItem divider />
+              <DropdownItem onClick={handleLogout}>
+                <i className="ni ni-user-run" />
+                <HoverSpeakText>Logout</HoverSpeakText>
+              </DropdownItem>
+            </DropdownMenu>
+          </UncontrolledDropdown>
+        </Nav>
+      </Container>
+    </Navbar>
   );
 };
 

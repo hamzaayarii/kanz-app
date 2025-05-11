@@ -11,12 +11,13 @@ import AuthLayout from "layouts/Auth.js";
 import StandaloneLayout from "./views/buisness/StandaloneLayout";
 import BusinessRegistrationGuard from "./views/buisness/BusinessRegistrationGuard";
 
-
+import TTSProvider from './components/TTS/TTSProvider.jsx';
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 
 root.render(
   <BrowserRouter>
+  <TTSProvider>
     <Routes>
       <Route
         path="/admin/*"
@@ -30,5 +31,6 @@ root.render(
       <Route path="/standalone/*" element={<StandaloneLayout />} />
       <Route path="*" element={<Navigate to="/auth/login" replace />} />
     </Routes>
+    </TTSProvider>
   </BrowserRouter>
 );

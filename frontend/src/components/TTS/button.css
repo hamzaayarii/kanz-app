@@ -1,0 +1,33 @@
+.tts-toggle-button {
+  background: transparent !important;
+}
+
+.tts-toggle-button i {
+  transition: transform 0.3s ease;
+  background: transparent !important; /* Force transparent background on the icon */
+}
+
+.tts-toggle-button:hover i {
+  transform: scale(1.1);
+}
+
+.tts-toggle-button.active i {
+  animation: pulseGlow 1.5s infinite;
+}
+
+/* Rest of your CSS remains the same */
+@keyframes pulseGlow {
+  0% {
+    text-shadow: 0 0 5px rgba(45, 206, 137, 0.5);
+  }
+  50% {
+    text-shadow: 0 0 15px rgba(45, 206, 137, 1);
+  }
+  100% {
+    text-shadow: 0 0 5px rgba(45, 206, 137, 0.5);
+  }
+}
+.custom-tts-button {
+    background-color: #28a745; /* Green */
+    color: white;
+}
