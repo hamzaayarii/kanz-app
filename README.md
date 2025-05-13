@@ -115,7 +115,7 @@ npm or yarn
 
 Setup
 
-Clone the repository:git clone https://github.com/your-username/accounting-management-system.git
+Clone the repository:git clone https://github.com/hamzaayarii/AccountingManagementApp/tree/dev
 
 
 Navigate to the project directory:cd accounting-management-system
@@ -150,6 +150,6 @@ Please adhere to our coding standards and include tests where applicable.
 This project is licensed under the MIT License.
 
 📬 Contact
-For questions or feedback, reach out to the ChillGuys team at email@example.com.
+For questions or feedback, reach out to the ChillGuys team at Kanz@gmail.com.
 
 Developed with 💻 by the ChillGuys team at ESPRIT, Tunisia.Let’s simplify accounting for Tunisian businesses together! 🇹🇳
