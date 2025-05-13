@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import {
     Card,
+    CardHeader,
+    CardBody,
     Container,
     Row,
     Col,
@@ -14,7 +16,6 @@ import {
     ListGroupItem,
     Spinner
 } from "reactstrap";
-import Header from "components/Headers/Header.js";
 import { useNavigate } from "react-router-dom";
 import HoverSpeakText from '../../components/TTS/HoverSpeakText'; // Adjust path as needed
 import TTSButton from '../../components/TTS/TTSButton'; // Adjust path as needed
@@ -125,132 +126,139 @@ const Invoices = () => {
 
     return (
         <>
-            <Header />
-            <Container className="mt-5">
-                <Row className="justify-content-center">
-                    <Col lg="8">
-                        <Card className="shadow p-4" id="invoices-container">
-                            <h3 className="mb-4">
-                                <HoverSpeakText>📤 Upload Invoice</HoverSpeakText>
-                                {isTTSEnabled && (
-                                    <TTSButton 
-                                        elementId="invoices-container"
-                                        className="ml-2"
-                                        size="sm"
-                                        label="Read all invoice information"
-                                    />
-                                )}
-                            </h3>
-
-                            <FormGroup>
-                                <HoverSpeakText textToSpeak="Select Business">
-                                    <Label for="businessSelector">Select Business</Label>
-                                </HoverSpeakText>
-                                <Input
-                                    type="select"
-                                    id="businessSelector"
-                                    value={businessId}
-                                    onChange={(e) => setBusinessId(e.target.value)}
-                                    required
-                                >
-                                    <option value="" disabled>Select a business</option>
-                                    {businesses.map((b) => (
-                                        <option key={b._id} value={b._id}>
-                                            {b.name}
-                                        </option>
-                                    ))}
-                                </Input>
-                            </FormGroup>
-
-                            <Form onSubmit={handleSubmit}>
+            <Container className="mt-4" fluid>
+                <Row>
+                    <Col>
+                        <Card className="shadow mb-4" id="upload-invoice-card">
+                            <CardHeader className="border-0">
+                                <h3 className="mb-0">
+                                    <HoverSpeakText>📤 Upload Invoice</HoverSpeakText>
+                                    {isTTSEnabled && (
+                                        <TTSButton
+                                            elementId="upload-invoice-card"
+                                            className="ml-2"
+                                            size="sm"
+                                            label="Read all invoice information"
+                                        />
+                                    )}
+                                </h3>
+                            </CardHeader>
+                            <CardBody>
                                 <FormGroup>
-                                    <HoverSpeakText textToSpeak="Invoice Name">
-                                        <Label for="invoiceName">Invoice Name</Label>
-                                    </HoverSpeakText>
-                                    <Input
-                                        type="text"
-                                        id="invoiceName"
-                                        value={invoiceName}
-                                        onChange={(e) => setInvoiceName(e.target.value)}
-                                        required
-                                    />
-                                </FormGroup>
-                                <FormGroup>
-                                    <HoverSpeakText textToSpeak="Invoice Type">
-                                        <Label for="invoiceType">Invoice Type</Label>
+                                    <HoverSpeakText textToSpeak="Select Business">
+                                        <Label for="businessSelector">Select Business</Label>
                                     </HoverSpeakText>
                                     <Input
                                         type="select"
-                                        id="invoiceType"
-                                        value={invoiceType}
-                                        onChange={(e) => setInvoiceType(e.target.value)}
+                                        id="businessSelector"
+                                        value={businessId}
+                                        onChange={(e) => setBusinessId(e.target.value)}
                                         required
                                     >
-                                        <option value="sale">Sale</option>
-                                        <option value="purchase">Purchase</option>
+                                        <option value="" disabled>Select a business</option>
+                                        {businesses.map((b) => (
+                                            <option key={b._id} value={b._id}>
+                                                {b.name}
+                                            </option>
+                                        ))}
                                     </Input>
                                 </FormGroup>
-                                <FormGroup>
-                                    <HoverSpeakText textToSpeak="Upload Invoice PDF or Image">
-                                        <Label for="file">Upload Invoice (PDF/Image)</Label>
-                                    </HoverSpeakText>
-                                    <Input type="file" id="file" onChange={handleFileChange} required />
-                                </FormGroup>
-                                <HoverSpeakText textToSpeak={loading ? "Uploading..." : "Upload Invoice"}>
-                                    <Button type="submit" color="primary" disabled={loading}>
-                                        {loading ? <Spinner size="sm" /> : "Upload"}
-                                    </Button>
-                                </HoverSpeakText>
-                            </Form>
 
-                            <hr className="my-4" />
-                            <h4 className="mb-3">
-                                <HoverSpeakText>🧾 Uploaded Invoices</HoverSpeakText>
-                                <TTSButton 
-                                    text="This section shows all your uploaded invoices"
-                                    className="ml-2"
-                                    size="sm"
-                                />
-                            </h4>
-
-                            <ListGroup flush>
-                                {uploadedInvoices.length === 0 && (
-                                    <p className="text-muted">
-                                        <HoverSpeakText>No invoices uploaded yet.</HoverSpeakText>
-                                    </p>
-                                )}
-                                {uploadedInvoices.map((invoice) => (
-                                    <ListGroupItem
-                                        key={invoice._id}
-                                        className="d-flex justify-content-between align-items-center"
-                                    >
-                                        <div>
-                                            <HoverSpeakText>
-                                                <strong>{invoice.invoiceName}</strong> ({invoice.invoiceType})
-                                            </HoverSpeakText>
-                                            <br />
-                                            <HoverSpeakText textToSpeak={`View invoice file for ${invoice.invoiceName}`}>
-                                                <a
-                                                    href={`http://localhost:5000/${invoice.filePath}?token=${token}`}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                >
-                                                    View File
-                                                </a>
-                                            </HoverSpeakText>
-                                        </div>
-                                        <HoverSpeakText textToSpeak={`Delete invoice ${invoice.invoiceName}`}>
-                                            <Button
-                                                color="danger"
-                                                size="sm"
-                                                onClick={() => handleDelete(invoice._id)}
-                                            >
-                                                Delete
-                                            </Button>
+                                <Form onSubmit={handleSubmit}>
+                                    <FormGroup>
+                                        <HoverSpeakText textToSpeak="Invoice Name">
+                                            <Label for="invoiceName">Invoice Name</Label>
                                         </HoverSpeakText>
-                                    </ListGroupItem>
-                                ))}
-                            </ListGroup>
+                                        <Input
+                                            type="text"
+                                            id="invoiceName"
+                                            value={invoiceName}
+                                            onChange={(e) => setInvoiceName(e.target.value)}
+                                            required
+                                        />
+                                    </FormGroup>
+                                    <FormGroup>
+                                        <HoverSpeakText textToSpeak="Invoice Type">
+                                            <Label for="invoiceType">Invoice Type</Label>
+                                        </HoverSpeakText>
+                                        <Input
+                                            type="select"
+                                            id="invoiceType"
+                                            value={invoiceType}
+                                            onChange={(e) => setInvoiceType(e.target.value)}
+                                            required
+                                        >
+                                            <option value="sale">Sale</option>
+                                            <option value="purchase">Purchase</option>
+                                        </Input>
+                                    </FormGroup>
+                                    <FormGroup>
+                                        <HoverSpeakText textToSpeak="Upload Invoice PDF or Image">
+                                            <Label for="file">Upload Invoice (PDF/Image)</Label>
+                                        </HoverSpeakText>
+                                        <Input type="file" id="file" onChange={handleFileChange} required />
+                                    </FormGroup>
+                                    <HoverSpeakText textToSpeak={loading ? "Uploading..." : "Upload Invoice"}>
+                                        <Button type="submit" color="primary" disabled={loading}>
+                                            {loading ? <Spinner size="sm" /> : "Upload"}
+                                        </Button>
+                                    </HoverSpeakText>
+                                </Form>
+                            </CardBody>
+                        </Card>
+
+                        <Card className="shadow" id="uploaded-invoices-card">
+                            <CardHeader className="border-0">
+                                <h3 className="mb-0">
+                                    <HoverSpeakText>🧾 Uploaded Invoices</HoverSpeakText>
+                                    <TTSButton
+                                        text="This section shows all your uploaded invoices"
+                                        className="ml-2"
+                                        size="sm"
+                                        elementId="uploaded-invoices-card"
+                                    />
+                                </h3>
+                            </CardHeader>
+                            <CardBody>
+                                <ListGroup flush>
+                                    {uploadedInvoices.length === 0 && (
+                                        <p className="text-muted">
+                                            <HoverSpeakText>No invoices uploaded yet.</HoverSpeakText>
+                                        </p>
+                                    )}
+                                    {uploadedInvoices.map((invoice) => (
+                                        <ListGroupItem
+                                            key={invoice._id}
+                                            className="d-flex justify-content-between align-items-center"
+                                        >
+                                            <div>
+                                                <HoverSpeakText>
+                                                    <strong>{invoice.invoiceName}</strong> ({invoice.invoiceType})
+                                                </HoverSpeakText>
+                                                <br />
+                                                <HoverSpeakText textToSpeak={`View invoice file for ${invoice.invoiceName}`}>
+                                                    <a
+                                                        href={`http://localhost:5000/${invoice.filePath}?token=${token}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                    >
+                                                        View File
+                                                    </a>
+                                                </HoverSpeakText>
+                                            </div>
+                                            <HoverSpeakText textToSpeak={`Delete invoice ${invoice.invoiceName}`}>
+                                                <Button
+                                                    color="danger"
+                                                    size="sm"
+                                                    onClick={() => handleDelete(invoice._id)}
+                                                >
+                                                    Delete
+                                                </Button>
+                                            </HoverSpeakText>
+                                        </ListGroupItem>
+                                    ))}
+                                </ListGroup>
+                            </CardBody>
                         </Card>
                     </Col>
                 </Row>

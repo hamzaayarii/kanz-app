@@ -162,7 +162,7 @@ const InvoiceList = () => {
                     message = error.response.data?.message || `Erreur serveur: ${error.response.status}`;
                 }
             } else if (error.request) {
-                message = 'Le serveur est injoignable. Vérifiez votre connexion ou l’état du serveur.';
+                message = 'Le serveur est injoignable. Vérifiez votre connexion ou l\'état du serveur.';
             }
             setError(message || 'Erreur lors du téléchargement du PDF');
         }
@@ -192,13 +192,13 @@ const InvoiceList = () => {
                     overflow: 'hidden'
                 }}>
                     <div style={{
-                        background: 'linear-gradient(to right, #4facfe, #00f2fe)',
+                        background: 'linear-gradient(to right, #5e72e4, #8965e0)',
                         padding: '30px',
                         color: 'white',
                         borderRadius: '20px 20px 0 0',
                         textAlign: 'center'
                     }}>
-                        <h2 style={{ fontSize: '36px', fontWeight: 'bold', margin: '0' }}>
+                        <h2 style={{ fontSize: '36px', fontWeight: 'bold', margin: '0', color: 'white' }}>
                             <HoverSpeakText>Liste des Factures</HoverSpeakText>
                             {isTTSEnabled && (
                                 <TTSButton
@@ -209,7 +209,7 @@ const InvoiceList = () => {
                                 />
                             )}
                         </h2>
-                        <p style={{ margin: '10px 0 0', fontSize: '18px', opacity: '0.9' }}>
+                        <p style={{ margin: '10px 0 0', fontSize: '18px', opacity: '0.9', color: 'white' }}>
                             <HoverSpeakText>Voir et gérer toutes vos factures</HoverSpeakText>
                         </p>
                     </div>
