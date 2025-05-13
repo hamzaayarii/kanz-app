@@ -17,7 +17,6 @@ import {
     Alert
 } from 'reactstrap';
 import axios from 'axios';
-import Header from "components/Headers/Header.js";
 
 const DailyRevenueList = ({ isAccountantView = false }) => {
     const navigate = useNavigate();
@@ -263,14 +262,13 @@ const DailyRevenueList = ({ isAccountantView = false }) => {
         return anomalies[entryDate] !== undefined;
     };
 
-    if (isLoading && !isAccountantView) {
-        return <div>Loading...</div>;
-    }
+    // if (isLoading && !isAccountantView) { // Commenting out the old top-level loading
+    //     return <div>Loading...</div>;
+    // }
 
     return (
         <>
-            <Header />
-            <Container className="mt--7" fluid>
+            <Container className="mt-4" fluid>
                 {error && (
                     <Row className="mb-3">
                         <Col>
@@ -353,6 +351,10 @@ const DailyRevenueList = ({ isAccountantView = false }) => {
                                     <div className="text-center py-4">
                                         <p>Please select a business owner and business to view daily money flow entries.</p>
                                     </div>
+                                ) : isLoading ? (
+                                    <div className="text-center py-5">
+                                        <p>Loading entries...</p>
+                                    </div>
                                 ) : (
                                     <Table className="align-items-center table-flush" responsive>
                                         <thead className="thead-light">
@@ -370,8 +372,8 @@ const DailyRevenueList = ({ isAccountantView = false }) => {
                                         <tbody>
                                             {entries.length === 0 ? (
                                                 <tr>
-                                                    <td colSpan={isAccountantView ? 7 : 8} className="text-center">
-                                                        No daily money flow entries found
+                                                    <td colSpan={isAccountantView ? 7 : 8} className="text-center py-4">
+                                                        No daily money flow entries found. Try adding a new entry to get started.
                                                     </td>
                                                 </tr>
                                             ) : (

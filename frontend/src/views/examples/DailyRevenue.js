@@ -16,7 +16,6 @@ import {
     Alert
 } from 'reactstrap';
 import axios from 'axios';
-import Header from "components/Headers/Header.js";
 import HoverSpeakText from '../../components/TTS/HoverSpeakText'; // Adjust path as needed
 import TTSButton from '../../components/TTS/TTSButton'; // Adjust path as needed
 import { useTTS } from '../../components/TTS/TTSContext'; // Adjust path as needed
@@ -449,7 +448,6 @@ const DailyRevenue = () => {
 
     return (
         <>
-            <Header />
             {/* Fixed Alert that's always visible */}
             {notification.show && (
                 <div style={fixedAlertStyle} className="fixed-alert-container">
@@ -506,7 +504,7 @@ const DailyRevenue = () => {
                     )}
                 </div>
             )}
-            <Container className="mt--7" fluid>
+            <Container className="mt-4" fluid>
                 <Row>
                     <div className="col">
                         <Card className="shadow">
@@ -529,7 +527,8 @@ const DailyRevenue = () => {
                                     <Col className="text-right" xs="4">
                                         <HoverSpeakText textToSpeak="Back to list">
                                             <Button
-                                                color="secondary"
+                                                outline
+                                                color="primary"
                                                 onClick={() => navigate('/admin/daily-revenue-list')}
                                                 size="sm"
                                             >
@@ -642,7 +641,7 @@ const DailyRevenue = () => {
                                             size="sm"
                                         />
                                     </h5>
-                                    <Row className="mb-3">
+                                    <Row className="mb-3 align-items-center">
                                         <Col md="5">
                                             <HoverSpeakText textToSpeak="Other revenue type">
                                                 <Input
@@ -653,7 +652,7 @@ const DailyRevenue = () => {
                                                 />
                                             </HoverSpeakText>
                                         </Col>
-                                        <Col md="5">
+                                        <Col md="5" className="pl-md-1">
                                             <HoverSpeakText textToSpeak="Other revenue amount">
                                                 <Input
                                                     type="number"
@@ -665,7 +664,7 @@ const DailyRevenue = () => {
                                                 />
                                             </HoverSpeakText>
                                         </Col>
-                                        <Col md="2">
+                                        <Col md="2" className="pl-md-1">
                                             <HoverSpeakText textToSpeak="Add other revenue">
                                                 <Button color="primary" onClick={addOtherRevenue} block>
                                                     Add
@@ -705,7 +704,7 @@ const DailyRevenue = () => {
                                         </Table>
                                     )}
 
-                                    <h4 className="mt-4 mb-3">
+                                    <h4 className="mt-5 mb-3">
                                         <HoverSpeakText>
                                             Expenses
                                         </HoverSpeakText>
@@ -733,7 +732,7 @@ const DailyRevenue = () => {
                                         </Col>
                                     </Row>
 
-                                    <h5 className="mt-4">
+                                    <h5 className="mt-5">
                                         <HoverSpeakText>
                                             Other Expenses
                                         </HoverSpeakText>
@@ -743,7 +742,7 @@ const DailyRevenue = () => {
                                             size="sm"
                                         />
                                     </h5>
-                                    <Row className="mb-3">
+                                    <Row className="mb-3 align-items-center">
                                         <Col md="5">
                                             <HoverSpeakText textToSpeak="Other expense description">
                                                 <Input
@@ -754,7 +753,7 @@ const DailyRevenue = () => {
                                                 />
                                             </HoverSpeakText>
                                         </Col>
-                                        <Col md="5">
+                                        <Col md="5" className="pl-md-1">
                                             <HoverSpeakText textToSpeak="Other expense amount">
                                                 <Input
                                                     type="number"
@@ -766,7 +765,7 @@ const DailyRevenue = () => {
                                                 />
                                             </HoverSpeakText>
                                         </Col>
-                                        <Col md="2">
+                                        <Col md="2" className="pl-md-1">
                                             <HoverSpeakText textToSpeak="Add other expense">
                                                 <Button color="primary" onClick={addOtherExpense} block>
                                                     Add
