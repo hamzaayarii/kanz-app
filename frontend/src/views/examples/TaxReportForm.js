@@ -1,6 +1,6 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import axios from 'axios';
-import { Button, Input, FormGroup, Label, Container, Alert, FormFeedback } from 'reactstrap';
+import { Button, Input, FormGroup, Label, Container, Alert, FormFeedback, Row, Col } from 'reactstrap';
 import debounce from 'lodash/debounce';
 
 // Validation regex patterns
@@ -18,18 +18,110 @@ const ERROR_MESSAGES = {
     futureYear: 'Année future non permise',
 };
 
+// Helper to get role from token (copied from AnomalyDetection.js)
+const getRoleFromToken = () => {
+    try {
+        const token = localStorage.getItem('authToken');
+        if (!token) return null;
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        return payload.role;
+    } catch {
+        return null;
+    }
+};
+
 const TaxReportForm = () => {
     const [income, setIncome] = useState('');
     const [expenses, setExpenses] = useState('');
     const [year, setYear] = useState('');
-    const [formErrors, setFormErrors] = useState({ income: '', expenses: '', year: '' });
+    const [formErrors, setFormErrors] = useState({ income: '', expenses: '', year: '', selectedBusiness: '' });
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
     const [calculatedTax, setCalculatedTax] = useState(null);
     const [loading, setLoading] = useState(false);
 
-    const API_URL = 'http://localhost:5000/api';
+    // State for business selection (copied from AnomalyDetection.js)
+    const [owners, setOwners] = useState([]);
+    const [selectedOwner, setSelectedOwner] = useState("");
+    const [businesses, setBusinesses] = useState([]);
+    const [selectedBusiness, setSelectedBusiness] = useState('');
+    const [currentUserRole, setCurrentUserRole] = useState(null);
+
+    const API_BASE_URL = 'http://localhost:5000';
     const currentYear = new Date().getFullYear();
+
+    // --- Start: Logic copied and adapted from AnomalyDetection.js ---
+    useEffect(() => {
+        setCurrentUserRole(getRoleFromToken());
+        if (getRoleFromToken() === "accountant") {
+            fetchBusinessOwners();
+        } else { // Assuming non-accountant is business_owner for this form's context
+            fetchUserBusinesses();
+        }
+    }, []);
+
+    const fetchBusinessOwners = async () => {
+        try {
+            const token = localStorage.getItem("authToken");
+            const res = await axios.get(`${API_BASE_URL}/api/users/assigned-business-owners`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            setOwners(res.data || []);
+        } catch (err) {
+            setError("Failed to load business owners.");
+        }
+    };
+
+    const fetchBusinessesForOwner = async (ownerId) => {
+        try {
+            const token = localStorage.getItem("authToken");
+            const res = await axios.get(`${API_BASE_URL}/api/business/getUserBusinessesByAccountant?ownerId=${ownerId}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const fetchedBusinesses = res.data.businesses || [];
+            setBusinesses(fetchedBusinesses);
+            if (fetchedBusinesses.length > 0) {
+                setSelectedBusiness(fetchedBusinesses[0]._id);
+            } else {
+                setSelectedBusiness("");
+            }
+        } catch (err) {
+            setError("Failed to load businesses for selected owner.");
+            setBusinesses([]);
+            setSelectedBusiness("");
+        }
+    };
+
+    const fetchUserBusinesses = async () => {
+        try {
+            const token = localStorage.getItem("authToken");
+            const res = await axios.get(`${API_BASE_URL}/api/business/user-businesses`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const fetchedBusinesses = res.data.businesses || res.data || []; // Handle both potential response structures
+            setBusinesses(fetchedBusinesses);
+            if (fetchedBusinesses.length > 0) {
+                setSelectedBusiness(fetchedBusinesses[0]._id);
+            } else {
+                 setSelectedBusiness("");
+            }
+        } catch (err) {
+            setError("Failed to load your businesses.");
+            setBusinesses([]);
+            setSelectedBusiness("");
+        }
+    };
+
+    const handleOwnerChange = (e) => {
+        const ownerId = e.target.value;
+        setSelectedOwner(ownerId);
+        setBusinesses([]); // Clear previous businesses
+        setSelectedBusiness(""); // Clear selected business
+        if (ownerId) {
+            fetchBusinessesForOwner(ownerId);
+        }
+    };
+    // --- End: Logic copied and adapted from AnomalyDetection.js ---
 
     // Validation avancée
     const validateAmount = useCallback((value) => {
@@ -48,8 +140,8 @@ const TaxReportForm = () => {
 
     const debouncedValidate = useCallback(
         debounce((name, value) => {
-            const error = name === 'year' ? validateYear(value) : validateAmount(value);
-            setFormErrors(prev => ({ ...prev, [name]: error }));
+            const errorMsg = name === 'year' ? validateYear(value) : validateAmount(value);
+            setFormErrors(prev => ({ ...prev, [name]: errorMsg }));
         }, 300),
         [validateAmount, validateYear]
     );
@@ -67,41 +159,60 @@ const TaxReportForm = () => {
         setMessage('');
     };
 
-    const validateForm = () => {
-        const errors = {
+    const validateFullForm = () => {
+        const currentFormErrors = {
             income: validateAmount(income),
             expenses: validateAmount(expenses),
             year: validateYear(year)
         };
-        setFormErrors(errors);
-        return Object.values(errors).every(error => !error);
+        setFormErrors(currentFormErrors);
+        
+        if (!selectedBusiness) {
+            setError('Please select a business.');
+            return false;
+        }
+        if (currentUserRole === 'accountant' && !selectedOwner) {
+             setError('Accountants must select a business owner.');
+             return false;
+        }
+
+        return Object.values(currentFormErrors).every(errorMsg => !errorMsg);
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!validateForm()) return;
-
-        setLoading(true);
         setError('');
         setMessage('');
+
+        if (!validateFullForm()) return;
+
+        setLoading(true);
         try {
             const token = localStorage.getItem('authToken');
             if (!token) throw new Error('Authentification requise');
 
+            const payload = {
+                businessId: selectedBusiness,
+                income: Number(income),
+                expenses: Number(expenses),
+                year: Number(year)
+            };
+
             const response = await axios.post(
-                `${API_URL}/taxReports/generate`,
-                { income: Number(income), expenses: Number(expenses), year: Number(year) },
+                `${API_BASE_URL}/api/taxReports/generate`,
+                payload,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
 
-            setMessage(response.data.message);
-            setCalculatedTax(response.data.taxReport.calculatedTax);
+            setMessage(response.data.message || 'Tax report generated successfully!');
+            setCalculatedTax(response.data.taxReport?.calculatedTax);
             setIncome('');
             setExpenses('');
             setYear('');
-            setFormErrors({ income: '', expenses: '', year: '' });
+            setFormErrors({ income: '', expenses: '', year: '', selectedBusiness: '' });
         } catch (err) {
             setError(err.response?.data?.message || err.message || 'Échec de la génération du rapport fiscal');
+            setCalculatedTax(null);
         } finally {
             setLoading(false);
         }
@@ -136,26 +247,12 @@ const TaxReportForm = () => {
 
                 <div style={{ padding: '40px' }}>
                     {error && (
-                        <Alert color="danger" style={{
-                            borderRadius: '10px',
-                            marginBottom: '20px',
-                            fontWeight: '500',
-                            background: 'linear-gradient(to right, #ff6b6b, #ff8787)',
-                            color: 'white',
-                            border: 'none'
-                        }}>
+                        <Alert color="danger" style={{ borderRadius: '10px', marginBottom: '20px', fontWeight: '500', background: 'linear-gradient(to right, #ff6b6b, #ff8787)', color: 'white', border: 'none' }}>
                             {error}
                         </Alert>
                     )}
                     {message && (
-                        <Alert color="success" style={{
-                            borderRadius: '10px',
-                            marginBottom: '20px',
-                            fontWeight: '500',
-                            background: 'linear-gradient(to right, #2ecc71, #27ae60)',
-                            color: 'white',
-                            border: 'none'
-                        }}>
+                        <Alert color="success" style={{ borderRadius: '10px', marginBottom: '20px', fontWeight: '500', background: 'linear-gradient(to right, #2ecc71, #27ae60)', color: 'white', border: 'none' }}>
                             {message}
                             {calculatedTax !== null && (
                                 <div>Taxe calculée (TND) : {calculatedTax.toFixed(2)}</div>
@@ -163,8 +260,49 @@ const TaxReportForm = () => {
                         </Alert>
                     )}
 
+                    {/* Business Selection Dropdowns */}
+                    {currentUserRole === "accountant" && (
+                        <FormGroup>
+                            <Label style={{ fontSize: '14px', color: '#555', fontWeight: '500' }} for="ownerSelect">Select Business Owner</Label>
+                            <Input
+                                type="select"
+                                id="ownerSelect"
+                                value={selectedOwner}
+                                onChange={handleOwnerChange}
+                                style={{ padding: '12px 16px', border: '2px solid #ddd', borderRadius: '8px', fontSize: '16px' }}
+                            >
+                                <option value="">-- Select Owner --</option>
+                                {owners.map((owner) => (
+                                    <option key={owner._id} value={owner._id}>
+                                        {owner.fullName || owner.email}
+                                    </option>
+                                ))}
+                            </Input>
+                        </FormGroup>
+                    )}
+
                     <FormGroup>
-                        <Label style={{ fontSize: '14px', color: '#555', fontWeight: '500' }}>Income(TND)</Label>
+                        <Label style={{ fontSize: '14px', color: '#555', fontWeight: '500' }} for="businessSelect">Select Business</Label>
+                        <Input
+                            type="select"
+                            id="businessSelect"
+                            value={selectedBusiness}
+                            onChange={(e) => setSelectedBusiness(e.target.value)}
+                            disabled={currentUserRole === "accountant" && !selectedOwner && businesses.length === 0}
+                            style={{ padding: '12px 16px', border: '2px solid #ddd', borderRadius: '8px', fontSize: '16px' }}
+                        >
+                            <option value="">-- Select Business --</option>
+                            {businesses.map(business => (
+                                <option key={business._id} value={business._id}>
+                                    {business.name}
+                                </option>
+                            ))}
+                        </Input>
+                         {formErrors.selectedBusiness && <FormFeedback>{formErrors.selectedBusiness}</FormFeedback>}
+                    </FormGroup>
+
+                    <FormGroup>
+                        <Label style={{ fontSize: '14px', color: '#555', fontWeight: '500' }}>Income (TND)</Label>
                         <Input
                             type="number"
                             name="income"
@@ -176,13 +314,7 @@ const TaxReportForm = () => {
                             min="0"
                             step="0.01"
                             placeholder="Enter your income"
-                            style={{
-                                padding: '12px 16px',
-                                border: '2px solid #ddd',
-                                borderRadius: '8px',
-                                fontSize: '16px',
-                                transition: 'border-color 0.3s ease'
-                            }}
+                            style={{ padding: '12px 16px', border: '2px solid #ddd', borderRadius: '8px', fontSize: '16px', transition: 'border-color 0.3s ease' }}
                             onFocus={e => e.target.style.borderColor = '#4facfe'}
                             onBlur={e => e.target.style.borderColor = '#ddd'}
                         />
@@ -190,7 +322,7 @@ const TaxReportForm = () => {
                     </FormGroup>
 
                     <FormGroup>
-                        <Label style={{ fontSize: '14px', color: '#555', fontWeight: '500' }}>Expenses(TND)</Label>
+                        <Label style={{ fontSize: '14px', color: '#555', fontWeight: '500' }}>Expenses (TND)</Label>
                         <Input
                             type="number"
                             name="expenses"
@@ -202,13 +334,7 @@ const TaxReportForm = () => {
                             min="0"
                             step="0.01"
                             placeholder="Enter your expenses"
-                            style={{
-                                padding: '12px 16px',
-                                border: '2px solid #ddd',
-                                borderRadius: '8px',
-                                fontSize: '16px',
-                                transition: 'border-color 0.3s ease'
-                            }}
+                            style={{ padding: '12px 16px', border: '2px solid #ddd', borderRadius: '8px', fontSize: '16px', transition: 'border-color 0.3s ease' }}
                             onFocus={e => e.target.style.borderColor = '#4facfe'}
                             onBlur={e => e.target.style.borderColor = '#ddd'}
                         />
@@ -228,13 +354,7 @@ const TaxReportForm = () => {
                             min="2000"
                             max={currentYear}
                             placeholder="Enter the year"
-                            style={{
-                                padding: '12px 16px',
-                                border: '2px solid #ddd',
-                                borderRadius: '8px',
-                                fontSize: '16px',
-                                transition: 'border-color 0.3s ease'
-                            }}
+                            style={{ padding: '12px 16px', border: '2px solid #ddd', borderRadius: '8px', fontSize: '16px', transition: 'border-color 0.3s ease' }}
                             onFocus={e => e.target.style.borderColor = '#4facfe'}
                             onBlur={e => e.target.style.borderColor = '#ddd'}
                         />
@@ -243,7 +363,7 @@ const TaxReportForm = () => {
 
                     <Button
                         onClick={handleSubmit}
-                        disabled={loading || Object.values(formErrors).some(err => !!err)}
+                        disabled={loading || Object.values(formErrors).some(err => !!err) || !selectedBusiness}
                         style={{
                             background: 'linear-gradient(to right, #2ecc71, #27ae60)',
                             color: 'white',
@@ -256,7 +376,7 @@ const TaxReportForm = () => {
                             transition: 'transform 0.3s ease, box-shadow 0.3s ease',
                             boxShadow: '0 4px 15px rgba(46, 204, 113, 0.4)',
                             display: 'block',
-                            margin: '0 auto'
+                            margin: '20px auto 0'
                         }}
                         onMouseEnter={e => e.target.style.transform = 'scale(1.05)'}
                         onMouseLeave={e => e.target.style.transform = 'scale(1)'}

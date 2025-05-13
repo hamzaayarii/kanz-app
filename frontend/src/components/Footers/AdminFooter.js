@@ -25,7 +25,10 @@ const Footer = () => {
     <footer className="footer">
       <Row className="align-items-center justify-content-center">
         <Col xl="12">
-          <div className="copyright text-center text-muted">
+          <div 
+            className="copyright text-center text-muted"
+            style={{ fontSize: '0.9rem' }}
+          >
             © {new Date().getFullYear()}{" "}
             <a
               className="font-weight-bold ml-1"
