@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo, useCallback } from "react";
 import axios from "axios";
-import { Card, Container, Row, Button, Form, FormGroup, Label, Input, Table } from "reactstrap";
+import { Card, Container, Row, Button, Form, FormGroup, Label, Input, Table, Col, CardHeader, CardBody } from "reactstrap";
 import { useNavigate } from "react-router-dom";
 import debounce from "lodash/debounce";
 import HoverSpeakText from '../../components/TTS/HoverSpeakText'; // Adjust path as needed
@@ -284,228 +284,246 @@ const Expenses = () => {
   );
 
   return (
-    <Container className="mt-5">
-      <Row className="justify-content-center">
-        <Card className="shadow p-4" id="expenses-container">
-          <h3>
-            <HoverSpeakText>Manage Expenses</HoverSpeakText>
-            {isTTSEnabled && (
-              <TTSButton 
-                elementId="expenses-container"
-                className="ml-2"
-                size="sm"
-                label="Read all expenses information"
+    <Container className="mt-4" fluid>
+      <Row>
+        <Col>
+          <Card className="shadow" id="expenses-container">
+            <CardHeader className="border-0">
+              <Row className="align-items-center justify-content-between">
+                <Col md="auto">
+                  <h3 className="mb-0">
+                    <HoverSpeakText>Manage Expenses</HoverSpeakText>
+                    {isTTSEnabled && (
+                      <TTSButton 
+                        elementId="expenses-container"
+                        className="ml-2"
+                        size="sm"
+                        label="Read all expenses information"
+                      />
+                    )}
+                  </h3>
+                </Col>
+                <Col md="auto">
+                  <Row className="align-items-center">
+                    <Col xs="auto" className="pr-2">
+                        <FormGroup className="mb-0">
+                        <HoverSpeakText textToSpeak="Select Business">
+                          <Input
+                            type="select"
+                            bsSize="sm"
+                            value={selectedBusiness}
+                            onChange={(e) => setSelectedBusiness(e.target.value)}
+                          >
+                            {data.businesses.map((biz) => (
+                              <option key={biz._id} value={biz._id}>
+                                {biz.name}
+                              </option>
+                            ))}
+                          </Input>
+                        </HoverSpeakText>
+                      </FormGroup>
+                    </Col>
+                    <Col xs="auto">
+                      <HoverSpeakText textToSpeak={form.isVisible ? "Hide expense form" : "Add new expense"}>
+                        <Button color="primary" size="sm" onClick={() => setForm((prev) => ({ ...prev, isVisible: !prev.isVisible }))}>
+                          {form.isVisible ? "Hide Form" : "Add Expense"}
+                        </Button>
+                      </HoverSpeakText>
+                    </Col>
+                  </Row>
+                </Col>
+              </Row>
+            </CardHeader>
+            <CardBody>
+              <ExpenseForm
+                isVisible={form.isVisible}
+                formData={form.data}
+                errors={form.errors}
+                categories={data.categories}
+                onSubmit={handleSubmit}
+                onChange={handleChange}
+                onCancel={() =>
+                  setForm({
+                    isVisible: false,
+                    editingExpense: null,
+                    data: { business: "", category: "", date: "", amount: "", tax: "", vendor: "", reference: "", description: "" },
+                    errors: {},
+                  })
+                }
+                editingExpense={form.editingExpense}
               />
-            )}
-          </h3>
-          <FormGroup>
-            <HoverSpeakText textToSpeak="Select Business">
-              <Label>Select Business</Label>
-            </HoverSpeakText>
-            <Input
-              type="select"
-              value={selectedBusiness}
-              onChange={(e) => setSelectedBusiness(e.target.value)}
-            >
-              {data.businesses.map((biz) => (
-                <option key={biz._id} value={biz._id}>
-                  {biz.name}
-                </option>
-              ))}
-            </Input>
-          </FormGroup>
-          <HoverSpeakText textToSpeak={form.isVisible ? "Hide expense form" : "Add new expense"}>
-            <Button color="primary" onClick={() => setForm((prev) => ({ ...prev, isVisible: !prev.isVisible }))}>
-              {form.isVisible ? "Hide Form" : "Add Expense"}
-            </Button>
-          </HoverSpeakText>
-          
-          <ExpenseForm
-            isVisible={form.isVisible}
-            formData={form.data}
-            errors={form.errors}
-            categories={data.categories}
-            onSubmit={handleSubmit}
-            onChange={handleChange}
-            onCancel={() =>
-              setForm({
-                isVisible: false,
-                editingExpense: null,
-                data: { business: "", category: "", date: "", amount: "", tax: "", vendor: "", reference: "", description: "" },
-                errors: {},
-              })
-            }
-            editingExpense={form.editingExpense}
-          />
-          
-          <hr />
-          <h4>
-            <HoverSpeakText>Normal Expenses</HoverSpeakText>
-            <TTSButton 
-              text="This table shows all your normal expenses by category, date, amount, and vendor information"
-              className="ml-2"
-              size="sm"
-            />
-          </h4>
-          <Table bordered responsive>
-            <thead>
-              <tr>
-                {['Category', 'Date', 'Amount', 'Tax', 'Vendor', 'Reference', 'Description', 'Actions'].map((header) => (
-                  <th key={header}>
-                    <HoverSpeakText>{header}</HoverSpeakText>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {data.expenses.length > 0 ? (
-                data.expenses.map((expense) => (
-                  <tr key={expense._id}>
-                    <td><HoverSpeakText>{getCategoryName(expense.category)}</HoverSpeakText></td>
-                    <td><HoverSpeakText>{new Date(expense.date).toLocaleDateString()}</HoverSpeakText></td>
-                    <td><HoverSpeakText>${expense.amount}</HoverSpeakText></td>
-                    <td><HoverSpeakText>${expense.tax}</HoverSpeakText></td>
-                    <td><HoverSpeakText>{expense.vendor}</HoverSpeakText></td>
-                    <td><HoverSpeakText>{expense.reference}</HoverSpeakText></td>
-                    <td><HoverSpeakText>{expense.description}</HoverSpeakText></td>
-                    <td>
-                      <HoverSpeakText textToSpeak={`Edit ${getCategoryName(expense.category)} expense`}>
-                        <Button color="warning" size="sm" onClick={() => handleEdit(expense)}>
-                          Edit
-                        </Button>
-                      </HoverSpeakText>
-                      <HoverSpeakText textToSpeak={`Delete ${getCategoryName(expense.category)} expense`}>
-                        <Button color="danger" size="sm" className="ml-2" onClick={() => handleDelete(expense._id)}>
-                          Delete
-                        </Button>
-                      </HoverSpeakText>
-                    </td>
+              
+              {form.isVisible && <hr />}
+
+              <h4>
+                <HoverSpeakText>Normal Expenses</HoverSpeakText>
+                <TTSButton 
+                  text="This table shows all your normal expenses by category, date, amount, and vendor information"
+                  className="ml-2"
+                  size="sm"
+                />
+              </h4>
+              <Table bordered responsive>
+                <thead>
+                  <tr>
+                    {['Category', 'Date', 'Amount', 'Tax', 'Vendor', 'Reference', 'Description', 'Actions'].map((header) => (
+                      <th key={header}>
+                        <HoverSpeakText>{header}</HoverSpeakText>
+                      </th>
+                    ))}
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="8" className="text-center">
-                    <HoverSpeakText>No expenses found</HoverSpeakText>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </Table>
-          
-          <hr />
-          <h4>
-            <HoverSpeakText>Daily Expenses</HoverSpeakText>
-            <TTSButton 
-              text="This table shows your daily expenses summary"
-              className="ml-2"
-              size="sm"
-            />
-          </h4>
-          <Table bordered responsive>
-            <thead>
-              <tr>
-                {['Date', 'Amount', 'Notes'].map((header) => (
-                  <th key={header}>
-                    <HoverSpeakText>{header}</HoverSpeakText>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {data.dailyExpenses.length > 0 ? (
-                data.dailyExpenses.map((expense) => (
-                  <tr key={expense._id}>
-                    <td><HoverSpeakText>{new Date(expense.date).toLocaleDateString()}</HoverSpeakText></td>
-                    <td><HoverSpeakText>${expense.summary?.totalExpenses || 0}</HoverSpeakText></td>
-                    <td><HoverSpeakText>{expense.notes}</HoverSpeakText></td>
+                </thead>
+                <tbody>
+                  {data.expenses.length > 0 ? (
+                    data.expenses.map((expense) => (
+                      <tr key={expense._id}>
+                        <td><HoverSpeakText>{getCategoryName(expense.category)}</HoverSpeakText></td>
+                        <td><HoverSpeakText>{new Date(expense.date).toLocaleDateString()}</HoverSpeakText></td>
+                        <td><HoverSpeakText>${expense.amount}</HoverSpeakText></td>
+                        <td><HoverSpeakText>${expense.tax}</HoverSpeakText></td>
+                        <td><HoverSpeakText>{expense.vendor}</HoverSpeakText></td>
+                        <td><HoverSpeakText>{expense.reference}</HoverSpeakText></td>
+                        <td><HoverSpeakText>{expense.description}</HoverSpeakText></td>
+                        <td>
+                          <HoverSpeakText textToSpeak={`Edit ${getCategoryName(expense.category)} expense`}>
+                            <Button color="warning" size="sm" onClick={() => handleEdit(expense)}>
+                              Edit
+                            </Button>
+                          </HoverSpeakText>
+                          <HoverSpeakText textToSpeak={`Delete ${getCategoryName(expense.category)} expense`}>
+                            <Button color="danger" size="sm" className="ml-2" onClick={() => handleDelete(expense._id)}>
+                              Delete
+                            </Button>
+                          </HoverSpeakText>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="8" className="text-center">
+                        <HoverSpeakText>No expenses found</HoverSpeakText>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </Table>
+              
+              <hr />
+              <h4>
+                <HoverSpeakText>Daily Expenses</HoverSpeakText>
+                <TTSButton 
+                  text="This table shows your daily expenses summary"
+                  className="ml-2"
+                  size="sm"
+                />
+              </h4>
+              <Table bordered responsive>
+                <thead>
+                  <tr>
+                    {['Date', 'Amount', 'Notes'].map((header) => (
+                      <th key={header}>
+                        <HoverSpeakText>{header}</HoverSpeakText>
+                      </th>
+                    ))}
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="3" className="text-center">
-                    <HoverSpeakText>No daily expenses found</HoverSpeakText>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </Table>
-          
-          <hr />
-          <h4>
-            <HoverSpeakText>Tax Report Expenses</HoverSpeakText>
-            <TTSButton 
-              text="This table shows your tax report expenses by year"
-              className="ml-2"
-              size="sm"
-            />
-          </h4>
-          <Table bordered responsive>
-            <thead>
-              <tr>
-                {['Year', 'Amount', 'Status'].map((header) => (
-                  <th key={header}>
-                    <HoverSpeakText>{header}</HoverSpeakText>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {data.taxReportExpenses.length > 0 ? (
-                data.taxReportExpenses.map((expense) => (
-                  <tr key={expense._id}>
-                    <td><HoverSpeakText>{expense.year}</HoverSpeakText></td>
-                    <td><HoverSpeakText>${expense.expenses}</HoverSpeakText></td>
-                    <td><HoverSpeakText>{expense.status}</HoverSpeakText></td>
+                </thead>
+                <tbody>
+                  {data.dailyExpenses.length > 0 ? (
+                    data.dailyExpenses.map((expense) => (
+                      <tr key={expense._id}>
+                        <td><HoverSpeakText>{new Date(expense.date).toLocaleDateString()}</HoverSpeakText></td>
+                        <td><HoverSpeakText>${expense.summary?.totalExpenses || 0}</HoverSpeakText></td>
+                        <td><HoverSpeakText>{expense.notes}</HoverSpeakText></td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="3" className="text-center">
+                        <HoverSpeakText>No daily expenses found</HoverSpeakText>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </Table>
+              
+              <hr />
+              <h4>
+                <HoverSpeakText>Tax Report Expenses</HoverSpeakText>
+                <TTSButton 
+                  text="This table shows your tax report expenses by year"
+                  className="ml-2"
+                  size="sm"
+                />
+              </h4>
+              <Table bordered responsive>
+                <thead>
+                  <tr>
+                    {['Year', 'Amount', 'Status'].map((header) => (
+                      <th key={header}>
+                        <HoverSpeakText>{header}</HoverSpeakText>
+                      </th>
+                    ))}
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="3" className="text-center">
-                    <HoverSpeakText>No tax report expenses found</HoverSpeakText>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </Table>
-          
-          <hr />
-          <h4>
-            <HoverSpeakText>Summary</HoverSpeakText>
-            <TTSButton 
-              text="This section shows the total amounts for all expense categories"
-              className="ml-2"
-              size="sm"
-            />
-          </h4>
-          <Table bordered>
-            <tbody>
-              {[
-                { label: "Normal Expenses Total", value: data.totalExpenses.normaltotalExpenses },
-                { label: "Daily Expenses Total", value: data.totalExpenses.dailytotalExpenses },
-                { label: "Tax Report Expenses Total", value: data.totalExpenses.taxtotalExpenses },
-                { label: "All Expenses Total", value: data.totalExpenses.totalExpenses }
-              ].map((item) => (
-                <tr key={item.label}>
-                  <td>
-                    <HoverSpeakText>
-                      <strong>{item.label}</strong>
-                    </HoverSpeakText>
-                  </td>
-                  <td>
-                    <HoverSpeakText>${item.value}</HoverSpeakText>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </Table>
-          
-          <hr />
-          <HoverSpeakText textToSpeak="Generate expense report">
-            <Button color="success" size="m" onClick={() => generateExpenseReport(selectedBusiness)}>
-              Generate Expense Report
-            </Button>
-          </HoverSpeakText>
-        </Card>
+                </thead>
+                <tbody>
+                  {data.taxReportExpenses.length > 0 ? (
+                    data.taxReportExpenses.map((expense) => (
+                      <tr key={expense._id}>
+                        <td><HoverSpeakText>{expense.year}</HoverSpeakText></td>
+                        <td><HoverSpeakText>${expense.expenses}</HoverSpeakText></td>
+                        <td><HoverSpeakText>{expense.status}</HoverSpeakText></td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="3" className="text-center">
+                        <HoverSpeakText>No tax report expenses found</HoverSpeakText>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </Table>
+              
+              <hr />
+              <h4>
+                <HoverSpeakText>Summary</HoverSpeakText>
+                <TTSButton 
+                  text="This section shows the total amounts for all expense categories"
+                  className="ml-2"
+                  size="sm"
+                />
+              </h4>
+              <Table bordered>
+                <tbody>
+                  {[
+                    { label: "Normal Expenses Total", value: data.totalExpenses.normaltotalExpenses },
+                    { label: "Daily Expenses Total", value: data.totalExpenses.dailytotalExpenses },
+                    { label: "Tax Report Expenses Total", value: data.totalExpenses.taxtotalExpenses },
+                    { label: "All Expenses Total", value: data.totalExpenses.totalExpenses }
+                  ].map((item) => (
+                    <tr key={item.label}>
+                      <td>
+                        <HoverSpeakText>
+                          <strong>{item.label}</strong>
+                        </HoverSpeakText>
+                      </td>
+                      <td>
+                        <HoverSpeakText>${item.value}</HoverSpeakText>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+              
+              <hr />
+              <HoverSpeakText textToSpeak="Generate expense report">
+                <Button color="success" size="m" onClick={() => generateExpenseReport(selectedBusiness)}>
+                  Generate Expense Report
+                </Button>
+              </HoverSpeakText>
+            </CardBody>
+          </Card>
+        </Col>
       </Row>
     </Container>
   );

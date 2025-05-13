@@ -85,12 +85,12 @@ const PredictCashFlow = () => {
     };
 
     return (
-        <Container className="mt--7" fluid>
-            <Row className="justify-content-center">
-                <Col xl="8">
-                    <Card className="bg-gradient-default shadow">
-                        <CardHeader className="bg-transparent">
-                            <h2 className="text-white mb-0">Cashflow Forecast</h2>
+        <Container className="mt-4" fluid>
+            <Row>
+                <Col>
+                    <Card className="shadow">
+                        <CardHeader className="border-0">
+                            <h2 className="mb-0">Cashflow Forecast</h2>
                         </CardHeader>
                         <CardBody>
                             {error && (
@@ -98,7 +98,7 @@ const PredictCashFlow = () => {
                             )}
 
                             <FormGroup>
-                                <Label for="business-select" className="text-white">Choose a business:</Label>
+                                <Label for="business-select">Choose a business:</Label>
                                 <Input
                                     type="select"
                                     id="business-select"
@@ -124,7 +124,7 @@ const PredictCashFlow = () => {
 
                             {forecastData && (
                                 <div className="mt-5">
-                                    <h3 className="text-white">
+                                    <h3>
                                         Forecast for: {businesses.find(b => b._id === selectedBusinessId)?.name || 'Selected Business'}
                                     </h3>
                                     <div className="chart mt-4">
@@ -176,8 +176,8 @@ const PredictCashFlow = () => {
 
                                     {forecastData.alerts?.length > 0 && (
                                         <div className="mt-4">
-                                            <h4 className="text-white">Alerts</h4>
-                                            <ul className="text-white">
+                                            <h4>Alerts</h4>
+                                            <ul>
                                                 {forecastData.alerts.map(alert => (
                                                     <li key={alert.date}>
                                                         <strong>{alert.type}</strong> on <strong>{alert.date}</strong>:{" "}
