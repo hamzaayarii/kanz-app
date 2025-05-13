@@ -194,9 +194,10 @@ const routes = [
   {
     path: '/notifications',
     name: 'notifications',
+    icon: 'ni ni-bell-55 text-yellow',
     component: <AuthRoute><Notifications /></AuthRoute>,
     layout: '/admin',
-   
+    category: 'Overview',
     showInSidebar: isUserBusinessOwner,
   },
   {

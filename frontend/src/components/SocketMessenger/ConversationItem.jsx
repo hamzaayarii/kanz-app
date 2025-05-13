@@ -35,7 +35,7 @@ const ConversationItem = ({ conversation, selectContact }) => {
           <img
             src={participant.avatar}
             className="rounded-circle"
-            alt={participant.fullName || participant.name || 'User'}
+            alt={participant.fullName || participant.name || participant.email || participant.username || 'User'}
             style={{ width: '48px', height: '48px', objectFit: 'cover' }}
           />
         ) : (
@@ -50,7 +50,7 @@ const ConversationItem = ({ conversation, selectContact }) => {
               fontWeight: 'bold'
             }}
           >
-            {(participant.fullName?.charAt(0) || participant.name?.charAt(0) || '?').toUpperCase()}
+            {(participant.fullName?.charAt(0) || participant.name?.charAt(0) || participant.email?.charAt(0) || participant.username?.charAt(0) || '?').toUpperCase()}
           </div>
         )}
         {/* Online status dot */}
@@ -73,7 +73,7 @@ const ConversationItem = ({ conversation, selectContact }) => {
       <div style={{ flex: 1 }}>
         <div className="d-flex justify-content-between">
           <div style={{ fontWeight: '500', fontSize: '14px' }}>
-            {participant.fullName || participant.name || 'Unknown'}
+            {participant.fullName || participant.name || participant.email || participant.username || 'Unknown'}
           </div>
           <small style={{ color: '#666666', fontSize: '12px' }}>
             {formatMessageDate(lastMessage?.createdAt)}

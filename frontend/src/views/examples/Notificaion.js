@@ -310,6 +310,7 @@ const Notifications = () => {
                               </div>
                             </Col>
                             <Col xs="12" md="4" className="text-md-right mt-2 mt-md-0">
+                              {/* View button removed based on user request
                               {notification.url && (
                                 <Button
                                   color="primary"
@@ -321,6 +322,7 @@ const Notifications = () => {
                                   View
                                 </Button>
                               )}
+                              */}
                               <Button
                                 color="danger"
                                 size="sm"
