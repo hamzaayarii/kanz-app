@@ -106,7 +106,7 @@ const routes = [
   {
     path: '/financial-calendar',
     name: 'financial-calendar',
-    icon: 'ni ni-money-coins text-success',
+    icon: 'ni ni-money-coins text-purple',
     description: 'Track your daily revenue flow',
     component: (
       <AuthRoute>
@@ -202,7 +202,7 @@ const routes = [
   {
     path: '/predictCashFlow',
     name: 'Cash FLow Prediction',
-    icon: 'ni ni-credit-card text-red',
+    icon: 'ni ni-chart-bar-32 text-success',
     description: 'Predict Cash Flow',
     component: <AuthRoute><PredictCashFlow /></AuthRoute>,
     layout: '/admin',
@@ -243,7 +243,7 @@ const routes = [
   {
     path: '/financial-statements',
     name: 'Financial Reports',
-    icon: 'ni ni-chart-bar-32 text-purple',
+    icon: 'ni ni-bullet-list-67 text-purple',
     description: 'Detailed financial insights',
     component: <BusinessOwnerRoute><FinancialStatements /></BusinessOwnerRoute>,
     layout: '/admin',
@@ -265,7 +265,7 @@ const routes = [
   {
     path: '/treasury',
     name: 'Treasury',
-    icon: 'ni ni-chart-bar-32 text-purple',
+    icon: 'ni ni-money-coins text-blue',
     description: 'Detailed financial insights',
     component: <AuthRoute><ManualTreasuryDashboard /></AuthRoute>,
     layout: '/admin',
