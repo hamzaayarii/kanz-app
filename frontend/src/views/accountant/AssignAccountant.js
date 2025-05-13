@@ -457,8 +457,8 @@ const AssignAccountant = () => {
                     <Paper 
                       elevation={0} 
                       sx={{ 
-                        bgcolor: 'warning.light', 
-                        color: 'warning.contrastText',
+                        bgcolor: '#5e72e4', 
+                        color: 'white',
                         p: 2,
                         borderRadius: '8px'
                       }}

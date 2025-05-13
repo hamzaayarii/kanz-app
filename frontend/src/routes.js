@@ -248,7 +248,7 @@ const routes = [
     component: <BusinessOwnerRoute><FinancialStatements /></BusinessOwnerRoute>,
     layout: '/admin',
     category: 'Finance',
-    showInSidebar: true,
+    showInSidebar: isUserBusinessOwner,
   },
 
   {

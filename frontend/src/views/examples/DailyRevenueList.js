@@ -269,69 +269,15 @@ const DailyRevenueList = ({ isAccountantView = false }) => {
     return (
         <>
             <Container className="mt-4" fluid>
-                {error && (
-                    <Row className="mb-3">
-                        <Col>
-                            <Alert color="danger" toggle={() => setError('')}>
-                                {error}
-                            </Alert>
-                        </Col>
-                    </Row>
-                )}
-                
-                {isAccountantView && (
-                    <Row className="mb-3">
-                        <Col lg="6">
-                            <Card className="shadow">
-                                <CardBody>
-                                    <FormGroup>
-                                        <Label for="ownerId">Select Business Owner</Label>
-                                        <Input
-                                            type="select"
-                                            id="ownerId"
-                                            value={selectedOwner}
-                                            onChange={e => setSelectedOwner(e.target.value)}
-                                        >
-                                            <option value="">-- Select Owner --</option>
-                                            {owners.map(owner => (
-                                                <option key={owner._id} value={owner._id}>
-                                                    {owner.fullName || owner.email}
-                                                </option>
-                                            ))}
-                                        </Input>
-                                    </FormGroup>
-                                    
-                                    {selectedOwner && (
-                                        <FormGroup>
-                                            <Label for="businessId">Select Business</Label>
-                                            <Input
-                                                type="select"
-                                                id="businessId"
-                                                value={selectedBusiness}
-                                                onChange={e => setSelectedBusiness(e.target.value)}
-                                            >
-                                                <option value="">-- Select Business --</option>
-                                                {businesses.map(business => (
-                                                    <option key={business._id} value={business._id}>
-                                                        {business.name}
-                                                    </option>
-                                                ))}
-                                            </Input>
-                                        </FormGroup>
-                                    )}
-                                </CardBody>
-                            </Card>
-                        </Col>
-                    </Row>
-                )}
-                
                 <Row>
-                    <div className="col">
+                    <Col>
                         <Card className="shadow">
                             <CardHeader className="border-0">
                                 <Row className="align-items-center">
-                                    <Col xs="8">
-                                        <h3 className="mb-0">Daily Money Flow History</h3>
+                                    <Col xs={isAccountantView ? "12" : "8"}>
+                                        <h3 className="mb-0">
+                                            {isAccountantView ? "Client Money Flow History" : "Daily Money Flow History"}
+                                        </h3>
                                     </Col>
                                     {!isAccountantView && (
                                         <Col className="text-right" xs="4">
@@ -347,9 +293,71 @@ const DailyRevenueList = ({ isAccountantView = false }) => {
                                 </Row>
                             </CardHeader>
                             <CardBody>
-                                {(isAccountantView && !selectedBusiness) ? (
+                                {error && (
+                                    <Alert color="danger" toggle={() => setError('')} className="mb-3">
+                                        {error}
+                                    </Alert>
+                                )}
+                                
+                                {isAccountantView && (
+                                    <>
+                                        <Row className="mb-3">
+                                            <Col md="6">
+                                                <FormGroup>
+                                                    <Label for="ownerId">Select Business Owner</Label>
+                                                    <Input
+                                                        type="select"
+                                                        id="ownerId"
+                                                        value={selectedOwner}
+                                                        onChange={e => setSelectedOwner(e.target.value)}
+                                                        bsSize="sm"
+                                                    >
+                                                        <option value="">-- Select Owner --</option>
+                                                        {owners.map(owner => (
+                                                            <option key={owner._id} value={owner._id}>
+                                                                {owner.fullName || owner.email}
+                                                            </option>
+                                                        ))}
+                                                    </Input>
+                                                </FormGroup>
+                                            </Col>
+                                            {selectedOwner && (
+                                                <Col md="6">
+                                                    <FormGroup>
+                                                        <Label for="businessId">Select Business</Label>
+                                                        <Input
+                                                            type="select"
+                                                            id="businessId"
+                                                            value={selectedBusiness}
+                                                            onChange={e => setSelectedBusiness(e.target.value)}
+                                                            bsSize="sm"
+                                                        >
+                                                            <option value="">-- Select Business --</option>
+                                                            {businesses.map(business => (
+                                                                <option key={business._id} value={business._id}>
+                                                                    {business.name}
+                                                                </option>
+                                                            ))}
+                                                        </Input>
+                                                    </FormGroup>
+                                                </Col>
+                                            )}
+                                        </Row>
+                                        <hr className="my-3" />
+                                    </>
+                                )}
+                                
+                                {(isAccountantView && !selectedOwner && !selectedBusiness) ? (
                                     <div className="text-center py-4">
-                                        <p>Please select a business owner and business to view daily money flow entries.</p>
+                                        <p>Please select a business owner to see available businesses.</p>
+                                    </div>
+                                ) : (isAccountantView && selectedOwner && !selectedBusiness && businesses.length === 0 && !isLoading) ? (
+                                     <div className="text-center py-4">
+                                        <p>No businesses found for the selected owner, or you may not have access to their businesses.</p>
+                                    </div>
+                                ) : (isAccountantView && selectedOwner && !selectedBusiness && businesses.length > 0) ? ( 
+                                     <div className="text-center py-4">
+                                        <p>Please select a business to view daily money flow entries.</p>
                                     </div>
                                 ) : isLoading ? (
                                     <div className="text-center py-5">
@@ -452,7 +460,7 @@ const DailyRevenueList = ({ isAccountantView = false }) => {
                                 )}
                             </CardBody>
                         </Card>
-                    </div>
+                    </Col>
                 </Row>
             </Container>
         </>

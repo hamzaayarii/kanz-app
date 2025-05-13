@@ -19,7 +19,6 @@ import {
   Badge,
   FormFeedback
 } from 'reactstrap';
-import Header from 'components/Headers/Header.js';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -367,8 +366,7 @@ const IncomeStatement = () => {
 
   return (
     <>
-      <Header />
-      <Container className="mt--7" fluid>
+      <Container className="mt-4" fluid>
         <Row>
           <Col className="order-xl-1 mb-5 mb-xl-0" xl="12">
             <Card className="bg-secondary shadow">

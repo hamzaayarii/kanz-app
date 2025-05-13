@@ -7,7 +7,8 @@ import {
   Box,
   Avatar,
   Snackbar,
-  Alert
+  Alert,
+  CardHeader
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import axios from "axios";
@@ -57,13 +58,10 @@ const AccountantBusinessOwners = () => {
   ];
 
   return (
-    <div className="px-8 py-6">
+    <div className="px-8 py-6 mt-6">
       <Card className="shadow-md">
+        <CardHeader title="My Assigned Business Owners" />
         <CardContent>
-          <Typography variant="h5" gutterBottom>
-            My Assigned Business Owners
-          </Typography>
-
           {loading ? (
             <Box className="flex justify-center my-6">
               <CircularProgress />
@@ -71,15 +69,35 @@ const AccountantBusinessOwners = () => {
           ) : businessOwners.length === 0 ? (
             <Typography color="text.secondary">No assigned business owners found.</Typography>
           ) : (
-            <Box className="mt-6" style={{ height: 400, width: "100%" }}>
+            <Box className="mt-6" style={{ height: 450, width: "100%" }}>
               <DataGrid
                 rows={businessOwners}
                 getRowId={(row) => row._id}
                 columns={columns}
-                pageSize={5}
-                rowsPerPageOptions={[5]}
+                initialState={{
+                  pagination: {
+                    paginationModel: { pageSize: 5, page: 0 },
+                  },
+                }}
+                pageSizeOptions={[5, 10, 25]}
                 disableRowSelectionOnClick
-                sx={{ fontFamily: "inherit" }}
+                sx={{
+                  fontFamily: "inherit",
+                  border: 0,
+                  '& .MuiDataGrid-columnHeaders': {
+                    backgroundColor: 'grey.100',
+                    fontWeight: 'bold',
+                  },
+                  '& .MuiDataGrid-row:nth-of-type(odd)': {
+                    backgroundColor: 'grey.50',
+                  },
+                  '& .MuiDataGrid-cell': {
+                    borderBottom: '1px solid rgba(224, 224, 224, 1)',
+                  },
+                  '& .MuiDataGrid-footerContainer': {
+                     borderTop: '1px solid rgba(224, 224, 224, 1)',
+                  },
+                }}
               />
             </Box>
           )}

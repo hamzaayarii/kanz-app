@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Button, Card, CardHeader, CardBody, FormGroup, Form, Input, Container, Row, Col } from "reactstrap";
-import UserHeader from "components/Headers/UserHeader.js";
+// import UserHeader from "components/Headers/UserHeader.js"; // Removed
 import AdminNavbar from "components/Navbars/AdminNavbar.js";
 import axios from "axios";
 import {jwtDecode} from 'jwt-decode';
@@ -202,25 +202,55 @@ const Profile = () => {
   return (
       <>
       
-        <UserHeader userName={user.fullName} profilePicture={user.avatar} />
-        <Container className="mt--7" fluid>
+        {/* <UserHeader userName={user.fullName} profilePicture={user.avatar} /> */} {/* Removed */}
+        <Container className="mt-4" fluid> {/* Changed from mt--7 */}
           <Row>
             <Col className="order-xl-1" xl="8">
-              <Card className="bg-secondary shadow">
+              <Card className="shadow"> {/* Removed bg-secondary */}
                 <CardHeader className="bg-white border-0">
                   <Row className="align-items-center">
-                    <Col xs="8">
+                    <Col xs="12"> {/* Changed from xs="8" to occupy full width */}
                       <h3 className="mb-0">My Account</h3>
                     </Col>
-                    <Col className="text-right" xs="4">
-                      <Button color="primary" onClick={handleSubmit} size="sm">
-                        Save Changes
-                      </Button>
-                    </Col>
+                    {/* "Save Changes" Button removed from here */}
                   </Row>
                 </CardHeader>
                 <CardBody>
                   <Form onSubmit={handleSubmit}>
+                    {/* New Profile Picture and Name Section */}
+                    <div className="pl-lg-4">
+                      <Row className="align-items-center mb-4">
+                        <Col md="4" className="text-center">
+                          {user.avatar ? (
+                            <img
+                              alt="Profile"
+                              src={user.avatar}
+                              style={{ width: "150px", height: "150px", borderRadius: "50%", objectFit: "cover", marginBottom: "10px" }}
+                            />
+                          ) : (
+                            <div 
+                              style={{ width: "150px", height: "150px", borderRadius: "50%", backgroundColor: "#e9ecef", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "10px", margin: "0 auto" }}
+                            >
+                              <i className="ni ni-single-02" style={{ fontSize: "4rem", color: "#adb5bd" }}></i>
+                            </div>
+                          )}
+                          <Input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleProfilePicChange}
+                            className="mt-2"
+                            bsSize="sm"
+                          />
+                        </Col>
+                        <Col md="8">
+                          <h3 className="mb-0">{user.fullName}</h3>
+                          <p className="text-muted">{user.email}</p>
+                        </Col>
+                      </Row>
+                    </div>
+                    
+                    <hr className="my-4" /> 
+
                     <h6 className="heading-small text-muted mb-4">User Information</h6>
                     <div className="pl-lg-4">
                       <Row>
@@ -355,21 +385,15 @@ const Profile = () => {
                           </FormGroup>
                         </Col>
                       </Row>
-
-                      {/* Profile Picture Upload */}
+                    </div>
+                    <hr className="my-4" />
+                    {/* Save Changes Button moved here */}
+                    <div className="pl-lg-4">
                       <Row>
-                        <Col lg="6">
-                          <FormGroup>
-                            <label className="form-control-label">Profile Picture</label>
-                            <Input
-                                type="file"
-                                accept="image/*"
-                                onChange={handleProfilePicChange}
-                            />
-                            {user.avatar && (
-                                <img src={user.avatar} alt="Profile" width="100px" />
-                            )}
-                          </FormGroup>
+                        <Col className="text-right">
+                          <Button color="primary" type="submit" disabled={loading}>
+                            {loading ? "Saving..." : "Save Changes"}
+                          </Button>
                         </Col>
                       </Row>
                     </div>

@@ -24,7 +24,6 @@ import {
   InputGroupText
 } from 'reactstrap';
 import { FaPlus, FaEdit, FaTrash, FaCheck, FaTimes } from 'react-icons/fa';
-import Header from "components/Headers/Header.js";
 
 // Account types based on Tunisian Chart of Accounts
 const ACCOUNT_TYPES = {
@@ -288,8 +287,7 @@ const Journal = () => {
 
   return (
     <>
-      <Header />
-      <Container className="mt--7" fluid>
+      <Container className="mt-4" fluid>
         <Row>
           <div className="col">
             <Card className="shadow">

@@ -5,7 +5,7 @@ import axios from "axios";
 import { Card, Container, Row, Button, Form, FormGroup, Label, Input } from "reactstrap";
 
 // core components
-import Header from "components/Headers/Header.js";
+// import Header from "components/Headers/Header.js"; // Removed Header import
 
 const PurchasesContent = ({ purchasesData }) => {
     return (
@@ -66,9 +66,9 @@ const Purchases = () => {
 
     return (
         <>
-            <Header />
+            {/* <Header /> */}{/* Header component removed */}
             {/* Page content */}
-            <Container className="mt--7" fluid>
+            <Container className="mt-4" fluid> {/* Changed from mt--7 to mt-4 */}
                 <Row>
                     <div className="col">
                         <Card className="shadow border-0">

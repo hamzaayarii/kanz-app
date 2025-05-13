@@ -136,26 +136,28 @@ const AdminNavbar = ({ brandText, userData }) => {
           />
         )}
         <Nav className="align-items-center d-none d-md-flex" navbar>
-          <div className="business-selector mr-4 position-relative">
-            <HoverSpeakText textToSpeak={state.business ? `Select business ${state.business.name}` : "Select Business"}>
-              <Button
-                color="primary"
-                className="d-flex align-items-center"
-                onClick={toggleBusinessDropdown}
-                aria-label={state.business ? `Select business ${state.business.name}` : "Select Business"}
-              >
-                <i className="ni ni-building mr-2"></i>
-                <span className="mr-2">{state.business ? state.business.name : "Select Business"}</span>
-                <i className={`ni ni-bold-${state.showBusinessDropdown ? "up" : "down"}`}></i>
-              </Button>
-            </HoverSpeakText>
-            <BusinessDropdown
-              isOpen={state.showBusinessDropdown}
-              business={state.business}
-              onNavigate={navigateToBusiness}
-              onRegister={redirectToBusinessRegistration}
-            />
-          </div>
+          {state.user && state.user.role !== 'accountant' && (
+            <div className="business-selector mr-4 position-relative">
+              <HoverSpeakText textToSpeak={state.business ? `Select business ${state.business.name}` : "Select Business"}>
+                <Button
+                  color="primary"
+                  className="d-flex align-items-center"
+                  onClick={toggleBusinessDropdown}
+                  aria-label={state.business ? `Select business ${state.business.name}` : "Select Business"}
+                >
+                  <i className="ni ni-building mr-2"></i>
+                  <span className="mr-2">{state.business ? state.business.name : "Select Business"}</span>
+                  <i className={`ni ni-bold-${state.showBusinessDropdown ? "up" : "down"}`}></i>
+                </Button>
+              </HoverSpeakText>
+              <BusinessDropdown
+                isOpen={state.showBusinessDropdown}
+                business={state.business}
+                onNavigate={navigateToBusiness}
+                onRegister={redirectToBusinessRegistration}
+              />
+            </div>
+          )}
 
           <HoverSpeakText textToSpeak={isTTSEnabled ? "Disable Text to Speech" : "Enable Text to Speech"}>
             <Button
