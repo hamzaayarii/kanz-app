@@ -152,4 +152,5 @@ This project is licensed under the MIT License.
 📬 Contact
 For questions or feedback, reach out to the ChillGuys team at Kanz@gmail.com.
 
-Developed with 💻 by the ChillGuys team at ESPRIT, Tunisia.Let’s simplify accounting for Tunisian businesses together! 🇹🇳
+Developed with 💻 by the ChillGuys team at Esprit School of Engineering , Tunisia.Let’s simplify accounting for Tunisian businesses together! 🇹🇳  
+#ESPRIT 
