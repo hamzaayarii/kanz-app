@@ -257,21 +257,23 @@ const ChatbotWindow = () => {
   return (
     <>
       {/* Floating Chat Button */}
-      <button
-        onClick={toggleChatWindow}
-        className="btn btn-primary btn-icon-only rounded-circle position-fixed chat-btn-pulse"
-        style={{
-          bottom: '20px',
-          right: '20px',
-          zIndex: 1050,
-          width: '60px',
-          height: '60px',
-          boxShadow: '0 7px 14px rgba(50, 50, 93, 0.1), 0 3px 6px rgba(0, 0, 0, 0.08)',
-          transition: 'all 0.3s ease'
-        }}
-      >
-        <i className="ni ni-chat-round" style={{ fontSize: '1.5rem' }}></i>
-      </button>
+      {!isOpen && (
+        <button
+          onClick={toggleChatWindow}
+          className="btn btn-primary btn-icon-only rounded-circle position-fixed chat-btn-pulse"
+          style={{
+            bottom: '70px',
+            right: '20px',
+            zIndex: 1051,
+            width: '60px',
+            height: '60px',
+            boxShadow: '0 4px 12px rgba(50, 50, 93, 0.2), 0 2px 6px rgba(0, 0, 0, 0.12)',
+            transition: 'all 0.3s ease-in-out'
+          }}
+        >
+          <i className="ni ni-chat-round" style={{ fontSize: '1.5rem' }}></i>
+        </button>
+      )}
 
       {/* Chat Window */}
       {isOpen && (

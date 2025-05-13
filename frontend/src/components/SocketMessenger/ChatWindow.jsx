@@ -97,7 +97,7 @@ const ChatWindow = ({ currentUser }) => {
   return (
     <div className="floating-chat" style={{ 
       position: 'fixed', 
-      bottom: '0px', 
+      bottom: '20px',
       right: '20px', 
       zIndex: 1000,
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
