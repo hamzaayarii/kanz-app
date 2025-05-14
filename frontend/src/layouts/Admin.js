@@ -93,7 +93,7 @@ const Admin = (props) => {
         routes={routes}
         logo={{
           innerLink: "/admin/index",
-          imgSrc: require("../assets/img/brand/kanzlast.png"),
+          imgSrc: require("../assets/img/brand/logoo.png"),
           imgAlt: "Kanz Logo"
         }}
         onLinkClick={handleSidebarLinkClick}

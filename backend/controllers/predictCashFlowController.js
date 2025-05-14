@@ -6,7 +6,7 @@ const Payroll = require("../models/Payroll");
 
 async function forecastCashflow(cashflowHistory) {
     return new Promise((resolve, reject) => {
-        const python = spawn('python3', ['../ai-services/predict_cashflow.py']);
+        const python = spawn('python', ['../ai-services/predict_cashflow.py']);
 
         let output = '';
         let error = '';

@@ -88,38 +88,47 @@ const AdminNavbar = ({ brandText, userData }) => {
     setState((prev) => ({ ...prev, showBusinessDropdown: false }));
   }, [navigate]);
 
-  const BusinessDropdown = useMemo(
-    () =>
-      ({ isOpen, business, onNavigate, onRegister }) =>
-        isOpen && (
-          <div
-            className="position-absolute bg-white rounded shadow-lg py-2"
-            style={{ top: "100%", right: 0, zIndex: 1000, minWidth: "200px" }}
-          >
-            {business && (
-              <div className="px-3 py-2" onClick={() => onNavigate(business._id)}>
-                <HoverSpeakText textToSpeak={`Select business ${business.name}`}>
-                  <div className="font-weight-bold">{business.name}</div>
-                  <div className="text-muted small">{business.type}</div>
-                </HoverSpeakText>
-              </div>
-            )}
-            <div className="border-top mt-2 pt-2 px-3">
-              <HoverSpeakText textToSpeak="Add New Business">
-                <Link to="/standalone/business-registration" className="text-primary d-block py-1" onClick={onRegister}>
-                  <i className="ni ni-fat-add mr-2"></i> Add New Business
-                </Link>
-              </HoverSpeakText>
-              <HoverSpeakText textToSpeak="Manage Businesses">
-                <Link to="/admin/business-management" className="text-primary d-block py-1">
-                  <i className="ni ni-settings mr-2"></i> Manage Businesses
-                </Link>
+ const BusinessDropdown = useMemo(
+  () =>
+    ({ isOpen, business, onNavigate, onRegister }) =>
+      isOpen && (
+        <div
+          className="position-absolute bg-white rounded shadow-lg py-2"
+          style={{ top: "100%", right: 0, zIndex: 1000, minWidth: "200px" }}
+        >
+          {business && (
+            <div className="px-3 py-2" onClick={() => onNavigate(business._id)}>
+              <HoverSpeakText textToSpeak={`Select business ${business.name}`}>
+                <div className="font-weight-bold">{business.name}</div>
+                <div className="text-muted small">{business.type}</div>
               </HoverSpeakText>
             </div>
+          )}
+          <div className="border-top mt-2 pt-2 px-3">
+            <HoverSpeakText textToSpeak="Add New Business">
+              <Link
+                to="/standalone/business-registration"
+                className="d-block py-1"
+                style={{ color: "#095E5C" }}
+                onClick={onRegister}
+              >
+                <i className="ni ni-fat-add mr-2"></i> Add New Business
+              </Link>
+            </HoverSpeakText>
+            <HoverSpeakText textToSpeak="Manage Businesses">
+              <Link
+                to="/admin/business-management"
+                className="d-block py-1"
+                style={{ color: "#095E5C" }}
+              >
+                <i className="ni ni-settings mr-2"></i> Manage Businesses
+              </Link>
+            </HoverSpeakText>
           </div>
-        ),
-    []
-  );
+        </div>
+      ),
+  []
+);
 
   return (
     <Navbar className="navbar-top navbar-dark" expand="md" id="navbar-main" style={{ zIndex: 2000, position: "relative" }}>

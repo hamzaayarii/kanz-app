@@ -1,6 +1,5 @@
-/*eslint-disable*/
 import { useState, useEffect } from "react";
-import { NavLink as NavLinkRRD, Link } from "react-router-dom";
+import { NavLink as NavLinkRRD, Link, useLocation } from "react-router-dom";
 import { PropTypes } from "prop-types";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
@@ -32,6 +31,7 @@ const Sidebar = (props) => {
   const [collapseStates, setCollapseStates] = useState({});
   const [user, setUser] = useState(null);
   const { speak } = useTTS();
+  const location = useLocation();
 
   // Fetch user data from the backend
   useEffect(() => {
@@ -68,7 +68,7 @@ const Sidebar = (props) => {
 
   // Verifies if routeName is the one active (in browser input)
   const activeRoute = (routeName) => {
-    return props.location.pathname.indexOf(routeName) > -1 ? "active" : "";
+    return location.pathname.indexOf(routeName) > -1 ? "active" : "";
   };
 
   // Toggles collapse between opened and closed (true/false)
@@ -79,6 +79,13 @@ const Sidebar = (props) => {
   // Closes the collapse
   const closeCollapse = () => {
     setCollapseOpen(false);
+  };
+
+  // Function to update page title when a link is clicked
+  const handleLinkClick = (name) => {
+    if (props.onLinkClick) {
+      props.onLinkClick(name);
+    }
   };
 
   // Creates the links that appear in the left menu / Sidebar
@@ -108,7 +115,7 @@ const Sidebar = (props) => {
                 onMouseEnter={() => speak(prop.name)}
                 className="d-flex align-items-center"
               >
-                <i className={prop.icon} />
+                <i className={prop.icon} style={{ color: "#FFFFFF" }} />
                 <span className="flex-grow-1">{prop.name}</span>
                 <i
                   className={
@@ -116,6 +123,7 @@ const Sidebar = (props) => {
                       ? "ni ni-bold-down arrow-icon"
                       : "ni ni-bold-right arrow-icon"
                   }
+                  style={{ color: "#FFFFFF" }}
                 />
               </NavLink>
               <Collapse isOpen={collapseStates[prop.state]}>
@@ -133,11 +141,14 @@ const Sidebar = (props) => {
                         <NavLink
                           to={view.layout + view.path}
                           tag={NavLinkRRD}
-                          onClick={closeCollapse}
+                          onClick={() => {
+                            closeCollapse();
+                            handleLinkClick(view.name);
+                          }}
                           onMouseEnter={() => speak(view.name)}
                           activeClassName="active"
                         >
-                          <i className={view.icon} />
+                          <i className={view.icon} style={{ color: "#FFFFFF" }} />
                           {view.name}
                         </NavLink>
                       </NavItem>
@@ -153,11 +164,14 @@ const Sidebar = (props) => {
               <NavLink
                 to={prop.layout + prop.path}
                 tag={NavLinkRRD}
-                onClick={closeCollapse}
+                onClick={() => {
+                  closeCollapse();
+                  handleLinkClick(prop.name);
+                }}
                 onMouseEnter={() => speak(prop.name)}
                 activeClassName="active"
               >
-                <i className={prop.icon} />
+                <i className={prop.icon} style={{ color: "#FFFFFF" }} />
                 {prop.name}
               </NavLink>
             </NavItem>
@@ -166,7 +180,7 @@ const Sidebar = (props) => {
       });
   };
 
-  const { bgColor, routes, logo } = props;
+  const { routes, logo } = props;
   let navbarBrandProps;
   if (logo && logo.innerLink) {
     navbarBrandProps = {
@@ -182,10 +196,12 @@ const Sidebar = (props) => {
 
   return (
     <Navbar
-      className="navbar-vertical fixed-left navbar-light bg-white"
+      className="navbar-vertical fixed-left navbar-dark"
       expand="md"
       id="sidenav-main"
+      style={{ backgroundColor: "#095E5C" }}
     >
+      
       <Container fluid>
         {/* Toggler */}
         <button
@@ -202,7 +218,7 @@ const Sidebar = (props) => {
               alt={logo.imgAlt}
               className="navbar-brand-img"
               src={logo.imgSrc}
-               style={{ height: "350px", width: "800px" }}
+              style={{ height: "450px", width: "800px" }}
             />
           </NavbarBrand>
         ) : null}
@@ -210,7 +226,7 @@ const Sidebar = (props) => {
         <Nav className="align-items-center d-md-none">
           <UncontrolledDropdown nav>
             <DropdownToggle nav className="nav-link-icon">
-              <i className="ni ni-bell-55" />
+              <i className="ni ni-bell-55" style={{ color: "#FFFFFF" }} />
             </DropdownToggle>
             <DropdownMenu
               aria-labelledby="navbar-default_dropdown_1"
@@ -242,24 +258,24 @@ const Sidebar = (props) => {
                 <h6 className="text-overflow m-0">Welcome!</h6>
               </DropdownItem>
               <DropdownItem to="/admin/user-profile" tag={Link}>
-                <i className="ni ni-single-02" />
+                <i className="ni ni-single-02" style={{ color: "#095E5C" }} />
                 <span>My profile</span>
               </DropdownItem>
               <DropdownItem to="/admin/user-profile" tag={Link}>
-                <i className="ni ni-settings-gear-65" />
+                <i className="ni ni-settings-gear-65" style={{ color: "#095E5C" }} />
                 <span>Settings</span>
               </DropdownItem>
               <DropdownItem to="/admin/user-profile" tag={Link}>
-                <i className="ni ni-calendar-grid-58" />
+                <i className="ni ni-calendar-grid-58" style={{ color: "#095E5C" }} />
                 <span>Activity</span>
               </DropdownItem>
               <DropdownItem to="/admin/user-profile" tag={Link}>
-                <i className="ni ni-support-16" />
+                <i className="ni ni-support-16" style={{ color: "#095E5C" }} />
                 <span>Support</span>
               </DropdownItem>
               <DropdownItem divider />
               <DropdownItem href="#pablo" onClick={(e) => e.preventDefault()}>
-                <i className="ni ni-user-run" />
+                <i className="ni ni-user-run" style={{ color: "#095E5C" }} />
                 <span>Logout</span>
               </DropdownItem>
             </DropdownMenu>
@@ -306,13 +322,13 @@ const Sidebar = (props) => {
               />
               <InputGroupAddon addonType="prepend">
                 <InputGroupText>
-                  <span className="fa fa-search" />
+                  <span className="fa fa-search" style={{ color: "#095E5C" }} />
                 </InputGroupText>
               </InputGroupAddon>
             </InputGroup>
           </Form>
           {/* Navigation */}
-          <Nav navbar>{createLinks(routes)}</Nav>
+          <Nav navbar className="text-white">{createLinks(routes)}</Nav>
           {/* Divider */}
           <hr className="my-3" />
         </Collapse>
@@ -333,6 +349,7 @@ Sidebar.propTypes = {
     imgSrc: PropTypes.string.isRequired,
     imgAlt: PropTypes.string.isRequired,
   }),
+  onLinkClick: PropTypes.func,
 };
 
 export default Sidebar;

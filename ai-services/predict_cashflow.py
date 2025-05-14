@@ -8,7 +8,7 @@ import json
 
 # Create DataFrame
 #df = pd.DataFrame(input_data)
-df = pd.read_csv('C:/Users/GnaR26/Downloads/synthetic_cash_flow_data.csv')
+df = pd.read_csv('D:/hamza/4TWIN2K24/semestre2/AccountingManagementApp/ai-services/synthetic_cash_flow_data.csv')
 
 # Ensure columns: date, inflows, outflows
 df['date'] = pd.to_datetime(df['date'])

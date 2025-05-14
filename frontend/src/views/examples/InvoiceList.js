@@ -217,10 +217,10 @@ const InvoiceList = () => {
                     <div style={{ padding: '40px' }}>
                         <div style={{ marginBottom: '20px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                             <div style={{ flex: '1', minWidth: '200px' }}>
-                                <HoverSpeakText textToSpeak="Rechercher par client ou numéro">
+                                <HoverSpeakText textToSpeak="Search by customer or number">
                                     <input
                                         type="text"
-                                        placeholder="Rechercher par client ou numéro..."
+                                        placeholder="Search by customer or number..."
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
                                         style={{
@@ -229,7 +229,7 @@ const InvoiceList = () => {
                                             borderRadius: '5px',
                                             border: '1px solid #ddd'
                                         }}
-                                        aria-label="Rechercher par client ou numéro de facture"
+                                        aria-label="Search by customer or invoice number"
                                     />
                                 </HoverSpeakText>
                             </div>
@@ -248,12 +248,12 @@ const InvoiceList = () => {
                                 </HoverSpeakText>
                             </div>
                             <div>
-                                <HoverSpeakText textToSpeak="Ordre de tri">
+                                <HoverSpeakText textToSpeak="Sort order">
                                     <select
                                         value={sortOrder}
                                         onChange={(e) => setSortOrder(e.target.value)}
                                         style={{ padding: '10px', borderRadius: '5px' }}
-                                        aria-label="Ordre de tri"
+                                        aria-label="Sort order"
                                     >
                                         <option value="desc">Descending</option>
                                         <option value="asc">Croissant</option>
@@ -267,7 +267,7 @@ const InvoiceList = () => {
                         ) : error ? (
                             <p style={{ textAlign: 'center', fontSize: '18px', color: 'red' }}>
                                 <HoverSpeakText>{error}</HoverSpeakText>
-                                <HoverSpeakText textToSpeak="Réessayer">
+                                <HoverSpeakText textToSpeak="Try again">
                                     <button
                                         onClick={fetchInvoices}
                                         style={{
@@ -319,8 +319,8 @@ const InvoiceList = () => {
                                                     </HoverSpeakText>
                                                 </p>
                                                 <p style={{ fontSize: '16px', color: '#666' }}>
-                                                    <HoverSpeakText textToSpeak="Montant">
-                                                        <span style={{ color: '#4facfe' }}>Montant: </span>
+                                                    <HoverSpeakText textToSpeak="Amount">
+                                                        <span style={{ color: '#4facfe' }}>Amount: </span>
                                                     </HoverSpeakText>
                                                     <HoverSpeakText>
                                                         {invoice.total ? invoice.total.toFixed(2) : '0.00'} TND
@@ -328,7 +328,7 @@ const InvoiceList = () => {
                                                 </p>
                                                 <p style={{ fontSize: '14px', color: '#888' }}>
                                                     <HoverSpeakText textToSpeak="Échéance">
-                                                        <span style={{ color: '#4facfe' }}>Échéance: </span>
+                                                        <span style={{ color: '#4facfe' }}>Due date: </span>
                                                     </HoverSpeakText>
                                                     <HoverSpeakText>
                                                         {invoice.dueDate
