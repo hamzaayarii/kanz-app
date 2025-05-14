@@ -1,9 +1,9 @@
 const mongoose = require('mongoose');
 
 const taxReportSchema = new mongoose.Schema({
-    userId: {
+    business: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+        ref: 'Business',
         required: true,
     },
     year: {

@@ -60,16 +60,14 @@ const Expenses = () => {
         return;
       }
       const headers = { Authorization: `Bearer ${token}` };
-      const [businessesRes, categoriesRes, taxReportRes] = await Promise.all([
+      const [businessesRes, categoriesRes] = await Promise.all([
         axios.get("http://localhost:5000/api/business/user-businesses", { headers }),
         axios.get("http://localhost:5000/api/categories", { headers }),
-        axios.get("http://localhost:5000/api/expenses/taxreport-expenses", { headers }),
       ]);
       setData((prev) => ({
         ...prev,
         businesses: businessesRes.data.businesses,
         categories: categoriesRes.data,
-        taxReportExpenses: taxReportRes.data,
       }));
       if (businessesRes.data.businesses.length > 0) {
         setSelectedBusiness(businessesRes.data.businesses[0]._id);
@@ -87,16 +85,18 @@ const Expenses = () => {
         return;
       }
       const headers = { Authorization: `Bearer ${token}` };
-      const [expensesRes, dailyExpensesRes, totalExpensesRes] = await Promise.all([
+      const [expensesRes, dailyExpensesRes, totalExpensesRes,  taxReportRes] = await Promise.all([
         axios.get(`http://localhost:5000/api/expenses?business=${businessId}`, { headers }),
         axios.get(`http://localhost:5000/api/expenses/daily-expenses?business=${businessId}`, { headers }),
         axios.get(`http://localhost:5000/api/expenses/total-expenses?business=${businessId}`, { headers }),
+        axios.get(`http://localhost:5000/api/expenses/taxreport-expenses?business=${businessId}`, { headers })
       ]);
       setData((prev) => ({
         ...prev,
         expenses: expensesRes.data,
         dailyExpenses: dailyExpensesRes.data,
         totalExpenses: totalExpensesRes.data,
+        taxReportExpenses: taxReportRes.data,
       }));
     } catch (error) {
       console.error("Error fetching business data", error);
