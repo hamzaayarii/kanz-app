@@ -102,22 +102,28 @@ const IncomeStatement = () => {
           return;
         }
         const response = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
-        // Handle both array and object response
-        const businesses = Array.isArray(response.data) ? response.data : (response.data.businesses || []);
-        setBusinesses(businesses);
-        if (businesses.length > 0) {
-          setValue('businessId', businesses[0]._id);
+        const businessesResponse = Array.isArray(response.data) ? response.data : (response.data.businesses || []);
+        setBusinesses(businessesResponse);
+        if (businessesResponse.length > 0) {
+          setValue('businessId', businessesResponse[0]._id);
+          setError(''); // Clear error if businesses are found
         } else {
-          setError('No businesses found.');
+          setError(''); // Ensure error is cleared if it was previously set for other reasons
         }
       } catch (err) {
-        setError(err.response?.data?.message || 'Error fetching businesses');
+        setError(''); // For now, clearing all errors if fetch fails or returns no businesses
+        setBusinesses([]); // Clear businesses on error or if none found
       }
     };
+
     if (isAccountant && !selectedOwner) {
       setBusinesses([]);
+      setValue('businessId', ''); // Clear businessId in form
+      setSelectedBusiness(null); // Clear detailed selected business object
+      setError(''); // Explicitly clear error when no owner is selected by accountant
       return;
     }
+
     if ((isAccountant && selectedOwner) || !isAccountant) {
       fetchBusinesses();
     }

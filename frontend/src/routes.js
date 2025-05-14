@@ -44,6 +44,8 @@ import SimpleDashboard from './views/examples/SimpleDashboard.js';
 import InlineStyledDashboard from './views/examples/InlineStyledDashboard.js';
 import FinanceManagement from './views/examples/FinanceManagement.js';
 import BusinessFinanceDashboard from './views/examples/BusinessFinanceDashboard.js';
+import ManualTreasuryDashboardAccountant from "./views/examples/ManualTreasuryDashboardAccountant";
+import PredictCashFlowAccountant from "./views/examples/PredictCashFlowAccountant";
 
 
 
@@ -286,16 +288,6 @@ const routes = [
     showInSidebar: isUserAccountant,
   },
   {
-    path: '/purchases',
-    name: 'Purchases',
-    icon: 'ni ni-cart text-orange',
-    description: 'Manage your spending',
-    component: <AuthRoute><Purchases /></AuthRoute>,
-    layout: '/admin',
-    category: 'Finance',
-    showInSidebar: isUserAccountant,
-  },
-  {
     path: '/expenses',
     name: 'Expenses',
     icon: 'ni ni-credit-card text-red',
@@ -310,9 +302,10 @@ const routes = [
   {
     path: '/notifications',
     name: 'notifications',
+    icon: 'ni ni-bell-55 text-yellow',
     component: <AuthRoute><Notifications /></AuthRoute>,
     layout: '/admin',
-   
+    category: 'Overview',
     showInSidebar: isUserBusinessOwner,
   },
   {
@@ -325,6 +318,16 @@ const routes = [
     category: 'Finance',
     showInSidebar: isUserBusinessOwner,
     showInSidebar: () => false, 
+  },
+  {
+    path: '/accountant/predictCashFlow',
+    name: 'Cash FLow Prediction',
+    icon: 'ni ni-chart-bar-32 text-success',
+    description: 'Predict Cash Flow',
+    component: <AuthRoute><PredictCashFlowAccountant /></AuthRoute>,
+    layout: '/admin',
+    category: 'Finance',
+    showInSidebar: isUserAccountant,
   },
   {
     path: '/invoices1',
@@ -389,6 +392,17 @@ const routes = [
     layout: '/admin',
     category: 'Finance',
     showInSidebar: false,
+  },
+
+  {
+    path: '/accountant/treasury',
+    name: 'Treasury',
+    icon: 'ni ni-money-coins text-blue',
+    description: 'Detailed financial insights',
+    component: <AuthRoute><ManualTreasuryDashboardAccountant /></AuthRoute>,
+    layout: '/admin',
+    category: 'Finance',
+    showInSidebar: isUserAccountant,
   },
 
   // Tax Management
