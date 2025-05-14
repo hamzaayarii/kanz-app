@@ -1,5 +1,6 @@
+/*eslint-disable*/
 import { useState, useEffect } from "react";
-import { NavLink as NavLinkRRD, Link, useLocation } from "react-router-dom";
+import { NavLink as NavLinkRRD, Link } from "react-router-dom";
 import { PropTypes } from "prop-types";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
@@ -31,7 +32,6 @@ const Sidebar = (props) => {
   const [collapseStates, setCollapseStates] = useState({});
   const [user, setUser] = useState(null);
   const { speak } = useTTS();
-  const location = useLocation();
 
   // Fetch user data from the backend
   useEffect(() => {
@@ -68,7 +68,7 @@ const Sidebar = (props) => {
 
   // Verifies if routeName is the one active (in browser input)
   const activeRoute = (routeName) => {
-    return location.pathname.indexOf(routeName) > -1 ? "active" : "";
+    return props.location.pathname.indexOf(routeName) > -1 ? "active" : "";
   };
 
   // Toggles collapse between opened and closed (true/false)
@@ -79,13 +79,6 @@ const Sidebar = (props) => {
   // Closes the collapse
   const closeCollapse = () => {
     setCollapseOpen(false);
-  };
-
-  // Function to update page title when a link is clicked
-  const handleLinkClick = (name) => {
-    if (props.onLinkClick) {
-      props.onLinkClick(name);
-    }
   };
 
   // Creates the links that appear in the left menu / Sidebar
@@ -140,10 +133,7 @@ const Sidebar = (props) => {
                         <NavLink
                           to={view.layout + view.path}
                           tag={NavLinkRRD}
-                          onClick={() => {
-                            closeCollapse();
-                            handleLinkClick(view.name);
-                          }}
+                          onClick={closeCollapse}
                           onMouseEnter={() => speak(view.name)}
                           activeClassName="active"
                         >
@@ -163,10 +153,7 @@ const Sidebar = (props) => {
               <NavLink
                 to={prop.layout + prop.path}
                 tag={NavLinkRRD}
-                onClick={() => {
-                  closeCollapse();
-                  handleLinkClick(prop.name);
-                }}
+                onClick={closeCollapse}
                 onMouseEnter={() => speak(prop.name)}
                 activeClassName="active"
               >
@@ -215,7 +202,7 @@ const Sidebar = (props) => {
               alt={logo.imgAlt}
               className="navbar-brand-img"
               src={logo.imgSrc}
-              style={{ height: "350px", width: "800px" }}
+               style={{ height: "350px", width: "800px" }}
             />
           </NavbarBrand>
         ) : null}
@@ -346,7 +333,6 @@ Sidebar.propTypes = {
     imgSrc: PropTypes.string.isRequired,
     imgAlt: PropTypes.string.isRequired,
   }),
-  onLinkClick: PropTypes.func,
 };
 
 export default Sidebar;

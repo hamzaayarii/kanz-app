@@ -199,7 +199,7 @@ const InvoiceList = () => {
                         textAlign: 'center'
                     }}>
                         <h2 style={{ fontSize: '36px', fontWeight: 'bold', margin: '0', color: 'white' }}>
-                            <HoverSpeakText>Liste des Factures</HoverSpeakText>
+                            <HoverSpeakText>List of Invoices</HoverSpeakText>
                             {isTTSEnabled && (
                                 <TTSButton
                                     elementId="invoice-list-container"
@@ -210,7 +210,7 @@ const InvoiceList = () => {
                             )}
                         </h2>
                         <p style={{ margin: '10px 0 0', fontSize: '18px', opacity: '0.9', color: 'white' }}>
-                            <HoverSpeakText>Voir et gérer toutes vos factures</HoverSpeakText>
+                            <HoverSpeakText>View and manage all your invoices</HoverSpeakText>
                         </p>
                     </div>
 
@@ -243,7 +243,7 @@ const InvoiceList = () => {
                                     >
                                         <option value="invoiceDate">Date</option>
                                         <option value="customerName">Client</option>
-                                        <option value="total">Montant</option>
+                                        <option value="total">Price</option>
                                     </select>
                                 </HoverSpeakText>
                             </div>
@@ -255,7 +255,7 @@ const InvoiceList = () => {
                                         style={{ padding: '10px', borderRadius: '5px' }}
                                         aria-label="Ordre de tri"
                                     >
-                                        <option value="desc">Décroissant</option>
+                                        <option value="desc">Descending</option>
                                         <option value="asc">Croissant</option>
                                     </select>
                                 </HoverSpeakText>
@@ -278,7 +278,7 @@ const InvoiceList = () => {
                                             textDecoration: 'underline',
                                             cursor: 'pointer'
                                         }}
-                                        aria-label="Réessayer le chargement des factures"
+                                        aria-label="Rtry loading invoices"
                                     >
                                         Réessayer
                                     </button>
@@ -286,7 +286,7 @@ const InvoiceList = () => {
                             </p>
                         ) : filteredInvoices.length === 0 ? (
                             <p style={{ textAlign: 'center', fontSize: '18px', color: '#666' }}>
-                                <HoverSpeakText>Aucune facture trouvée</HoverSpeakText>
+                                <HoverSpeakText>No invoices found</HoverSpeakText>
                             </p>
                         ) : (
                             <>
@@ -356,12 +356,12 @@ const InvoiceList = () => {
                                                         }}
                                                         onMouseEnter={(e) => !loading && (e.target.style.transform = 'scale(1.05)')}
                                                         onMouseLeave={(e) => !loading && (e.target.style.transform = 'scale(1)')}
-                                                        aria-label={`Télécharger le PDF de la facture ${invoice.invoiceNumber || invoice._id}`}
+                                                        aria-label={`Download the invoice PDF ${invoice.invoiceNumber || invoice._id}`}
                                                     >
                                                         Télécharger PDF
                                                     </button>
                                                 </HoverSpeakText>
-                                                <HoverSpeakText textToSpeak={`Supprimer la facture ${invoice.invoiceNumber || invoice._id}`}>
+                                                <HoverSpeakText textToSpeak={`Delete invoice ${invoice.invoiceNumber || invoice._id}`}>
                                                     <button
                                                         onClick={() => deleteInvoice(invoice._id)}
                                                         disabled={loading}
@@ -379,7 +379,7 @@ const InvoiceList = () => {
                                                         }}
                                                         onMouseEnter={(e) => !loading && (e.target.style.transform = 'scale(1.05)')}
                                                         onMouseLeave={(e) => !loading && (e.target.style.transform = 'scale(1)')}
-                                                        aria-label={`Supprimer la facture ${invoice.invoiceNumber || invoice._id}`}
+                                                        aria-label={`Delete invoicee ${invoice.invoiceNumber || invoice._id}`}
                                                     >
                                                         Supprimer
                                                     </button>
@@ -390,7 +390,7 @@ const InvoiceList = () => {
                                 </div>
                                 {totalPages > 1 && (
                                     <div style={{ marginTop: '20px', textAlign: 'center', display: 'flex', justifyContent: 'center', gap: '10px' }}>
-                                        <HoverSpeakText textToSpeak="Page précédente">
+                                        <HoverSpeakText textToSpeak="Previous page">
                                             <button
                                                 onClick={() => setPage(p => Math.max(1, p - 1))}
                                                 disabled={page === 1 || loading}
@@ -402,7 +402,7 @@ const InvoiceList = () => {
                                                     border: 'none',
                                                     cursor: page === 1 ? 'not-allowed' : 'pointer'
                                                 }}
-                                                aria-label="Page précédente"
+                                                aria-label="Previous page"
                                             >
                                                 Précédent
                                             </button>
@@ -412,7 +412,7 @@ const InvoiceList = () => {
                                                 Page {page} sur {totalPages}
                                             </HoverSpeakText>
                                         </span>
-                                        <HoverSpeakText textToSpeak="Page suivante">
+                                        <HoverSpeakText textToSpeak="Next page">
                                             <button
                                                 onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                                                 disabled={page === totalPages || loading}
@@ -424,9 +424,9 @@ const InvoiceList = () => {
                                                     border: 'none',
                                                     cursor: page === totalPages ? 'not-allowed' : 'pointer'
                                                 }}
-                                                aria-label="Page suivante"
+                                                aria-label="Next page"
                                             >
-                                                Suivant
+                                                Next
                                             </button>
                                         </HoverSpeakText>
                                     </div>

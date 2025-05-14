@@ -351,7 +351,7 @@ const Notifications = () => {
                   </Button>
                 </CardFooter>
               )}
-            </Card>
+            </Card> 
           </Col>
         </Row>
       </Container>
