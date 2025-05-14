@@ -1,20 +1,14 @@
-/*eslint-disable*/
 import { useState, useEffect } from "react";
-import { NavLink as NavLinkRRD, Link } from "react-router-dom";
-// nodejs library to set properties for components
+import { NavLink as NavLinkRRD, Link, useLocation } from "react-router-dom";
 import { PropTypes } from "prop-types";
 import axios from "axios";
-import {jwtDecode} from 'jwt-decode';
-
-// reactstrap components
+import { jwtDecode } from "jwt-decode";
 import {
-
   Collapse,
   DropdownMenu,
   DropdownItem,
   UncontrolledDropdown,
   DropdownToggle,
- 
   Form,
   Input,
   InputGroupAddon,
@@ -26,18 +20,18 @@ import {
   NavItem,
   NavLink,
   Nav,
- 
   Container,
   Row,
   Col,
 } from "reactstrap";
 import { useTTS } from "../TTS/TTSContext";
 
-
 const Sidebar = (props) => {
   const [collapseOpen, setCollapseOpen] = useState();
+  const [collapseStates, setCollapseStates] = useState({});
   const [user, setUser] = useState(null);
   const { speak } = useTTS();
+  const location = useLocation();
 
   // Fetch user data from the backend
   useEffect(() => {
@@ -63,47 +57,125 @@ const Sidebar = (props) => {
 
     fetchUserData();
   }, []);
-  // verifies if routeName is the one active (in browser input)
-  const activeRoute = (routeName) => {
-    return props.location.pathname.indexOf(routeName) > -1 ? "active" : "";
+
+  // Toggle collapse for a specific section
+  const toggleSectionCollapse = (stateName) => {
+    setCollapseStates((prev) => ({
+      ...prev,
+      [stateName]: !prev[stateName],
+    }));
   };
-  // toggles collapse between opened and closed (true/false)
+
+  // Verifies if routeName is the one active (in browser input)
+  const activeRoute = (routeName) => {
+    return location.pathname.indexOf(routeName) > -1 ? "active" : "";
+  };
+
+  // Toggles collapse between opened and closed (true/false)
   const toggleCollapse = () => {
     setCollapseOpen((data) => !data);
   };
-  // closes the collapse
+
+  // Closes the collapse
   const closeCollapse = () => {
     setCollapseOpen(false);
   };
-  // creates the links that appear in the left menu / Sidebar
+
+  // Function to update page title when a link is clicked
+  const handleLinkClick = (name) => {
+    if (props.onLinkClick) {
+      props.onLinkClick(name);
+    }
+  };
+
+  // Creates the links that appear in the left menu / Sidebar
   const createLinks = (routes) => {
     return routes
-      .filter(route => {
-        // If user is admin, show all routes
-        if (user && user.role === 'admin') {
+      .filter((route) => {
+        if (user && user.role === "admin") {
           return true;
         }
-        // For non-admin users, handle both boolean and function types for showInSidebar
-        if (typeof route.showInSidebar === 'function') {
+        if (typeof route.showInSidebar === "function") {
           return route.showInSidebar(user);
         }
         return route.showInSidebar !== false;
       })
       .map((prop, key) => {
-        return (
-          <NavItem key={key}>
-           <NavLink
-  to={prop.layout + prop.path}
-  tag={NavLinkRRD}
-  onClick={closeCollapse}
-  onMouseEnter={() => speak(prop.name)} // 👈 TTS here
->
-  <i className={prop.icon} />
-  {prop.name}
-</NavLink>
-
-          </NavItem>
-        );
+        if (prop.collapse && prop.views) {
+          // Handle collapsible sections (e.g., Finances, Invoice)
+          return (
+            <NavItem key={key}>
+              <NavLink
+                href="#pablo"
+                onClick={(e) => {
+                  e.preventDefault();
+                  toggleSectionCollapse(prop.state);
+                  speak(prop.name);
+                }}
+                onMouseEnter={() => speak(prop.name)}
+                className="d-flex align-items-center"
+              >
+                <i className={prop.icon} />
+                <span className="flex-grow-1">{prop.name}</span>
+                <i
+                  className={
+                    collapseStates[prop.state]
+                      ? "ni ni-bold-down arrow-icon"
+                      : "ni ni-bold-right arrow-icon"
+                  }
+                />
+              </NavLink>
+              <Collapse isOpen={collapseStates[prop.state]}>
+                <Nav className="nav-sm">
+                  {prop.views
+                    .filter((view) => {
+                      if (user && user.role === "admin") return true;
+                      if (typeof view.showInSidebar === "function") {
+                        return view.showInSidebar(user);
+                      }
+                      return view.showInSidebar !== false;
+                    })
+                    .map((view, viewKey) => (
+                      <NavItem key={viewKey}>
+                        <NavLink
+                          to={view.layout + view.path}
+                          tag={NavLinkRRD}
+                          onClick={() => {
+                            closeCollapse();
+                            handleLinkClick(view.name);
+                          }}
+                          onMouseEnter={() => speak(view.name)}
+                          activeClassName="active"
+                        >
+                          <i className={view.icon} />
+                          {view.name}
+                        </NavLink>
+                      </NavItem>
+                    ))}
+                </Nav>
+              </Collapse>
+            </NavItem>
+          );
+        } else {
+          // Handle non-collapsible routes
+          return (
+            <NavItem key={key}>
+              <NavLink
+                to={prop.layout + prop.path}
+                tag={NavLinkRRD}
+                onClick={() => {
+                  closeCollapse();
+                  handleLinkClick(prop.name);
+                }}
+                onMouseEnter={() => speak(prop.name)}
+                activeClassName="active"
+              >
+                <i className={prop.icon} />
+                {prop.name}
+              </NavLink>
+            </NavItem>
+          );
+        }
       });
   };
 
@@ -143,6 +215,7 @@ const Sidebar = (props) => {
               alt={logo.imgAlt}
               className="navbar-brand-img"
               src={logo.imgSrc}
+              style={{ height: "350px", width: "800px" }}
             />
           </NavbarBrand>
         ) : null}
@@ -169,7 +242,10 @@ const Sidebar = (props) => {
                 <span className="avatar avatar-sm rounded-circle">
                   <img
                     alt="Profile"
-                    src={user?.avatar || require("../../assets/img/theme/team-1-800x800.jpg")}
+                    src={
+                      user?.avatar ||
+                      require("../../assets/img/theme/team-1-800x800.jpg")
+                    }
                   />
                 </span>
               </Media>
@@ -252,8 +328,6 @@ const Sidebar = (props) => {
           <Nav navbar>{createLinks(routes)}</Nav>
           {/* Divider */}
           <hr className="my-3" />
-
-
         </Collapse>
       </Container>
     </Navbar>
@@ -265,20 +339,14 @@ Sidebar.defaultProps = {
 };
 
 Sidebar.propTypes = {
-  // links that will be displayed inside the component
   routes: PropTypes.arrayOf(PropTypes.object),
   logo: PropTypes.shape({
-    // innerLink is for links that will direct the user within the app
-    // it will be rendered as <Link to="...">...</Link> tag
     innerLink: PropTypes.string,
-    // outterLink is for links that will direct the user outside the app
-    // it will be rendered as simple <a href="...">...</a> tag
     outterLink: PropTypes.string,
-    // the image src of the logo
     imgSrc: PropTypes.string.isRequired,
-    // the alt for the img
     imgAlt: PropTypes.string.isRequired,
   }),
+  onLinkClick: PropTypes.func,
 };
 
 export default Sidebar;

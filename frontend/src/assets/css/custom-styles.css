@@ -1,0 +1,280 @@
+:root {
+  /* Couleurs principales */
+  --primary-color: #1D6F73;      /* Couleur du logo KANZ (bleu-vert) */
+  --secondary-color: #4A89DC;    /* Bleu pour les boutons */
+  --danger-color: #E74C3C;       /* Rouge pour les alertes */
+  --success-color: #2ECC71;      /* Vert pour les succès */
+  --warning-color: #F39C12;      /* Orange pour les avertissements */
+  
+  /* Niveaux de gris */
+  --text-color: #333333;         /* Texte principal */
+  --text-light: #666666;         /* Texte secondaire */
+  --border-color: #EAEAEA;       /* Couleur des bordures */
+  --bg-light: #F7F9FC;           /* Arrière-plan clair */
+  --bg-lighter: #F4F6F9;         /* Arrière-plan très clair */
+  
+  /* Polices */
+  --font-family: 'Inter', -apple-system, sans-serif;
+  --font-size-xs: 12px;          /* Très petit texte */
+  --font-size-sm: 14px;          /* Texte normal */
+  --font-size-md: 16px;          /* Sous-titres */
+  --font-size-lg: 18px;          /* Petits titres */
+  --font-size-xl: 20px;          /* Titres */
+  
+  /* Espacements */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+}
+
+
+/* Textes */
+.text-primary { color: var(--primary-color); }
+.text-secondary { color: var(--secondary-color); }
+.text-danger { color: var(--danger-color); }
+.text-dark { color: var(--text-color); }
+.text-light { color: var(--text-light); }
+
+/* Arrière-plans */
+.bg-primary { background-color: var(--primary-color); }
+.bg-secondary { background-color: var(--secondary-color); }
+.bg-light { background-color: var(--bg-light); }
+.bg-lighter { background-color: var(--bg-lighter); }
+.bg-white { background-color: white; }
+
+/* Bordures */
+.border-light { border: 1px solid var(--border-color); }
+.border-primary { border: 1px solid var(--primary-color); }
+
+/* Ombres */
+.shadow-sm { box-shadow: var(--shadow-light); }
+.shadow-md { box-shadow: var(--shadow-medium); }
+.shadow-lg { box-shadow: var(--shadow-strong); }
+
+/* Espacements (marges) */
+.m-0 { margin: 0; }
+.mt-sm { margin-top: var(--spacing-sm); }
+.mb-md { margin-bottom: var(--spacing-md); }
+/* ... créez d'autres classes selon vos besoins */
+
+/* Styles de base pour tout le texte */
+/* Style typographique de base */
+body {
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-normal);
+  color: var(--text-color);
+}
+
+/* Hiérarchie des titres */
+h1, .h1 {
+  font-size: var(--font-size-xxl);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+  margin-bottom: var(--spacing-md);
+}
+
+h2, .h2 {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  margin-bottom: var(--spacing-sm);
+}
+
+h3, .h3 {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-tight);
+  margin-bottom: var(--spacing-sm);
+}
+
+p, .body-text {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-normal);
+  margin-bottom: var(--spacing-md);
+}
+
+.text-small {
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-normal);
+}
+
+/* Tableaux */
+/* Styles de base des tableaux */
+.table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+/* En-têtes de tableau */
+.table thead th {
+  background-color: var(--bg-lighter);
+  color: var(--text-color);
+  font-weight: var(--font-weight-medium);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-bottom: 1px solid var(--border-color);
+  text-align: left;
+}
+
+/* Cellules de tableau */
+.table tbody td {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* Lignes alternées */
+.table tbody tr:nth-child(even) {
+  background-color: var(--bg-lighter);
+}
+
+/* Ligne au survol */
+.table tbody tr:hover {
+  background-color: var(--hover-color);
+}
+
+/* Boutons */
+.btn, button {
+  font-size: var(--font-size-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: 4px;
+  font-weight: 500;
+}
+.btn-primary, .add-expense {
+  background-color: var(--secondary-color);
+  color: white;
+  border: none;
+}
+.btn-danger, .delete {
+  background-color: var(--danger-color);
+  color: white;
+  border: none;
+}
+.btn-edit, .edit {
+  background-color: #F8F9FA;
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+}
+
+/* Sidebar */
+/* Style de base de la sidebar */
+.sidebar {
+  background-color: white;
+  box-shadow: var(--shadow-medium);
+  height: 100vh;
+  width: 250px;
+  position: fixed;
+  left: 0;
+  top: 0;
+}
+
+/* En-tête de la sidebar (logo) */
+.sidebar-header {
+  padding: var(--spacing-md);
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* Élément du menu */
+.sidebar-menu-item {
+  padding: var(--spacing-sm) var(--spacing-md);
+  color: var(--text-color);
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+/* Icône du menu */
+.sidebar-menu-item-icon {
+  margin-right: var(--spacing-sm);
+  font-size: 18px;
+  width: 20px;
+  text-align: center;
+}
+
+/* Élément actif */
+.sidebar-menu-item.active {
+  background-color: var(--hover-color);
+  color: var(--primary-color);
+  border-left: 3px solid var(--primary-color);
+}
+
+/* Survol */
+.sidebar-menu-item:hover:not(.active) {
+  background-color: var(--hover-color);
+}
+
+/* Cartes */
+/* Style de base des cartes */
+.card {
+  background-color: white;
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-light);
+  margin-bottom: var(--spacing-md);
+  overflow: hidden;
+}
+
+/* En-tête de carte */
+.card-header {
+  padding: var(--spacing-md);
+  border-bottom: 1px solid var(--border-color);
+  background-color: white;
+}
+
+/* Corps de carte */
+.card-body {
+  padding: var(--spacing-md);
+}
+
+/* Pied de carte */
+.card-footer {
+  padding: var(--spacing-md);
+  border-top: 1px solid var(--border-color);
+  background-color: var(--bg-lighter);
+}
+
+/* Styles de base des boutons */
+.btn {
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  transition: all 0.2s ease;
+  border: none;
+  cursor: pointer;
+}
+
+/* Bouton primaire */
+.btn-primary {
+  background-color: var(--primary-color);
+  color: white;
+}
+.btn-primary:hover {
+  background-color: darken(var(--primary-color), 5%);
+}
+
+/* Bouton secondaire */
+.btn-secondary {
+  background-color: var(--secondary-color);
+  color: white;
+}
+
+/* Bouton de danger */
+.btn-danger {
+  background-color: var(--danger-color);
+  color: white;
+}
+
+/* Bouton outline */
+.btn-outline {
+  background-color: transparent;
+  border: 1px solid var(--primary-color);
+  color: var(--primary-color);
+}
+.btn-outline:hover {
+  background-color: var(--hover-color);
+}

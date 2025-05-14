@@ -1,42 +1,73 @@
 import React from 'react';
-import { DollarSignIcon } from 'lucide-react';
+import { DollarSign } from 'lucide-react';
 
-const ProfitOverview = ({ data }) => {
-  // Format currency
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('fr-TN', {
-      style: 'currency',
-      currency: 'TND',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(amount);
-  };
-
-  // Determine if profit is positive or negative
-  const isPositiveMonth = data.thisMonth >= 0;
-  const isPositiveYear = data.thisYear >= 0;
-
+const ProfitOverview = ({ data, period = 'month' }) => {
+  const { thisMonth = 0, thisYear = 0 } = data || {};
+  const displayValue = period === 'month' ? thisMonth : thisYear;
+  
+  // Format the value to always show a sign (+ or -)
+  const formattedValue = displayValue < 0 ? displayValue : `+${displayValue}`;
+  const isProfitable = displayValue >= 0;
+  
   return (
-    <div className="bg-white p-4 rounded-lg shadow hover:shadow-md transition-shadow">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-800">Profit Net</h3>
-        <div className={`p-2 ${isPositiveYear ? 'bg-green-100' : 'bg-red-100'} rounded-full`}>
-          <DollarSignIcon className={`h-5 w-5 ${isPositiveYear ? 'text-green-600' : 'text-red-600'}`} />
+    <div className="card h-100 shadow-sm">
+      <div className="card-header bg-white">
+        <h5 className="mb-0 fw-semibold">Profit Net</h5>
+      </div>
+      <div className="card-body">
+        <div className="d-flex align-items-center mb-3">
+          <div className={`bg-light-${isProfitable ? 'success' : 'danger'} p-2 rounded me-3`}>
+            <DollarSign size={24} className={`text-${isProfitable ? 'success' : 'danger'}`} />
+          </div>
+          <div>
+            <span className="text-muted small">This {period}</span>
+            <h4 className={`fw-bold mb-0 text-${isProfitable ? 'success' : 'danger'}`}>
+              {formattedValue} DT
+            </h4>
+          </div>
         </div>
-      </div>
-      
-      <div className="mb-2">
-        <p className={`text-2xl font-bold ${isPositiveMonth ? 'text-green-600' : 'text-red-600'}`}>
-          {formatCurrency(data.thisMonth)}
-        </p>
-        <p className="text-sm text-gray-500">Ce mois</p>
-      </div>
-      
-      <div>
-        <p className={`text-lg font-semibold ${isPositiveYear ? 'text-green-600' : 'text-red-600'}`}>
-          {formatCurrency(data.thisYear)}
-          <span className="text-sm font-normal text-gray-500 ml-1">cette année</span>
-        </p>
+        
+        <div style={{ height: '100px' }}>
+          {/* A simple horizontal line showing profit/loss */}
+          <div className="position-relative h-100">
+            <div className="position-absolute top-50 start-0 end-0" style={{ height: '1px', background: '#e2e8f0' }}></div>
+            <div className="position-absolute top-50 start-0 end-0 d-flex justify-content-center">
+              <div 
+                className={`p-2 rounded-circle bg-light-${isProfitable ? 'success' : 'danger'}`}
+                style={{ transform: 'translateY(-50%)' }}
+              >
+                <span className={`text-${isProfitable ? 'success' : 'danger'}`}>
+                  {isProfitable ? '+' : '-'}
+                </span>
+              </div>
+            </div>
+            <div className="position-absolute bottom-0 start-0 end-0">
+              <div className="progress" style={{ height: '8px' }}>
+                <div 
+                  className={`progress-bar bg-${isProfitable ? 'success' : 'danger'}`} 
+                  role="progressbar" 
+                  style={{ width: '70%' }} 
+                  aria-valuenow="70" 
+                  aria-valuemin="0" 
+                  aria-valuemax="100"
+                ></div>
+              </div>
+              <div className="d-flex justify-content-between mt-1">
+                <small className="text-muted">This {period}</small>
+                <small className="text-muted">Previous {period}</small>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="mt-3 pt-3 border-top">
+          <div className="d-flex justify-content-between align-items-center">
+            <span className="text-muted">Year to date</span>
+            <h6 className={`mb-0 fw-bold text-${isProfitable ? 'success' : 'danger'}`}>
+              {thisYear} DT
+            </h6>
+          </div>
+        </div>
       </div>
     </div>
   );

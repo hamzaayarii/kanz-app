@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 // Import BusinessSelector with the correct import syntax
-import BusinessSelector from '../../components/dashboard/BusinessSelector';  // Adjust the path as needed
+import BusinessSelector from '../../components/dashboard/BusinessSelector';  
+
 
 const AllBusinessesDashboard = () => {
   const [data, setData] = useState(null);

@@ -4,12 +4,13 @@ import {
   UncontrolledDropdown, 
   DropdownToggle, 
   DropdownMenu, 
-  DropdownItem, 
-  Badge 
+  DropdownItem
 } from 'reactstrap';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FiBell, FiMessageSquare, FiShoppingCart, FiUser, FiAlertCircle, FiFileText, FiDollarSign, FiCreditCard } from 'react-icons/fi';
+import './NotificationDropDown.scss';
 import notificationService from '../../services/notificationService';
 import { formatDistanceToNow } from 'date-fns';
-import './NotificationDropDown.css';
 
 const NotificationDropdown = () => {
   const [notifications, setNotifications] = useState([]);
@@ -17,63 +18,65 @@ const NotificationDropdown = () => {
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
-  // Initialize notification service and fetch notifications on component mount
   useEffect(() => {
     const token = localStorage.getItem('authToken');
     if (!token) return;
 
-    // Initialize socket connection
     notificationService.initSocket(token);
-
-    // Set up event listeners
     notificationService.onNewNotification(handleNewNotification);
     notificationService.onNotificationUpdate(handleNotificationUpdate);
     notificationService.onAllNotificationsRead(handleAllNotificationsRead);
 
-    // Fetch initial notifications
     fetchNotifications();
 
-    // Clean up socket connection on unmount
     return () => notificationService.disconnect();
   }, []);
 
-  // Fetch notifications with pagination
   const fetchNotifications = async (newPage = 1) => {
     try {
       setLoading(true);
       const response = await notificationService.getNotifications(newPage, 10);
       
-      if (newPage === 1) {
-        setNotifications(response.notifications);
-      } else {
-        setNotifications(prev => [...prev, ...response.notifications]);
-      }
-      
+      setNotifications(prev => newPage === 1 ? 
+        response.notifications : [...prev, ...response.notifications]);
       setUnreadCount(response.unreadCount);
       setPage(newPage);
       setHasMore(response.pagination.page < response.pagination.pages);
-      setLoading(false);
     } catch (error) {
       console.error('Error fetching notifications:', error);
+    } finally {
       setLoading(false);
     }
   };
 
-  // Load more notifications
-  const loadMore = () => {
-    if (!loading && hasMore) {
-      fetchNotifications(page + 1);
-    }
-  };
-
-  // Handle new notification event
   const handleNewNotification = (notification) => {
     setNotifications(prev => [notification, ...prev]);
     setUnreadCount(prev => prev + 1);
+    
+    // Show desktop notification if browser supports it
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification(notification.title, { 
+        body: notification.content,
+        icon: getNotificationIcon(notification.type)
+      });
+    }
   };
 
+  const handleNotificationClick = async (notification, e) => {
+    if (!notification.read) {
+      try {
+        await notificationService.markAsRead(notification._id);
+      } catch (error) {
+        console.error('Error marking notification as read:', error);
+      }
+    }
+    
+    if (!notification.url) e.preventDefault();
+  };
+  
   // Handle notification update event
   const handleNotificationUpdate = (updatedNotification) => {
     setNotifications(prev => 
@@ -96,129 +99,135 @@ const NotificationDropdown = () => {
     setUnreadCount(0);
   };
 
-  // Mark notification as read and navigate to destination
-  const handleNotificationClick = async (notification, e) => {
-    if (!notification.read) {
-      try {
-        await notificationService.markAsRead(notification._id);
-        // The state will be updated by the socket event
-      } catch (error) {
-        console.error('Error marking notification as read:', error);
-      }
-    }
-    
-    // If notification has no URL, prevent default navigation
-    if (!notification.url) {
-      e.preventDefault();
-    }
-  };
-
-  // Mark all notifications as read
   const markAllAsRead = async () => {
     try {
       await notificationService.markAllAsRead();
-      // The state will be updated by the socket event
     } catch (error) {
       console.error('Error marking all notifications as read:', error);
     }
   };
 
-  // Get appropriate icon for notification type
   const getNotificationIcon = (type) => {
-    switch (type) {
-      case 'message':
-        return 'ni-chat-round';
-      case 'order':
-        return 'ni-cart';
-      case 'role_change':
-        return 'ni-badge';
-      case 'system':
-        return 'ni-bell-55';
-      case 'invoice':
-        return 'ni-receipt-tax';
-      case 'purchase':
-        return 'ni-cart';
-      case 'expense':
-        return 'ni-money-coins';
-      case 'payroll':
-        return 'ni-single-02';
-      default:
-        return 'ni-bell-55';
-    }
+    const icons = {
+      message: <FiMessageSquare className="text-info" />,
+      order: <FiShoppingCart className="text-warning" />,
+      role_change: <FiUser className="text-primary" />,
+      system: <FiAlertCircle className="text-danger" />,
+      invoice: <FiFileText className="text-success" />,
+      purchase: <FiShoppingCart className="text-warning" />,
+      expense: <FiDollarSign className="text-danger" />,
+      payroll: <FiCreditCard className="text-success" />
+    };
+    return icons[type] || <FiBell className="text-primary" />;
   };
-
-  // Format the timestamp
-  const formatTime = (date) => {
-    return formatDistanceToNow(new Date(date), { addSuffix: true });
-  };
-  const getNotificationUrl = (url, type) => {
-    if (type === 'expense') return '/admin/expenses';
-    if (type === 'message') return null; // Don't redirect for message notifications
-    if (type === 'system' || type === 'role_change') return null; // Example non-routable types
   
-    // Use original URL if present
-    return url || null;
+  const formatTime = (date) => formatDistanceToNow(new Date(date), { addSuffix: true });
+
+  // Helper function to format notification content that might contain user information
+  const formatNotificationContent = (notification) => {
+    // For message type notifications, ensure we display the sender's name properly
+    if (notification.type === 'message' && notification.sender && notification.sender.fullName) {
+      return `${notification.sender.fullName} sent you a message`;
+    }
+    
+    // Return the regular content for other notification types
+    return notification.content;
   };
-    return (
-    <UncontrolledDropdown nav className="notification-dropdown">
-      <DropdownToggle nav className="position-relative">
-  <i className="ni ni-bell-55" style={{ color: 'red' }} />
-  {unreadCount > 0 && (
-    <Badge color="danger" pill className="notification-badge">
-      {unreadCount > 99 ? '99+' : unreadCount}
-    </Badge>
-  )}
-</DropdownToggle>
-      <DropdownMenu right className="notification-menu" innerRef={dropdownRef}>
-        <DropdownItem header className="d-flex justify-content-between align-items-center">
-          <span>Notifications</span>
+  
+  return (
+    <UncontrolledDropdown nav inNavbar className="notification-dropdown">
+      <DropdownToggle nav caret={false} className="position-relative">
+        <div className="notification-trigger">
+          <motion.div
+            animate={{ 
+              rotate: isOpen ? [0, 15, -15, 0] : 0,
+              scale: isOpen ? 1.1 : 1
+            }}
+            transition={{ duration: 0.5 }}
+          >
+            <FiBell size={20} className="icon" />
+          </motion.div>
+          
           {unreadCount > 0 && (
-            <Badge color="primary" pill onClick={markAllAsRead} style={{ cursor: 'pointer' }}>
-              Mark all as read
-            </Badge>
-          )}
-        </DropdownItem>
-        
-        <div className="notification-list">
-          {notifications.length === 0 ? (
-            <DropdownItem disabled>No notifications</DropdownItem>
-          ) : (
-            notifications.map(notification => (
-                <DropdownItem
-                key={notification._id}
-                tag={notification.url ? Link : 'div'}
-                to={getNotificationUrl(notification.url, notification.type)}
-                onClick={(e) => handleNotificationClick(notification, e)}
-                className={`notification-item ${!notification.read ? 'unread' : ''}`}
-              >
-                <div className="notification-icon">
-                  <i className={`ni ${getNotificationIcon(notification.type)}`} />
-                </div>
-                <div className="notification-content">
-                  <div className="notification-title">{notification.title}</div>
-                  <div className="notification-text">{notification.content}</div>
-                  <div className="notification-time">{formatTime(notification.createdAt)}</div>
-                </div>
-              </DropdownItem>
-            ))
-          )}
-          
-          {loading && <DropdownItem disabled>Loading...</DropdownItem>}
-          
-          {hasMore && !loading && (
-            <DropdownItem
-              className="text-center text-primary"
-              onClick={loadMore}
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="notification-counter"
             >
-              Load more
-            </DropdownItem>
+              {unreadCount > 9 ? '9+' : unreadCount}
+            </motion.div>
           )}
         </div>
-        
-        <DropdownItem divider />
-        <DropdownItem tag={Link} to="/admin/notifications" className="text-center">
-          View all notifications
-        </DropdownItem>
+      </DropdownToggle>
+
+      <DropdownMenu right className="notification-panel">
+        <div className="notification-header">
+          <h5>Notifications</h5>
+          {unreadCount > 0 && (
+            <button 
+              className="mark-all-read"
+              onClick={markAllAsRead}
+            >
+              Mark all as read
+            </button>
+          )}
+        </div>
+
+        <div className="notification-list">
+          <AnimatePresence>
+            {notifications.length === 0 ? (
+              <div className="empty-state">
+                <FiBell size={40} className="empty-icon" />
+                <p>No new notifications</p>
+              </div>
+            ) : (
+              notifications.map(notification => (
+                <motion.div
+                  key={notification._id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <DropdownItem
+                    tag={notification.url ? Link : 'div'}
+                    to={notification.url || '#'}
+                    onClick={(e) => handleNotificationClick(notification, e)}
+                    className={`notification-item ${!notification.read ? 'unread' : ''}`}
+                  >
+                    <div className="notification-icon">
+                      {getNotificationIcon(notification.type)}
+                    </div>
+                    <div className="notification-content">
+                      <div className="notification-title">
+                        {notification.title}
+                        {!notification.read && <span className="unread-indicator" />}
+                      </div>
+                      <p className="notification-message">
+                        {formatNotificationContent(notification)}
+                      </p>
+                      <div className="notification-time">
+                        {formatTime(notification.createdAt)}
+                      </div>
+                    </div>
+                  </DropdownItem>
+                </motion.div>
+              ))
+            )}
+          </AnimatePresence>
+        </div>
+
+        {hasMore && (
+          <div className="notification-footer">
+            <button 
+              className="load-more"
+              onClick={() => fetchNotifications(page + 1)}
+              disabled={loading}
+            >
+              {loading ? 'Loading...' : 'Load more'}
+            </button>
+          </div>
+        )}
       </DropdownMenu>
     </UncontrolledDropdown>
   );

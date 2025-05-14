@@ -62,6 +62,8 @@ const AdminNavbar = ({ brandText, userData }) => {
   const handleLogout = useCallback((e) => {
     e.preventDefault();
     localStorage.removeItem("authToken");
+    // Also remove the page title from localStorage when logging out
+    localStorage.removeItem("currentPageTitle");
     navigate("/auth/login", { replace: true });
   }, [navigate]);
 
@@ -122,9 +124,20 @@ const AdminNavbar = ({ brandText, userData }) => {
   return (
     <Navbar className="navbar-top navbar-dark" expand="md" id="navbar-main" style={{ zIndex: 2000, position: "relative" }}>
       <Container fluid>
-        <HoverSpeakText textToSpeak="Navigate to dashboard">
-          <Link className="h4 mb-0 text-white text-uppercase d-none d-lg-inline-block" to="/">
-            {brandText}
+        <HoverSpeakText textToSpeak={`Current page: ${brandText || 'Dashboard'}`}>
+          <Link 
+            to="/" 
+            style={{
+              fontSize: '1.5rem',        // Larger font size
+              fontWeight: '600',         // Bolder text
+              color: '#000000',          // Black color
+              textDecoration: 'none',    // Remove underline
+              marginRight: '20px',       // Add some spacing
+              textTransform: 'capitalize' // Capitalize each word
+            }}
+            className="d-none d-lg-inline-block"
+          >
+            {brandText || 'Dashboard'}
           </Link>
         </HoverSpeakText>
         {isTTSEnabled && (

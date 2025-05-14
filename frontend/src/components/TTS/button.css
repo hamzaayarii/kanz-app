@@ -1,33 +1,91 @@
 .tts-toggle-button {
-  background: transparent !important;
+  position: relative;
+  background: linear-gradient(145deg, #1a1a2e, #16213e) !important;
+  border: none;
+  border-radius: 50px;
+  padding: 12px 24px;
+  color: #e6e6e6;
+  font-family: 'Segoe UI', sans-serif;
+  font-weight: 600;
+  cursor: pointer;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+  z-index: 1;
+}
+
+.tts-toggle-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(45deg, #00dbde, #fc00ff, #00dbde, #fc00ff);
+  background-size: 400% 400%;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  z-index: -1;
+}
+
+.tts-toggle-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+}
+
+.tts-toggle-button:hover::before {
+  opacity: 0.3;
 }
 
 .tts-toggle-button i {
-  transition: transform 0.3s ease;
-  background: transparent !important; /* Force transparent background on the icon */
+  margin-right: 8px;
+  font-size: 1.2em;
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 2;
 }
 
-.tts-toggle-button:hover i {
-  transform: scale(1.1);
+.tts-toggle-button.active {
+  color: white;
+}
+
+.tts-toggle-button.active::before {
+  opacity: 1;
+  animation: gradientFlow 8s ease infinite;
 }
 
 .tts-toggle-button.active i {
-  animation: pulseGlow 1.5s infinite;
+  animation: voicePulse 1.5s ease infinite;
 }
 
-/* Rest of your CSS remains the same */
-@keyframes pulseGlow {
-  0% {
-    text-shadow: 0 0 5px rgba(45, 206, 137, 0.5);
-  }
-  50% {
-    text-shadow: 0 0 15px rgba(45, 206, 137, 1);
-  }
-  100% {
-    text-shadow: 0 0 5px rgba(45, 206, 137, 0.5);
-  }
+@keyframes gradientFlow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
-.custom-tts-button {
-    background-color: #28a745; /* Green */
-    color: white;
+
+@keyframes voicePulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+/* Sound wave animation for active state */
+.tts-toggle-button.active::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 20" preserveAspectRatio="none"><path fill="rgba(255,255,255,0.1)" d="M0,10 C15,8 30,12 45,8 S75,12 90,8 L100,10 L100,20 L0,20 Z"></path></svg>') repeat-x;
+  background-size: 100px 20px;
+  animation: waveMove 1s linear infinite;
+  opacity: 0.6;
+  z-index: 0;
+}
+
+@keyframes waveMove {
+  0% { background-position-x: 0; }
+  100% { background-position-x: 100px; }
 }
