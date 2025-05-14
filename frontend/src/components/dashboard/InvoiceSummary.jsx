@@ -1,72 +1,73 @@
 import React from 'react';
-import { CheckCircleIcon, ClockIcon, AlertCircleIcon, PencilIcon } from 'lucide-react';
+import { CheckCircle, Clock, AlertTriangle, FileText } from 'lucide-react';
 
 const InvoiceSummary = ({ data }) => {
-  // Calculate total invoices
-  const totalInvoices = data.paid + data.unpaid + data.overdue + data.draft;
-
-  // Invoice status categories with their display info
-  const statusCategories = [
+  const { paid = 0, unpaid = 0, overdue = 0, draft = 0 } = data || {};
+  
+  const invoiceTypes = [
     {
-      name: 'Payées',
-      count: data.paid,
-      icon: <CheckCircleIcon className="h-5 w-5 text-green-500" />,
-      bgColor: 'bg-green-50',
-      textColor: 'text-green-700'
+      name: 'Paid',
+      value: paid,
+      icon: <CheckCircle size={18} />,
+      color: 'text-success',
+      bgColor: 'bg-light-success'
     },
     {
-      name: 'En attente',
-      count: data.unpaid,
-      icon: <ClockIcon className="h-5 w-5 text-blue-500" />,
-      bgColor: 'bg-blue-50',
-      textColor: 'text-blue-700'
+      name: 'Due soon',
+      value: unpaid,
+      icon: <Clock size={18} />,
+      color: 'text-warning',
+      bgColor: 'bg-light-warning'
     },
     {
-      name: 'En retard',
-      count: data.overdue,
-      icon: <AlertCircleIcon className="h-5 w-5 text-red-500" />,
-      bgColor: 'bg-red-50',
-      textColor: 'text-red-700'
+      name: 'Overdue',
+      value: overdue,
+      icon: <AlertTriangle size={18} />,
+      color: 'text-danger',
+      bgColor: 'bg-light-danger'
     },
     {
-      name: 'Brouillons',
-      count: data.draft,
-      icon: <PencilIcon className="h-5 w-5 text-gray-500" />,
-      bgColor: 'bg-gray-50',
-      textColor: 'text-gray-700'
+      name: 'Draft',
+      value: draft,
+      icon: <FileText size={18} />,
+      color: 'text-secondary',
+      bgColor: 'bg-light-secondary'
     }
   ];
 
+  const totalInvoices = paid + unpaid + overdue + draft;
+
   return (
-    <div className="bg-white p-4 rounded-lg shadow">
-      <h3 className="text-lg font-semibold text-gray-800 mb-4">État des Factures</h3>
-      
-      <div className="grid grid-cols-2 gap-4">
-        {statusCategories.map((category, index) => (
-          <div 
-            key={index} 
-            className={`${category.bgColor} p-3 rounded-lg flex flex-col`}
-          >
-            <div className="flex items-center justify-between mb-2">
-              <span className={`text-sm ${category.textColor}`}>
-                {category.name}
-              </span>
-              {category.icon}
-            </div>
-            <p className="text-xl font-bold">{category.count}</p>
-            <p className="text-xs text-gray-500">
-              {totalInvoices > 0 
-                ? `${Math.round((category.count / totalInvoices) * 100)}% du total` 
-                : '0% du total'}
-            </p>
-          </div>
-        ))}
+    <div className="card h-100 shadow-sm">
+      <div className="card-header bg-white">
+        <h5 className="mb-0 fw-semibold">Invoice Status</h5>
       </div>
-      
-      <div className="mt-4 pt-4 border-t border-gray-200">
-        <div className="flex justify-between items-center">
-          <span className="text-sm text-gray-600">Total des Factures</span>
-          <span className="text-lg font-semibold">{totalInvoices}</span>
+      <div className="card-body">
+        <div className="d-flex flex-column">
+          {invoiceTypes.map((invoice, index) => (
+            <div key={index} className="d-flex justify-content-between align-items-center mb-3">
+              <div className="d-flex align-items-center">
+                <div className={`${invoice.bgColor} p-2 rounded me-2`}>
+                  <span className={invoice.color}>{invoice.icon}</span>
+                </div>
+                <span>{invoice.name}</span>
+              </div>
+              <div className="d-flex align-items-center">
+                <strong>{invoice.value}</strong>
+                <small className="text-muted ms-2">
+                  {totalInvoices > 0 
+                    ? `${Math.round((invoice.value / totalInvoices) * 100)}%` 
+                    : '0%'}
+                </small>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="mt-3 pt-3 border-top">
+          <div className="d-flex justify-content-between">
+            <span className="text-muted">Total invoices</span>
+            <strong>{totalInvoices}</strong>
+          </div>
         </div>
       </div>
     </div>

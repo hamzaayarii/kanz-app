@@ -42,6 +42,10 @@ import  Dashboard from './views/examples/Dashboard.jsx';
 import AllBusinessesDashboard from './views/examples/AllBusinessesDashboard.js';
 import SimpleDashboard from './views/examples/SimpleDashboard.js';
 import InlineStyledDashboard from './views/examples/InlineStyledDashboard.js';
+import ManualTreasuryDashboardAccountant from "./views/examples/ManualTreasuryDashboardAccountant";
+import BusinessFinanceDashboard from './views/examples/BusinessFinanceDashboard.js';
+import FinanceManagement from './views/examples/FinanceManagement.js';
+import PredictCashFlowAccountant from './views/examples/PredictCashFlowAccountant.js';
 
 
 
@@ -49,17 +53,17 @@ import InlineStyledDashboard from './views/examples/InlineStyledDashboard.js';
 
 // Grouped and enhanced routes for better UX
 const routes = [
-  // Dashboard & Overview
-  {
+ {
     path: '/index',
     name: 'Dashboard Hub',
     icon: 'ni ni-tv-2 text-primary',
     description: 'Your business at a glance',
-    component: <AuthRoute><Index /></AuthRoute>,
+    component: <AuthRoute><BusinessFinanceDashboard /></AuthRoute>,
     layout: '/admin',
     category: 'Overview',
-    showInSidebar: () => true, // Visible to all authenticated users
+    showInSidebar: () => true, 
   },
+  
   {
     path: '/buisness asigned to',
     name: 'My Clients',
@@ -73,7 +77,24 @@ const routes = [
   },
 
 
-  {
+ {
+
+  name: "Finance",
+    icon: "ni ni-collection text-cyan",
+    category: "Finance",
+    collapse: true,
+    state: "invoiceCollapse",
+  views: [
+    {
+      path: "/expenses",
+      name: "Expenses",
+      icon: "ni ni-credit-card text-red",
+      description: "Keep expenses in check",
+      component: <AuthRoute><Expenses /></AuthRoute>,
+      layout: "/admin",
+      showInSidebar: isUserBusinessOwner,
+    },
+ {
     path: '/daily-revenue',
     name: 'Daily Money Flow',
     icon: 'ni ni-money-coins text-success',
@@ -81,62 +102,7 @@ const routes = [
     component: <AuthRoute><DailyRevenue /></AuthRoute>,
     layout: '/admin',
     category: 'Overview',
-    showInSidebar: () => true,
-  },
-  {
-    path: '/financial-calendar',
-    name: 'financial-calendar',
-    icon: 'ni ni-money-coins text-success',
-    description: 'Track your daily revenue flow',
-    component: (
-      <AuthRoute>
-        <CalendarProvider>
-          <FinancialCalendarPage />
-        </CalendarProvider>
-      </AuthRoute>
-    ),
-    layout: '/admin',
-    category: 'Overview',
-    showInSidebar: () => true,
-  },
-  {
-    path: '/dashboard',
-    name: 'dashboard.all',
-    icon: 'ni ni-chart-pie-35 text-primary',
-    description: 'Vue globale de toutes vos entreprises',
-    component: (
-      <AuthRoute>
-        <AllBusinessesDashboard />
-      </AuthRoute>
-    ),
-    layout: '/admin',
-    category: 'Overview',
-    showInSidebar: () => true,
-  },
-  {
-    path: '/dashboard/:businessId',
-    name: 'dashboard.business',
-    icon: 'ni ni-chart-bar-32 text-primary',
-    description: 'Get a high-level financial overview',
-    component: (
-      <AuthRoute>
-        <InlineStyledDashboard />
-      </AuthRoute>
-    ),
-    layout: '/admin',
-    category: 'Overview',
-    showInSidebar: () => false, // Hide this from sidebar, will be accessed via business selector
-  },
-  
-  {
-    path: '/daily-revenue/edit/:id',
-    name: 'Edit Daily Money Flow',
-    icon: 'ni ni-money-coins text-success',
-    description: 'Edit daily revenue entry',
-    component: <AuthRoute><DailyRevenue /></AuthRoute>,
-    layout: '/admin',
-    category: 'Overview',
-    showInSidebar: () => false, // Hide from sidebar
+    showInSidebar: isUserBusinessOwner,
   },
   {
     path: '/daily-revenue-list',
@@ -146,91 +112,19 @@ const routes = [
     component: <AuthRoute><DailyRevenueList /></AuthRoute>,
     layout: '/admin',
     category: 'Overview',
-    showInSidebar: () => true,
+    showInSidebar: isUserBusinessOwner,
   },
-
-  // Financial Management
-  {
-    path: '/journal',
-    name: 'Accounting Journal',
-    icon: 'ni ni-book-bookmark text-indigo',
-    description: 'Log all your financial entries',
-    component: <AuthRoute><Journal /></AuthRoute>,
+    {
+    path: '/client-daily-revenue',
+    name: 'Client Money Flow History',
+    icon: 'ni ni-chart-pie-35 text-info',
+    description: 'View client daily revenue entries',
+    component: <AuthRoute><DailyRevenueList isAccountantView={true} /></AuthRoute>,
     layout: '/admin',
-    category: 'Finance',
+    category: 'Overview',
     showInSidebar: isUserAccountant,
   },
-  {
-    path: '/purchases',
-    name: 'Purchases',
-    icon: 'ni ni-cart text-orange',
-    description: 'Manage your spending',
-    component: <AuthRoute><Purchases /></AuthRoute>,
-    layout: '/admin',
-    category: 'Finance',
-    showInSidebar: isUserAccountant,
-  },
-  {
-    path: '/expenses',
-    name: 'Expenses',
-    icon: 'ni ni-credit-card text-red',
-    description: 'Keep expenses in check',
-    component: <AuthRoute><Expenses /></AuthRoute>,
-    layout: '/admin',
-    category: 'Finance',
-    showInSidebar: isUserBusinessOwner,
-  },
-
-  {
-    path: '/notifications',
-    name: 'notifications',
-    component: <AuthRoute><Notifications /></AuthRoute>,
-    layout: '/admin',
-   
-    showInSidebar: isUserBusinessOwner,
-  },
-  {
-    path: '/predictCashFlow',
-    name: 'Cash FLow Prediction',
-    icon: 'ni ni-credit-card text-red',
-    description: 'Predict Cash Flow',
-    component: <AuthRoute><PredictCashFlow /></AuthRoute>,
-    layout: '/admin',
-    category: 'Finance',
-    showInSidebar: isUserBusinessOwner,
-  },
-  {
-    path: '/invoices1',
-    name: 'Invoice Tracker',
-    icon: 'ni ni-paper-diploma text-blue',
-    description: 'Monitor all invoices',
-    component: <AuthRoute><Invoices /></AuthRoute>,
-    layout: '/admin',
-    category: 'Finance',
-    showInSidebar: () => true, // Both should be able to track invoices
-  },
-  {
-    path: '/create-invoice',
-    name: 'New Invoice',
-    icon: 'ni ni-fat-add text-teal',
-    description: 'Create a fresh invoice',
-    component: <AuthRoute><CreateInvoice /></AuthRoute>,
-    layout: '/admin',
-    category: 'Finance',
-    showInSidebar: () => true, // Changed to allow both roles to create invoices
-  },
-  {
-    path: '/invoices',
-    name: 'Invoice List',
-    icon: 'ni ni-bullet-list-67 text-green',
-    description: 'View all invoices',
-    component: <AuthRoute><InvoiceList /></AuthRoute>,
-    layout: '/admin',
-    category: 'Finance',
-    showInSidebar: () => true, // Both should be able to view invoices
-  },
-
-  {
+      {
     path: '/financial-statements',
     name: 'Financial Reports',
     icon: 'ni ni-chart-bar-32 text-purple',
@@ -238,33 +132,71 @@ const routes = [
     component: <BusinessOwnerRoute><FinancialStatements /></BusinessOwnerRoute>,
     layout: '/admin',
     category: 'Finance',
-    showInSidebar: true,
+     showInSidebar: isUserBusinessOwner,
   },
-
   {
     path: '/income-statement',
     name: 'Income Statement',
     icon: 'ni ni-money-coins text-green',
     description: 'Revenue and expense reports',
-    component: <BusinessOwnerRoute><IncomeStatement /></BusinessOwnerRoute>,
+    component: <AuthRoute><IncomeStatement /></AuthRoute>,
     layout: '/admin',
     category: 'Finance',
-    showInSidebar: true,
+    showInSidebar: (user) => user && user.role !== 'business_owner',
   },
-
+  
   {
     path: '/treasury',
     name: 'Treasury',
-    icon: 'ni ni-chart-bar-32 text-purple',
+    icon: 'ni ni-money-coins text-blue',
     description: 'Detailed financial insights',
     component: <AuthRoute><ManualTreasuryDashboard /></AuthRoute>,
     layout: '/admin',
     category: 'Finance',
-    showInSidebar: true,
+   
+    showInSidebar: isUserBusinessOwner,
   },
 
-  // Tax Management
-  {
+   {
+    path: '/accountant/treasury',
+    name: 'Treasury',
+    icon: 'ni ni-money-coins text-blue',
+    description: 'Detailed financial insights',
+    component: <AuthRoute><ManualTreasuryDashboardAccountant /></AuthRoute>,
+    layout: '/admin',
+    category: 'Finance',
+    showInSidebar: isUserAccountant,
+  },
+  
+  ]
+}
+,
+ {
+    name: "Invoice",
+    icon: "ni ni-collection text-cyan",
+    category: "Finance",
+    collapse: true,
+    state: "invoiceCollapse",
+    views: [
+      {
+        path: "/create-invoice",
+        name: "Add Invoice",
+        icon: "ni ni-fat-add text-teal",
+        description: "Create a fresh invoice",
+        component: <AuthRoute><CreateInvoice /></AuthRoute>,
+        layout: "/admin",
+        showInSidebar: () => true,
+      },
+      {
+        path: "/invoices",
+        name: "All Invoices",
+        icon: "ni ni-bullet-list-67 text-green",
+        description: "View all invoices",
+        component: <AuthRoute><InvoiceList /></AuthRoute>,
+        layout: "/admin",
+        showInSidebar: () => true,
+      },
+       {
     path: '/tax-report',
     name: 'Tax Report Generator',
     icon: 'ni ni-single-copy-04 text-green',
@@ -284,6 +216,229 @@ const routes = [
     category: 'Taxes',
     showInSidebar: isUserAccountant,
   },
+    ]
+  },
+  {
+    path: '/client-daily-revenue',
+    name: 'Client Money Flow History',
+    icon: 'ni ni-chart-pie-35 text-info',
+    description: 'View client daily revenue entries',
+    component: <AuthRoute><DailyRevenueList isAccountantView={true} /></AuthRoute>,
+    layout: '/admin',
+    category: 'Overview',
+    showInSidebar: isUserAccountant,
+  },
+  {
+    path: '/financial-calendar',
+    name: 'financial-calendar',
+    icon: 'ni ni-money-coins text-purple',
+    description: 'Track your daily revenue flow',
+    component: (
+      <AuthRoute>
+        <CalendarProvider>
+          <FinancialCalendarPage />
+        </CalendarProvider>
+      </AuthRoute>
+    ),
+    layout: '/admin',
+    category: 'Overview',
+    showInSidebar: () => true,
+  },
+  
+  {
+    path: '/dashboard/:businessId',
+    name: 'dashboard.business',
+    icon: 'ni ni-chart-bar-32 text-primary',
+    description: 'Get a high-level financial overview',
+    component: (
+      <AuthRoute>
+        <InlineStyledDashboard />
+      </AuthRoute>
+    ),
+    layout: '/admin',
+    category: 'Overview',
+    showInSidebar: () => false, // Hide this from sidebar, will be accessed via business selector
+  },
+  {
+    path: '/daily-revenue',
+    name: 'Daily Money Flow',
+    icon: 'ni ni-money-coins text-success',
+    description: 'Track your daily revenue flow',
+    component: <AuthRoute><DailyRevenue /></AuthRoute>,
+    layout: '/admin',
+    category: 'Overview',
+     showInSidebar: () => false, 
+  },
+  {
+    path: '/daily-revenue-list',
+    name: 'Daily Money Flow History',
+    icon: 'ni ni-chart-pie-35 text-info',
+    description: 'View all daily revenue entries',
+    component: <AuthRoute><DailyRevenueList /></AuthRoute>,
+    layout: '/admin',
+    category: 'Overview',
+    showInSidebar: () => false, 
+  },
+  {
+    path: '/daily-revenue/edit/:id',
+    name: 'Edit Daily Money Flow',
+    icon: 'ni ni-money-coins text-success',
+    description: 'Edit daily revenue entry',
+    component: <AuthRoute><DailyRevenue /></AuthRoute>,
+    layout: '/admin',
+    category: 'Overview',
+    showInSidebar: () => false, // Hide from sidebar
+  },
+  
+  // Financial Management
+  {
+    path: '/journal',
+    name: 'Accounting Journal',
+    icon: 'ni ni-book-bookmark text-indigo',
+    description: 'Log all your financial entries',
+    component: <AuthRoute><Journal /></AuthRoute>,
+    layout: '/admin',
+    category: 'Finance',
+    showInSidebar: isUserAccountant,
+  },
+  {
+    path: '/expenses',
+    name: 'Expenses',
+    icon: 'ni ni-credit-card text-red',
+    description: 'Keep expenses in check',
+    component: <AuthRoute><Expenses /></AuthRoute>,
+    layout: '/admin',
+    category: 'Finance',
+    showInSidebar: () => false, 
+  },
+
+  {
+    path: '/notifications',
+    name: 'notifications',
+    icon: 'ni ni-bell-55 text-yellow',
+    component: <AuthRoute><Notifications /></AuthRoute>,
+    layout: '/admin',
+    category: 'Overview',
+     showInSidebar: () => false,
+  },
+  {
+    path: '/predictCashFlow',
+    name: 'Cash FLow Prediction',
+    icon: 'ni ni-chart-bar-32 text-success',
+    description: 'Predict Cash Flow',
+    component: <AuthRoute><PredictCashFlow /></AuthRoute>,
+    layout: '/admin',
+    category: 'Finance',
+    showInSidebar: isUserBusinessOwner,
+    showInSidebar: () => false, 
+  },
+   {
+    path: '/accountant/predictCashFlow',
+    name: 'Cash FLow Prediction',
+    icon: 'ni ni-chart-bar-32 text-success',
+    description: 'Predict Cash Flow',
+    component: <AuthRoute><PredictCashFlowAccountant /></AuthRoute>,
+    layout: '/admin',
+    category: 'Finance',
+    showInSidebar: isUserAccountant,
+  },
+  {
+    path: '/invoices1',
+    name: 'Invoice Tracker',
+    icon: 'ni ni-paper-diploma text-blue',
+    description: 'Monitor all invoices',
+    component: <AuthRoute><Invoices /></AuthRoute>,
+    layout: '/admin',
+    category: 'Finance',
+    showInSidebar: () => false, 
+  },
+  {
+    path: '/create-invoice',
+    name: 'New Invoice',
+    icon: 'ni ni-fat-add text-teal',
+    description: 'Create a fresh invoice',
+    component: <AuthRoute><CreateInvoice /></AuthRoute>,
+    layout: '/admin',
+    category: 'Finance',
+    showInSidebar: () => false, // Changed to allow both roles to create invoices
+  },
+  {
+    path: '/invoices',
+    name: 'Invoice List',
+    icon: 'ni ni-bullet-list-67 text-green',
+    description: 'View all invoices',
+    component: <AuthRoute><InvoiceList /></AuthRoute>,
+    layout: '/admin',
+    category: 'Finance',
+    showInSidebar: () => false, // Both should be able to view invoices
+  },
+
+  {
+    path: '/financial-statements',
+    name: 'Financial Reports',
+    icon: 'ni ni-bullet-list-67 text-purple',
+    description: 'Detailed financial insights',
+    component: <BusinessOwnerRoute><FinancialStatements /></BusinessOwnerRoute>,
+    layout: '/admin',
+    category: 'Finance',
+    showInSidebar: isUserBusinessOwner,
+  },
+
+  {
+    path: '/income-statement',
+    name: 'Income Statement',
+    icon: 'ni ni-money-coins text-green',
+    description: 'Revenue and expense reports',
+    component: <AuthRoute><IncomeStatement /></AuthRoute>,
+    layout: '/admin',
+    category: 'Finance',
+    showInSidebar: () => false, 
+  },
+
+  {
+    path: '/treasury',
+    name: 'Treasury',
+    icon: 'ni ni-money-coins text-blue',
+    description: 'Detailed financial insights',
+    component: <AuthRoute><ManualTreasuryDashboard /></AuthRoute>,
+    layout: '/admin',
+    category: 'Finance',
+   
+   showInSidebar: () => false, 
+  },
+
+   {
+    path: '/accountant/treasury',
+    name: 'Treasury',
+    icon: 'ni ni-money-coins text-blue',
+    description: 'Detailed financial insights',
+    component: <AuthRoute><ManualTreasuryDashboardAccountant /></AuthRoute>,
+    layout: '/admin',
+    category: 'Finance',
+    showInSidebar: () => false, 
+  },
+
+  // Tax Management
+  {
+    path: '/tax-report',
+    name: 'Tax Report Generator',
+    icon: 'ni ni-single-copy-04 text-green',
+    description: 'Prepare your tax reports',
+    component: <AuthRoute><TaxReportForm /></AuthRoute>,
+    layout: '/admin',
+    category: 'Taxes',
+   showInSidebar: () => false, 
+  },
+  {
+    path: '/tax-reports',
+    name: 'Tax Reports Archive',
+    icon: 'ni ni-archive-2 text-purple',
+    description: 'Browse past tax reports',
+    component: <AuthRoute><TaxReportsList /></AuthRoute>,
+    layout: '/admin',
+    category: 'Taxes',
+    showInSidebar: () => false, 
+  },
 
   // Business & Employee Management
   {
@@ -296,7 +451,18 @@ const routes = [
     category: 'Business',
     showInSidebar: isUserAdmin,
   },
-  {
+   {
+ 
+  name: "Human Resources",
+  icon: "ni ni-single-02 text-orange",
+  description: "Manage your employees and payroll",
+ 
+  showInSidebar: isUserBusinessOwner,
+  category: "Business",
+  collapse: true,
+  state: "hrCollapse",
+  views: [
+    {
     path: '/employee-management',
     name: 'Employee Management',
     icon: 'ni ni-badge text-yellow',
@@ -306,7 +472,7 @@ const routes = [
     category: 'Business',
     showInSidebar: isUserBusinessOwner,
   },
-  {
+     {
     path: '/payroll-management',
     name: 'Payroll Center',
     icon: 'ni ni-money-coins text-teal',
@@ -315,6 +481,29 @@ const routes = [
     layout: '/admin',
     category: 'Business',
     showInSidebar: isUserBusinessOwner,
+  },
+  ],
+}
+,
+  {
+    path: '/employee-management',
+    name: 'Employee Management',
+    icon: 'ni ni-badge text-yellow',
+    description: 'Oversee your employees',
+    component: <AuthRoute><EmployeeManagement /></AuthRoute>,
+    layout: '/admin',
+    category: 'Business',
+    showInSidebar: () => false, 
+  },
+  {
+    path: '/payroll-management',
+    name: 'Payroll Center',
+    icon: 'ni ni-money-coins text-teal',
+    description: 'Handle payroll with ease',
+    component: <AuthRoute><PayrollManagement /></AuthRoute>,
+    layout: '/admin',
+    category: 'Business',
+   showInSidebar: () => false, 
   },
   {
     path: '/assign-accountant',

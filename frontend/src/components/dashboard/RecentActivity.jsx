@@ -1,12 +1,13 @@
 import React from 'react';
-import { FileTextIcon, CheckCircleIcon, ClockIcon, AlertCircleIcon, XCircleIcon } from 'lucide-react';
+import { FileText, CheckCircle, Clock, AlertCircle, XCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
-const RecentActivity = ({ activities }) => {
+const RecentActivity = ({ activities = [] }) => {
   // Format date
   const formatDate = (dateString) => {
-    if (!dateString) return 'Date inconnue';
+    if (!dateString) return 'Unknown date';
     const date = new Date(dateString);
-    if (isNaN(date)) return 'Date invalide';
+    if (isNaN(date)) return 'Invalid date';
     return new Intl.DateTimeFormat('fr-TN', {
       day: 'numeric',
       month: 'short',
@@ -14,7 +15,6 @@ const RecentActivity = ({ activities }) => {
       minute: '2-digit'
     }).format(date);
   };
-  
 
   // Format currency
   const formatCurrency = (amount) => {
@@ -30,15 +30,15 @@ const RecentActivity = ({ activities }) => {
   const getStatusIcon = (status) => {
     switch (status) {
       case 'paid':
-        return <CheckCircleIcon className="h-4 w-4 text-green-500" />;
+        return <CheckCircle size={16} className="text-success" />;
       case 'sent':
-        return <ClockIcon className="h-4 w-4 text-blue-500" />;
+        return <Clock size={16} className="text-primary" />;
       case 'cancelled':
-        return <XCircleIcon className="h-4 w-4 text-red-500" />;
+        return <XCircle size={16} className="text-danger" />;
       case 'draft':
-        return <FileTextIcon className="h-4 w-4 text-gray-500" />;
+        return <FileText size={16} className="text-secondary" />;
       default:
-        return <ClockIcon className="h-4 w-4 text-gray-500" />;
+        return <Clock size={16} className="text-secondary" />;
     }
   };
 
@@ -46,74 +46,113 @@ const RecentActivity = ({ activities }) => {
   const getStatusClass = (status) => {
     switch (status) {
       case 'paid':
-        return 'bg-green-100 text-green-800';
+        return 'bg-light-success text-success';
       case 'sent':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-light-primary text-primary';
       case 'cancelled':
-        return 'bg-red-100 text-red-800';
+        return 'bg-light-danger text-danger';
       case 'draft':
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-light-secondary text-secondary';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-light-secondary text-secondary';
     }
   };
 
-  return (
-    <div className="bg-white p-4 rounded-lg shadow">
-      <h3 className="text-lg font-semibold text-gray-800 mb-4">Activités Récentes</h3>
-      
-      {activities.length === 0 ? (
-        <div className="text-center py-6">
-          <p className="text-gray-500">Aucune activité récente à afficher</p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {activities.map((activity, index) => (
-            <div 
-              key={activity.id || index} 
-              className="flex items-start p-3 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <div className="flex-shrink-0 mr-3">
-                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                {getStatusIcon(activity.status)}
+  // Get status translation
+  const getStatusText = (status) => {
+    switch (status) {
+      case 'paid':
+        return 'paid';
+      case 'sent':
+        return 'sent';
+      case 'cancelled':
+        return 'cancelled';
+      case 'draft':
+        return 'draft';
+      default:
+        return status;
+    }
+  };
 
-                </div>
-              </div>
-              
-              <div className="flex-grow">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-medium text-gray-900">{activity.action}</h4>
-                  <span className="text-xs text-gray-500">{formatDate(activity.date)}</span>
-                </div>
-                
-                <p className="text-sm text-gray-600 mt-1">
-                  {activity.entityName} - <span className="font-medium">#{activity.entityId}</span>
-                </p>
-                
-                <div className="flex items-center justify-between mt-2">
-                  <span className="text-sm font-medium">{formatCurrency(activity.amount)}</span>
-                  <span className={`px-2 py-1 text-xs rounded-full flex items-center ${getStatusClass(activity.status)}`}>
+  // If no activities provided, show placeholders
+  const displayActivities = activities.length > 0 ? activities : [
+    { 
+      id: 1, 
+      action: 'Invoice created',
+      entityName: 'Client Company',
+      entityId: 'INV-2023-01', 
+      date: new Date(), 
+      amount: 2000, 
+      status: 'sent' 
+    },
+    { 
+      id: 2, 
+      action: 'Expense recorded',
+      entityName: 'Office Supplies',
+      entityId: 'EXP-2023-02', 
+      date: new Date(Date.now() - 86400000), 
+      amount: 785, 
+      status: 'paid' 
+    }
+  ];
+
+  return (
+    <div className="card h-100 shadow-sm">
+      <div className="card-header bg-white">
+        <h5 className="mb-0 fw-semibold">Recent Activities</h5>
+      </div>
+      <div className="card-body">
+        {displayActivities.length === 0 ? (
+          <div className="text-center py-4">
+            <p className="text-muted">No activities to show</p>
+          </div>
+        ) : (
+          <div className="activity-list">
+            {displayActivities.map((activity, index) => (
+              <div 
+                key={activity.id || index} 
+                className="d-flex align-items-start mb-3 pb-3 border-bottom"
+              >
+                <div className="me-3">
+                  <div className="p-2 rounded-circle bg-light-secondary">
                     {getStatusIcon(activity.status)}
-                    <span className="ml-1 capitalize">
-                      {activity.status === 'paid' ? 'Payée' : 
-                       activity.status === 'sent' ? 'Envoyée' :
-                       activity.status === 'draft' ? 'Brouillon' : 'Annulée'}
+                  </div>
+                </div>
+                
+                <div className="flex-grow-1">
+                  <div className="d-flex justify-content-between align-items-center">
+                    <h6 className="mb-0 fs-6 fw-semibold">{activity.action}</h6>
+                    <small className="text-muted">{formatDate(activity.date)}</small>
+                  </div>
+                  
+                  <p className="mb-1 text-muted small">
+                    {activity.entityName} - <span className="fw-medium">#{activity.entityId}</span>
+                  </p>
+                  
+                  <div className="d-flex justify-content-between align-items-center mt-1">
+                    <span className="fw-medium">{formatCurrency(activity.amount)}</span>
+                    <span className={`badge ${getStatusClass(activity.status)} d-flex align-items-center`}>
+                      {getStatusIcon(activity.status)}
+                      <span className="ms-1">{getStatusText(activity.status)}</span>
                     </span>
-                  </span>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-      )}
-      
-      {activities.length > 0 && (
-        <div className="mt-4 pt-3 border-t border-gray-200 text-center">
-          <button className="text-sm text-blue-600 hover:text-blue-800 font-medium">
-            Voir toutes les activités
-          </button>
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+        
+        {displayActivities.length > 0 && (
+          <div className="text-center mt-2">
+            <Link
+              to="/admin/expenses"
+              className="btn btn-link btn-sm text-decoration-none"
+            >
+              Show all activities
+            </Link>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

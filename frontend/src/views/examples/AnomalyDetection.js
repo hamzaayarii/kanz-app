@@ -290,7 +290,9 @@ const AnomalyDetection = () => {
                                 </Input>
                             </FormGroup>
                         </Col>
-                        <Col md={6} className="d-flex align-items-end">
+                    </Row>
+                    <Row className="mb-4">
+                        <Col md={12} className="text-center">
                             <Button
                                 color="primary"
                                 onClick={fetchAnomalies}

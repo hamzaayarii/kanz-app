@@ -19,7 +19,6 @@ import {
   Badge,
   FormFeedback
 } from 'reactstrap';
-import Header from 'components/Headers/Header.js';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -57,34 +56,78 @@ const IncomeStatement = () => {
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const navigate = useNavigate();
+  const [owners, setOwners] = useState([]);
+  const [selectedOwner, setSelectedOwner] = useState('');
+  const [isAccountant, setIsAccountant] = useState(false);
 
-  // Fetch businesses
+  // Detect user role from localStorage
+  useEffect(() => {
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      const user = JSON.parse(userStr);
+      setIsAccountant(user.role === 'accountant');
+    }
+  }, []);
+
+  // Fetch business owners for accountants
+  useEffect(() => {
+    if (!isAccountant) return;
+    const fetchOwners = async () => {
+      try {
+        const token = localStorage.getItem('authToken');
+        const res = await axios.get('http://localhost:5000/api/users/assigned-business-owners', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setOwners(res.data || []);
+      } catch (err) {
+        setError('Failed to load business owners.');
+      }
+    };
+    fetchOwners();
+  }, [isAccountant]);
+
+  // Fetch businesses (for business owner or for selected owner if accountant)
   useEffect(() => {
     const fetchBusinesses = async () => {
       try {
         const token = localStorage.getItem('authToken');
-        if (!token) {
-          throw new Error('You must be logged in to fetch businesses');
-        }
-
-        const response = await axios.get(`${API_URL}/business/user-businesses`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        const businesses = response.data.businesses || [];
-        setBusinesses(businesses);
-        if (businesses.length > 0) {
-          setValue('businessId', businesses[0]._id);
+        if (!token) throw new Error('You must be logged in to fetch businesses');
+        let url = '';
+        if (isAccountant && selectedOwner) {
+          url = `http://localhost:5000/api/business/getUserBusinessesByAccountant?ownerId=${selectedOwner}`;
+        } else if (!isAccountant) {
+          url = 'http://localhost:5000/api/business/user-businesses';
         } else {
-          setError('No businesses found.');
+          setBusinesses([]);
+          return;
+        }
+        const response = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
+        const businessesResponse = Array.isArray(response.data) ? response.data : (response.data.businesses || []);
+        setBusinesses(businessesResponse);
+        if (businessesResponse.length > 0) {
+          setValue('businessId', businessesResponse[0]._id);
+          setError(''); // Clear error if businesses are found
+        } else {
+          setError(''); // Ensure error is cleared if it was previously set for other reasons
         }
       } catch (err) {
-        setError(err.response?.data?.message || 'Error fetching businesses');
+        setError(''); // For now, clearing all errors if fetch fails or returns no businesses
+        setBusinesses([]); // Clear businesses on error or if none found
       }
     };
 
-    fetchBusinesses();
-  }, [setValue]);
+    if (isAccountant && !selectedOwner) {
+      setBusinesses([]);
+      setValue('businessId', ''); // Clear businessId in form
+      setSelectedBusiness(null); // Clear detailed selected business object
+      setError(''); // Explicitly clear error when no owner is selected by accountant
+      return;
+    }
+
+    if ((isAccountant && selectedOwner) || !isAccountant) {
+      fetchBusinesses();
+    }
+  }, [isAccountant, selectedOwner, setValue]);
 
   // Update selected business
   useEffect(() => {
@@ -329,8 +372,7 @@ const IncomeStatement = () => {
 
   return (
     <>
-      <Header />
-      <Container className="mt--7" fluid>
+      <Container className="mt-4" fluid>
         <Row>
           <Col className="order-xl-1 mb-5 mb-xl-0" xl="12">
             <Card className="bg-secondary shadow">
@@ -355,6 +397,28 @@ const IncomeStatement = () => {
                 <Form onSubmit={handleSubmit(onSubmit)}>
                   <h6 className="heading-small text-muted mb-4">Business Information</h6>
                   <div className="pl-lg-4">
+                    {isAccountant && (
+                      <Row>
+                        <Col lg="6">
+                          <FormGroup>
+                            <Label for="ownerId">Select Business Owner</Label>
+                            <Input
+                              type="select"
+                              id="ownerId"
+                              value={selectedOwner}
+                              onChange={e => setSelectedOwner(e.target.value)}
+                            >
+                              <option value="">-- Select Owner --</option>
+                              {owners.map(owner => (
+                                <option key={owner._id} value={owner._id}>
+                                  {owner.fullName || owner.email}
+                                </option>
+                              ))}
+                            </Input>
+                          </FormGroup>
+                        </Col>
+                      </Row>
+                    )}
                     <Row>
                       <Col lg="6">
                         <FormGroup>

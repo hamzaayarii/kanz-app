@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import BusinessSelector from '../../components/dashboard/BusinessSelector';
+import { Row, Col } from 'reactstrap';
+
+// Dashboard Components
 import TransactionSummary from '../../components/dashboard/TransactionSummary';
 import RevenueOverview from '../../components/dashboard/RevenueOverview';
 import ExpensesOverview from '../../components/dashboard/ExpensesOverview';
@@ -11,9 +13,14 @@ import InvoiceSummary from '../../components/dashboard/InvoiceSummary';
 import FinancialTrends from '../../components/dashboard/FinancialTrends';
 import RecentActivity from '../../components/dashboard/RecentActivity';
 
-const Dashboard = () => {
-  const { businessId } = useParams();
+// TTS Components
+import HoverSpeakText from '../../components/TTS/HoverSpeakText';
+import TTSButton from '../../components/TTS/TTSButton';
+import { useTTS } from '../../components/TTS/TTSContext';
+
+const Dashboard = ({ businessId }) => {
   const navigate = useNavigate();
+  const { isTTSEnabled, speak, stop } = useTTS();
 
   const [dashboardData, setDashboardData] = useState({
     revenue: { thisMonth: 0, thisYear: 0 },
@@ -28,9 +35,16 @@ const Dashboard = () => {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedPeriod, setSelectedPeriod] = useState('month');
 
   useEffect(() => {
     const fetchData = async () => {
+      if (!businessId) {
+        setError('No business selected');
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
         const token = localStorage.getItem('authToken');
@@ -42,6 +56,9 @@ const Dashboard = () => {
         const response = await axios.get(`http://localhost:5000/api/dashboard/${businessId}`, {
           headers: {
             Authorization: `Bearer ${token}`
+          },
+          params: {
+            period: selectedPeriod
           }
         });
 
@@ -61,6 +78,15 @@ const Dashboard = () => {
           financialTrends: apiData.financialTrends || [],
           recentActivity: apiData.recentActivity || []
         });
+
+        // Speak dashboard summary when data loads and TTS is enabled
+        if (isTTSEnabled) {
+          const summary = `Dashboard loaded for ${apiData.businessOverview?.businessName || 'your business'}. 
+            Current ${selectedPeriod} revenue: ${selectedPeriod === 'month' ? apiData.revenue.thisMonth : apiData.revenue.thisYear}. 
+            Expenses: ${selectedPeriod === 'month' ? apiData.expenses.thisMonth : apiData.expenses.thisYear}. 
+            Net profit: ${selectedPeriod === 'month' ? apiData.netProfit.thisMonth : apiData.netProfit.thisYear}.`;
+          speak(summary);
+        }
       } catch (err) {
         setError(err.response?.data?.message || 'Failed to load dashboard');
       } finally {
@@ -68,26 +94,34 @@ const Dashboard = () => {
       }
     };
 
-    if (businessId) {
-      fetchData();
+    fetchData();
+  }, [businessId, navigate, selectedPeriod, isTTSEnabled, speak]);
+
+  const handlePeriodChange = (period) => {
+    setSelectedPeriod(period);
+    if (isTTSEnabled) {
+      speak(`Switched to ${period} view`);
     }
-  }, [businessId, navigate]);
+  };
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <p className="text-lg text-gray-600">Loading dashboard...</p>
+      <div className="text-center py-5">
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
+        <p className="mt-2">Loading dashboard...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-red-100 text-red-700 p-6 rounded-xl shadow">
+      <div className="alert alert-danger">
         <p>{error}</p>
-        <button 
+        <button
           onClick={() => window.location.reload()}
-          className="mt-4 px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+          className="btn btn-primary mt-3"
         >
           Retry
         </button>
@@ -96,27 +130,184 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="px-6 py-8 bg-gray-50 min-h-screen">
-      <div className="flex justify-between items-center mb-8">
+    <div className="dashboard-container" id="dashboard-container">
+      <div className="mb-4 d-flex justify-content-between align-items-center">
         <div>
-          <h1 className="text-4xl font-bold text-indigo-800">
-            {dashboardData.businessOverview.businessName || 'Dashboard'}
-          </h1>
-          <p className="text-gray-500 text-sm mt-1">Overview of your financial performance</p>
+          <h2 className="mb-0">
+            <HoverSpeakText>
+              {dashboardData.businessOverview.businessName ? dashboardData.businessOverview.businessName : 'Total'}
+            </HoverSpeakText>
+            {isTTSEnabled && (
+              <TTSButton 
+                elementId="dashboard-container"
+                className="ml-2"
+                size="sm"
+                label="Read all dashboard information"
+              />
+            )}
+          </h2>
+          <p className="text-muted small">
+            <HoverSpeakText>Overview of your financial performance</HoverSpeakText>
+          </p>
         </div>
-        <BusinessSelector />
+        <div className="d-flex align-items-center">
+          <div className="dropdown">
+            <HoverSpeakText textToSpeak={`Current view: ${selectedPeriod === 'month' ? 'Month' : 'Year'}`}>
+              <button 
+                className="btn btn-outline-secondary dropdown-toggle" 
+                type="button" 
+                id="periodDropdown" 
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+              >
+                {selectedPeriod === 'month' ? 'Month' : 'Year'}
+              </button>
+            </HoverSpeakText>
+            <ul className="dropdown-menu" aria-labelledby="periodDropdown">
+              <li>
+                <HoverSpeakText textToSpeak="Switch to month view">
+                  <button 
+                    className={`dropdown-item ${selectedPeriod === 'month' ? 'active' : ''}`}
+                    onClick={() => handlePeriodChange('month')}
+                  >
+                    Month
+                  </button>
+                </HoverSpeakText>
+              </li>
+              <li>
+                <HoverSpeakText textToSpeak="Switch to year view">
+                  <button 
+                    className={`dropdown-item ${selectedPeriod === 'year' ? 'active' : ''}`}
+                    onClick={() => handlePeriodChange('year')}
+                  >
+                    Year
+                  </button>
+                </HoverSpeakText>
+              </li>
+            </ul>
+          </div>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <TransactionSummary data={dashboardData.transactionCount} />
-        <RevenueOverview data={dashboardData.revenue} />
-        <ExpensesOverview data={dashboardData.expenses} />
-        <ProfitOverview data={dashboardData.netProfit} />
-        <BusinessOverview data={dashboardData.businessOverview} />
-        <InvoiceSummary data={dashboardData.invoiceSummary} />
-        <FinancialTrends data={dashboardData.financialTrends} />
-        <RecentActivity activities={dashboardData.recentActivity} />
-      </div>
+      {/* First row of stats */}
+      <Row className="mb-4 g-3">
+        <Col lg="3" md="6">
+          <div id="transaction-summary">
+            <HoverSpeakText textToSpeak="Transaction summary">
+              <TransactionSummary data={dashboardData.transactionCount} />
+            </HoverSpeakText>
+            {isTTSEnabled && (
+              <TTSButton 
+                text={`Transaction summary: ${dashboardData.transactionCount.income} income transactions, ${dashboardData.transactionCount.expense} expense transactions`}
+                className="mt-2"
+                size="sm"
+              />
+            )}
+          </div>
+        </Col>
+        <Col lg="3" md="6">
+          <div id="revenue-overview">
+            <HoverSpeakText textToSpeak="Revenue overview">
+              <RevenueOverview data={dashboardData.revenue} period={selectedPeriod} />
+            </HoverSpeakText>
+            {isTTSEnabled && (
+              <TTSButton 
+                text={`Revenue this ${selectedPeriod}: ${selectedPeriod === 'month' ? dashboardData.revenue.thisMonth : dashboardData.revenue.thisYear}`}
+                className="mt-2"
+                size="sm"
+              />
+            )}
+          </div>
+        </Col>
+        <Col lg="3" md="6">
+          <div id="expenses-overview">
+            <HoverSpeakText textToSpeak="Expenses overview">
+              <ExpensesOverview data={dashboardData.expenses} period={selectedPeriod} />
+            </HoverSpeakText>
+            {isTTSEnabled && (
+              <TTSButton 
+                text={`Expenses this ${selectedPeriod}: ${selectedPeriod === 'month' ? dashboardData.expenses.thisMonth : dashboardData.expenses.thisYear}`}
+                className="mt-2"
+                size="sm"
+              />
+            )}
+          </div>
+        </Col>
+        <Col lg="3" md="6">
+          <div id="profit-overview">
+            <HoverSpeakText textToSpeak="Profit overview">
+              <ProfitOverview data={dashboardData.netProfit} period={selectedPeriod} />
+            </HoverSpeakText>
+            {isTTSEnabled && (
+              <TTSButton 
+                text={`Net profit this ${selectedPeriod}: ${selectedPeriod === 'month' ? dashboardData.netProfit.thisMonth : dashboardData.netProfit.thisYear}`}
+                className="mt-2"
+                size="sm"
+              />
+            )}
+          </div>
+        </Col>
+      </Row>
+
+      {/* Second row of stats */}
+      <Row className="g-3">
+        <Col lg="3" md="6">
+          <div id="business-overview">
+            <HoverSpeakText textToSpeak="Business overview">
+              <BusinessOverview data={dashboardData.businessOverview} />
+            </HoverSpeakText>
+            {isTTSEnabled && (
+              <TTSButton 
+                text={`Business: ${dashboardData.businessOverview.businessName}. Type: ${dashboardData.businessOverview.businessType}. Accountants: ${dashboardData.businessOverview.accountantCount}`}
+                className="mt-2"
+                size="sm"
+              />
+            )}
+          </div>
+        </Col>
+        <Col lg="3" md="6">
+          <div id="invoice-summary">
+            <HoverSpeakText textToSpeak="Invoice summary">
+              <InvoiceSummary data={dashboardData.invoiceSummary} />
+            </HoverSpeakText>
+            {isTTSEnabled && (
+              <TTSButton 
+                text={`Invoices: ${dashboardData.invoiceSummary.paid} paid, ${dashboardData.invoiceSummary.unpaid} unpaid, ${dashboardData.invoiceSummary.overdue} overdue, ${dashboardData.invoiceSummary.draft} draft`}
+                className="mt-2"
+                size="sm"
+              />
+            )}
+          </div>
+        </Col>
+        <Col lg="3" md="6">
+          <div id="financial-trends">
+            <HoverSpeakText textToSpeak="Financial trends">
+              <FinancialTrends data={dashboardData.financialTrends} />
+            </HoverSpeakText>
+            {isTTSEnabled && (
+              <TTSButton 
+                text="Financial trends chart showing performance over time"
+                className="mt-2"
+                size="sm"
+              />
+            )}
+          </div>
+        </Col>
+        <Col lg="3" md="6">
+          <div id="recent-activity">
+            <HoverSpeakText textToSpeak="Recent activity">
+              <RecentActivity activities={dashboardData.recentActivity} />
+            </HoverSpeakText>
+            {isTTSEnabled && (
+              <TTSButton 
+                text={`Recent activities: ${dashboardData.recentActivity.length} items`}
+                className="mt-2"
+                size="sm"
+              />
+            )}
+          </div>
+        </Col>
+      </Row>
     </div>
   );
 };

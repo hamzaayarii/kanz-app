@@ -5,6 +5,9 @@ import { Alert, Modal, ModalHeader, ModalBody, Input, Table, Spinner } from 'rea
 import { FaSearch } from 'react-icons/fa';
 import debounce from 'lodash.debounce';
 import styles from '../../assets/css/CreateInvoice.module.css';
+import HoverSpeakText from '../../components/TTS/HoverSpeakText';
+import TTSButton from '../../components/TTS/TTSButton';
+import { useTTS } from '../../components/TTS/TTSContext';
 
 const CreateInvoice = () => {
     const [loading, setLoading] = useState(false);
@@ -16,6 +19,7 @@ const CreateInvoice = () => {
     const [items, setItems] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [loadingItems, setLoadingItems] = useState(false);
+    const { isTTSEnabled, speak, stop } = useTTS();
 
     const { register, control, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm({
         defaultValues: {
@@ -47,7 +51,7 @@ const CreateInvoice = () => {
         const fetchBusinesses = async () => {
             try {
                 const token = localStorage.getItem('authToken');
-                if (!token) throw new Error('Vous devez être connecté pour récupérer les entreprises');
+                if (!token) throw new Error('You must be logged in to fetch businesses');
 
                 const response = await axios.get('http://localhost:5000/api/business/user-businesses', {
                     headers: { Authorization: `Bearer ${token}` },
@@ -59,7 +63,7 @@ const CreateInvoice = () => {
                     setValue('businessId', response.data.businesses[0]._id);
                 }
             } catch (err) {
-                setError(err.response?.data?.message || 'Erreur lors de la récupération des entreprises');
+                setError(err.response?.data?.message || 'Error fetching businesses');
                 console.error('FetchBusinesses - Error:', err.response?.data || err);
             }
         };
@@ -86,7 +90,7 @@ const CreateInvoice = () => {
                 }
             } catch (error) {
                 console.error('Error fetching items:', error);
-                setError('Échec du chargement des articles');
+                setError('Failed to load items');
             } finally {
                 setLoadingItems(false);
             }
@@ -140,7 +144,7 @@ const CreateInvoice = () => {
 
         try {
             const token = localStorage.getItem('authToken');
-            if (!token) throw new Error('Vous devez être connecté pour créer une facture');
+            if (!token) throw new Error('You must be logged in to create an invoice');
 
             const invoiceData = {
                 ...data,
@@ -158,11 +162,11 @@ const CreateInvoice = () => {
                 { headers: { Authorization: `Bearer ${token}` }, timeout: 10000 }
             );
 
-            setSuccess('Facture créée avec succès');
+            setSuccess('Invoice created successfully');
             reset();
         } catch (err) {
-            setError(err.response?.data?.message || err.message || 'Erreur lors de la création de la facture');
-            console.error('Erreur lors de la création:', err);
+            setError(err.response?.data?.message || err.message || 'Error creating invoice');
+            console.error('Create error:', err);
         } finally {
             setLoading(false);
         }
@@ -170,21 +174,21 @@ const CreateInvoice = () => {
 
     const handleExtract = async (event) => {
         if (!event?.target?.files?.[0]) {
-            setError('Aucun fichier sélectionné.');
+            setError('No file selected.');
             return;
         }
 
         const file = event.target.files[0];
         if (file.size === 0) {
-            setError('Le fichier est vide.');
+            setError('The file is empty.');
             return;
         }
         if (file.size > 10 * 1024 * 1024) {
-            setError('Le fichier est trop volumineux (max 10 Mo).');
+            setError('The file is too large (max 10 MB).');
             return;
         }
         if (!watchBusinessId) {
-            setError('Veuillez sélectionner une entreprise avant de télécharger un document');
+            setError('Please select a business before uploading a document');
             return;
         }
 
@@ -195,7 +199,7 @@ const CreateInvoice = () => {
         try {
             const token = localStorage.getItem('authToken');
             if (!token) {
-                throw new Error('Vous devez être connecté pour extraire des données');
+                throw new Error('You must be logged in to extract data');
             }
 
             const formData = new FormData();
@@ -210,19 +214,19 @@ const CreateInvoice = () => {
                         Authorization: `Bearer ${token}`,
                         'Content-Type': 'multipart/form-data'
                     },
-                    timeout: 30000 // Increased timeout for Tesseract.js processing
+                    timeout: 30000
                 }
             );
 
             if (!response.data || !response.data.invoiceData) {
-                throw new Error('Réponse invalide du serveur');
+                throw new Error('Invalid server response');
             }
 
             const { invoiceData } = response.data;
             console.log('Extracted invoiceData:', invoiceData);
 
             if (!invoiceData.items || !Array.isArray(invoiceData.items)) {
-                throw new Error('Les données des articles sont invalides');
+                throw new Error('Invalid item data');
             }
 
             const calculatedSubTotal = invoiceData.items.reduce((sum, item) => {
@@ -235,7 +239,7 @@ const CreateInvoice = () => {
             );
 
             if (Math.abs(calculatedTotal - Number(invoiceData.total)) > 0.01) {
-                setError(`Attention : Le total extrait (${invoiceData.total}) ne correspond pas au total calculé (${calculatedTotal}). Veuillez vérifier les données.`);
+                setError(`Warning: Extracted total (${invoiceData.total}) does not match calculated total (${calculatedTotal}). Please verify the data.`);
             }
 
             const cleanedItems = invoiceData.items.map(item => ({
@@ -255,26 +259,26 @@ const CreateInvoice = () => {
                 dueDate: invoiceData.dueDate || '',
                 discount: Number(invoiceData.discount) || 0,
                 shippingCharges: Number(invoiceData.shippingCharges) || 0,
-                customerNotes: invoiceData.customerNotes ? invoiceData.customerNotes.replace(/Page \d+ de \d+/i, '').trim() : '',
+                customerNotes: invoiceData.customerNotes ? invoiceData.customerNotes.replace(/Page \d+ of \d+/i, '').trim() : '',
                 items: cleanedItems.length > 0 ? cleanedItems : [{ itemDetails: '', quantity: 1, rate: 0, taxPercentage: 0 }]
             });
 
-            setSuccess('Informations extraites avec succès');
+            setSuccess('Information extracted successfully');
         } catch (err) {
-            let errorMessage = 'Erreur lors de l\'extraction des données';
+            let errorMessage = 'Error extracting data';
             if (err.response?.data?.message) {
                 errorMessage = err.response.data.message;
             } else if (err.message) {
                 errorMessage = err.message;
             }
             if (errorMessage.includes('bad XRef entry')) {
-                errorMessage = 'Le fichier PDF est corrompu ou mal formé. Veuillez essayer un autre fichier.';
-            } else if (errorMessage.includes('Aucun texte détecté')) {
-                errorMessage = 'Aucun texte détecté dans le document. Assurez-vous que l\'image est claire, lisible et contient du texte scannable.';
+                errorMessage = 'The PDF file is corrupted or malformed. Please try another file.';
+            } else if (errorMessage.includes('No text detected')) {
+                errorMessage = 'No text detected in the document. Ensure the image is clear, readable, and contains scannable text.';
             } else if (err.code === 'ECONNABORTED') {
-                errorMessage = 'Délai d\'attente dépassé. Le document peut être trop complexe ou volumineux. Essayez un fichier plus simple.';
+                errorMessage = 'Request timed out. The document may be too complex or large. Try a simpler file.';
             } else {
-                errorMessage = errorMessage + '. Veuillez vérifier le fichier et réessayer.';
+                errorMessage = errorMessage + '. Please check the file and try again.';
             }
             setError(errorMessage);
             console.error('Extraction error:', err.response?.data || err);
@@ -289,7 +293,7 @@ const CreateInvoice = () => {
         if (!file) return;
 
         if (file.size === 0) {
-            setError('Le fichier JSON est vide.');
+            setError('The JSON file is empty.');
             return;
         }
 
@@ -299,7 +303,7 @@ const CreateInvoice = () => {
                 try {
                     const data = JSON.parse(e.target.result);
                     if (!data || typeof data !== 'object') {
-                        setError('Fichier JSON invalide');
+                        setError('Invalid JSON file');
                         return;
                     }
 
@@ -324,15 +328,15 @@ const CreateInvoice = () => {
                         replace([{ itemDetails: '', quantity: 1, rate: 0, taxPercentage: 0 }]);
                     }
 
-                    setSuccess('Données importées avec succès');
+                    setSuccess('Data imported successfully');
                 } catch (jsonErr) {
-                    setError('Erreur de parsing JSON : ' + jsonErr.message);
+                    setError('JSON parsing error: ' + jsonErr.message);
                 }
             };
-            reader.onerror = () => setError('Erreur lors de la lecture du fichier');
+            reader.onerror = () => setError('Error reading file');
             reader.readAsText(file);
         } catch (err) {
-            setError('Erreur lors de l\'importation des données');
+            setError('Error importing data');
             console.error('Import error:', err);
         } finally {
             event.target.value = '';
@@ -340,115 +344,192 @@ const CreateInvoice = () => {
     };
 
     return (
-        <div className={styles.container}>
+        <div className={styles.container} id="create-invoice-container">
             <div className={styles.formWrapper}>
                 <div className={styles.header}>
-                    <h2>Création de Facture</h2>
-                    <p>Gérez vos factures avec style</p>
+                    <h2>
+                        <HoverSpeakText>Create Invoice</HoverSpeakText>
+                        {isTTSEnabled && (
+                            <TTSButton 
+                                elementId="create-invoice-container"
+                                className="ml-2"
+                                size="sm"
+                                label="Read all invoice creation information"
+                            />
+                        )}
+                    </h2>
+                    <p><HoverSpeakText>Manage your invoices with style</HoverSpeakText></p>
                 </div>
                 <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
-                    {error && <Alert color="danger">{error}</Alert>}
-                    {success && <Alert color="success">{success}</Alert>}
+                    {error && (
+                        <Alert color="danger">
+                            <HoverSpeakText>{error}</HoverSpeakText>
+                        </Alert>
+                    )}
+                    {success && (
+                        <Alert color="success">
+                            <HoverSpeakText>{success}</HoverSpeakText>
+                        </Alert>
+                    )}
 
                     <div className={styles.field}>
-                        <label className={styles.label}>Extraire depuis un document (PDF/Image)</label>
+                        <HoverSpeakText textToSpeak="Extract from PDF or Image document">
+                            <label className={styles.label}>Extract from document (PDF/Image)</label>
+                        </HoverSpeakText>
                         <input
                             type="file"
                             accept="application/pdf,image/png,image/jpeg,image/jpg"
                             onChange={handleExtract}
                             disabled={loading || !watchBusinessId}
                             className={styles.input}
+                            aria-label="Upload document for extraction"
                         />
                     </div>
 
-
-
                     <div className={styles.inputGrid}>
                         <div className={styles.field}>
-                            <label className={styles.label}>Entreprise</label>
+                            <HoverSpeakText textToSpeak="Select a business">
+                                <label className={styles.label}>Business</label>
+                            </HoverSpeakText>
                             <select
-                                {...register('businessId', { required: 'Veuillez sélectionner une entreprise' })}
+                                {...register('businessId', { required: 'Please select a business' })}
                                 disabled={loading || businesses.length === 0}
                                 className={styles.input}
+                                aria-label="Business list"
                             >
-                                <option value="">Sélectionner une entreprise</option>
+                                <option value="">Select a business</option>
                                 {businesses.map(business => (
                                     <option key={business._id} value={business._id}>
                                         {business.name}
                                     </option>
                                 ))}
                             </select>
-                            {errors.businessId && <span className={styles.error}>{errors.businessId.message}</span>}
+                            {errors.businessId && (
+                                <span className={styles.error}>
+                                    <HoverSpeakText>{errors.businessId.message}</HoverSpeakText>
+                                </span>
+                            )}
                         </div>
 
                         {selectedBusiness && (
                             <div className={styles.field}>
-                                <label className={styles.label}>Détails de l'entreprise</label>
+                                <HoverSpeakText textToSpeak="Business details">
+                                    <label className={styles.label}>Business Details</label>
+                                </HoverSpeakText>
                                 <div className={styles.businessDetails}>
-                                    <p><strong>Nom :</strong> {selectedBusiness.name}</p>
-                                    <p><strong>Adresse :</strong> {selectedBusiness.address}</p>
-                                    <p><strong>N° Taxe :</strong> {selectedBusiness.taxNumber}</p>
+                                    <p>
+                                        <HoverSpeakText>
+                                            <strong>Name:</strong> {selectedBusiness.name}
+                                        </HoverSpeakText>
+                                    </p>
+                                    <p>
+                                        <HoverSpeakText>
+                                            <strong>Address:</strong> {selectedBusiness.address}
+                                        </HoverSpeakText>
+                                    </p>
+                                    <p>
+                                        <HoverSpeakText>
+                                            <strong>Tax Number:</strong> {selectedBusiness.taxNumber}
+                                        </HoverSpeakText>
+                                    </p>
                                 </div>
                             </div>
                         )}
 
                         {[
-                            { name: 'customerName', label: 'Nom du client', required: 'Ce champ est requis', maxLength: { value: 100, message: 'Maximum 100 caractères' } },
-                            { name: 'invoiceNumber', label: 'Numéro de facture', required: 'Ce champ est requis', pattern: { value: /^[A-Za-z0-9-]+$/, message: 'Alphanumérique avec tirets uniquement' } },
-                            { name: 'orderNumber', label: 'Numéro de commande' },
-                            { name: 'invoiceDate', label: 'Date de facture', type: 'date', required: 'Ce champ est requis' },
-                            { name: 'dueDate', label: 'Date d\'échéance', type: 'date', required: 'Ce champ est requis', validate: value => new Date(value) >= new Date(watch('invoiceDate')) || 'Doit être postérieure à la date de facture' }
+                            { name: 'customerName', label: 'Customer Name', required: 'This field is required', maxLength: { value: 100, message: 'Maximum 100 characters' } },
+                            { name: 'invoiceNumber', label: 'Invoice Number', required: 'This field is required', pattern: { value: /^[A-Za-z0-9-]+$/, message: 'Alphanumeric with dashes only' } },
+                            { name: 'orderNumber', label: 'Order Number' },
+                            { name: 'invoiceDate', label: 'Invoice Date', type: 'date', required: 'This field is required' },
+                            { name: 'dueDate', label: 'Due Date', type: 'date', required: 'This field is required', validate: value => new Date(value) >= new Date(watch('invoiceDate')) || 'Must be later than invoice date' }
                         ].map(field => (
                             <div key={field.name} className={styles.field}>
-                                <label className={styles.label}>{field.label}</label>
+                                <HoverSpeakText textToSpeak={field.label}>
+                                    <label className={styles.label}>{field.label}</label>
+                                </HoverSpeakText>
                                 <input
                                     type={field.type || 'text'}
                                     {...register(field.name, { required: field.required, maxLength: field.maxLength, pattern: field.pattern, validate: field.validate })}
                                     disabled={loading}
                                     className={styles.input}
+                                    aria-label={field.label}
                                 />
-                                {errors[field.name] && <span className={styles.error}>{errors[field.name].message}</span>}
+                                {errors[field.name] && (
+                                    <span className={styles.error}>
+                                        <HoverSpeakText>{errors[field.name].message}</HoverSpeakText>
+                                    </span>
+                                )}
                             </div>
                         ))}
                     </div>
 
-                    <div className={styles.itemsSection}>
-                        <h3>Articles</h3>
+                    <div className={styles.itemsSection} id="invoice-items-section">
+                        <h3>
+                            <HoverSpeakText>Items</HoverSpeakText>
+                            <TTSButton 
+                                text="This section contains all invoice items" 
+                                className="ml-2"
+                                size="sm"
+                            />
+                        </h3>
                         {fields.map((item, index) => (
                             <div key={item.id} className={styles.itemRow}>
                                 <div>
-                                    <label className={styles.label}>Détails</label>
+                                    <HoverSpeakText textToSpeak="Item details">
+                                        <label className={styles.label}>Details</label>
+                                    </HoverSpeakText>
                                     <input
-                                        {...register(`items.${index}.itemDetails`, { required: 'Requis', maxLength: { value: 200, message: 'Maximum 200 caractères' } })}
+                                        {...register(`items.${index}.itemDetails`, { required: 'Required', maxLength: { value: 200, message: 'Maximum 200 characters' } })}
                                         disabled={loading}
                                         className={styles.itemInput}
+                                        aria-label={`Item ${index + 1} details`}
                                     />
-                                    {errors.items?.[index]?.itemDetails && <span className={styles.error}>{errors.items[index].itemDetails.message}</span>}
+                                    {errors.items?.[index]?.itemDetails && (
+                                        <span className={styles.error}>
+                                            <HoverSpeakText>{errors.items[index].itemDetails.message}</HoverSpeakText>
+                                        </span>
+                                    )}
                                 </div>
                                 <div>
-                                    <label className={styles.label}>Quantité</label>
+                                    <HoverSpeakText textToSpeak="Quantity">
+                                        <label className={styles.label}>Quantity</label>
+                                    </HoverSpeakText>
                                     <input
                                         type="number"
                                         step="1"
-                                        {...register(`items.${index}.quantity`, { required: 'Requis', min: { value: 1, message: 'Minimum 1' }, valueAsNumber: true })}
+                                        {...register(`items.${index}.quantity`, { required: 'Required', min: { value: 1, message: 'Minimum 1' }, valueAsNumber: true })}
                                         disabled={loading}
                                         className={styles.itemInput}
+                                        aria-label={`Item ${index + 1} quantity`}
                                     />
-                                    {errors.items?.[index]?.quantity && <span className={styles.error}>{errors.items[index].quantity.message}</span>}
+                                    {errors.items?.[index]?.quantity && (
+                                        <span className={styles.error}>
+                                            <HoverSpeakText>{errors.items[index].quantity.message}</HoverSpeakText>
+                                        </span>
+                                    )}
                                 </div>
                                 <div>
-                                    <label className={styles.label}>Prix unitaire</label>
+                                    <HoverSpeakText textToSpeak="Unit price">
+                                        <label className={styles.label}>Unit Price</label>
+                                    </HoverSpeakText>
                                     <input
                                         type="number"
                                         step="0.01"
-                                        {...register(`items.${index}.rate`, { required: 'Requis', min: { value: 0, message: 'Minimum 0' }, valueAsNumber: true })}
+                                        {...register(`items.${index}.rate`, { required: 'Required', min: { value: 0, message: 'Minimum 0' }, valueAsNumber: true })}
                                         disabled={loading}
                                         className={styles.itemInput}
+                                        aria-label={`Item ${index + 1} unit price`}
                                     />
-                                    {errors.items?.[index]?.rate && <span className={styles.error}>{errors.items[index].rate.message}</span>}
+                                    {errors.items?.[index]?.rate && (
+                                        <span className={styles.error}>
+                                            <HoverSpeakText>{errors.items[index].rate.message}</HoverSpeakText>
+                                        </span>
+                                    )}
                                 </div>
                                 <div>
-                                    <label className={styles.label}>Taxe (%)</label>
+                                    <HoverSpeakText textToSpeak="Tax rate percentage">
+                                        <label className={styles.label}>Tax (%)</label>
+                                    </HoverSpeakText>
                                     <input
                                         type="number"
                                         step="0.01"
@@ -459,94 +540,118 @@ const CreateInvoice = () => {
                                         })}
                                         disabled={loading}
                                         className={styles.itemInput}
+                                        aria-label={`Item ${index + 1} tax rate`}
                                     />
-                                    {errors.items?.[index]?.taxPercentage && <span className={styles.error}>{errors.items[index].taxPercentage.message}</span>}
+                                    {errors.items?.[index]?.taxPercentage && (
+                                        <span className={styles.error}>
+                                            <HoverSpeakText>{errors.items[index].taxPercentage.message}</HoverSpeakText>
+                                        </span>
+                                    )}
                                 </div>
                                 <div>
-                                    <label className={styles.label}>Montant</label>
+                                    <HoverSpeakText textToSpeak="Total amount with tax">
+                                        <label className={styles.label}>Amount</label>
+                                    </HoverSpeakText>
                                     <input
                                         type="number"
                                         value={calculateAmount(watchItems[index]).toFixed(2)}
                                         disabled
                                         className={`${styles.itemInput} ${styles.amountInput}`}
+                                        aria-label={`Item ${index + 1} total amount: ${calculateAmount(watchItems[index]).toFixed(2)}`}
                                     />
                                 </div>
-                                <button
-                                    type="button"
-                                    onClick={() => remove(index)}
-                                    disabled={fields.length === 1 || loading}
-                                    className={styles.removeButton}
-                                >
-                                    Supprimer
-                                </button>
+                                <HoverSpeakText textToSpeak={`Remove item ${index + 1}`}>
+                                    <button
+                                        type="button"
+                                        onClick={() => remove(index)}
+                                        disabled={fields.length === 1 || loading}
+                                        className={styles.removeButton}
+                                        aria-label={`Remove item ${index + 1}`}
+                                    >
+                                        Remove
+                                    </button>
+                                </HoverSpeakText>
                             </div>
                         ))}
                         <div className={styles.itemButtons}>
-                            <button
-                                type="button"
-                                onClick={() => setItemModal(true)}
-                                disabled={loading}
-                                className={`${styles.addButton} ${styles.selectItem}`}
-                            >
-                                + Sélectionner un article existant
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => append({ itemDetails: '', quantity: 1, rate: 0, taxPercentage: 0 })}
-                                disabled={loading}
-                                className={styles.addButton}
-                            >
-                                + Ajouter un article personnalisé
-                            </button>
+                            <HoverSpeakText textToSpeak="Select existing item">
+                                <button
+                                    type="button"
+                                    onClick={() => setItemModal(true)}
+                                    disabled={loading}
+                                    className={`${styles.addButton} ${styles.selectItem}`}
+                                    aria-label="Select existing item"
+                                >
+                                    + Select Existing Item
+                                </button>
+                            </HoverSpeakText>
+                            <HoverSpeakText textToSpeak="Add custom item">
+                                <button
+                                    type="button"
+                                    onClick={() => append({ itemDetails: '', quantity: 1, rate: 0, taxPercentage: 0 })}
+                                    disabled={loading}
+                                    className={styles.addButton}
+                                    aria-label="Add custom item"
+                                >
+                                    + Add Custom Item
+                                </button>
+                            </HoverSpeakText>
                         </div>
 
                         <Modal isOpen={itemModal} toggle={() => setItemModal(!itemModal)} size="lg">
                             <ModalHeader toggle={() => setItemModal(!itemModal)}>
-                                Sélectionner un article
+                                <HoverSpeakText>Select Item</HoverSpeakText>
                             </ModalHeader>
                             <ModalBody>
                                 <div className={styles.searchContainer}>
                                     <div className={styles.searchBox}>
                                         <FaSearch className={styles.searchIcon} />
-                                        <Input
-                                            type="text"
-                                            placeholder="Rechercher des articles..."
-                                            value={searchTerm}
-                                            onChange={handleSearchChange}
-                                            className={styles.searchInput}
-                                        />
+                                        <HoverSpeakText textToSpeak="Search items">
+                                            <Input
+                                                type="text"
+                                                placeholder="Search items..."
+                                                value={searchTerm}
+                                                onChange={handleSearchChange}
+                                                className={styles.searchInput}
+                                                aria-label="Search items"
+                                            />
+                                        </HoverSpeakText>
                                     </div>
                                 </div>
 
                                 {loadingItems ? (
                                     <div className={styles.spinnerContainer}>
                                         <Spinner />
+                                        <HoverSpeakText>Loading items...</HoverSpeakText>
                                     </div>
                                 ) : (
                                     <Table hover responsive className={styles.itemsTable}>
                                         <thead>
                                         <tr>
-                                            <th>Nom</th>
-                                            <th>Unité</th>
-                                            <th>Prix</th>
-                                            <th>Taux de taxe</th>
-                                            <th>Action</th>
+                                            {['Name', 'Unit', 'Price', 'Tax Rate', 'Action'].map((header) => (
+                                                <th key={header}>
+                                                    <HoverSpeakText>{header}</HoverSpeakText>
+                                                </th>
+                                            ))}
                                         </tr>
                                         </thead>
                                         <tbody>
                                         {items.map((item) => (
                                             <tr key={item._id}>
-                                                <td>{item.name}</td>
-                                                <td>{item.unit}</td>
-                                                <td>{item.salesInfo.sellingPrice}</td>
-                                                <td>{item.salesInfo.tax}%</td>
+                                                <td><HoverSpeakText>{item.name}</HoverSpeakText></td>
+                                                <td><HoverSpeakText>{item.unit}</HoverSpeakText></td>
+                                                <td><HoverSpeakText>{item.salesInfo.sellingPrice}</HoverSpeakText></td>
+                                                <td><HoverSpeakText>{item.salesInfo.tax}%</HoverSpeakText></td>
                                                 <td>
-                                                    <button
-                                                        onClick={() => handleItemSelect(item)}
-                                                        className={styles.selectButton}
-                                                    >
-                                                        Sélectionner
-                                                    </button>
+                                                    <HoverSpeakText textToSpeak={`Select item ${item.name}`}>
+                                                        <button
+                                                            onClick={() => handleItemSelect(item)}
+                                                            className={styles.selectButton}
+                                                            aria-label={`Select item ${item.name}`}
+                                                        >
+                                                            Select
+                                                        </button>
+                                                    </HoverSpeakText>
                                                 </td>
                                             </tr>
                                         ))}
@@ -556,38 +661,74 @@ const CreateInvoice = () => {
                             </ModalBody>
                         </Modal>
 
-                        <div className={styles.totalsSection}>
-                            <h4>Totaux</h4>
+                        <div className={styles.totalsSection} id="invoice-totals-section">
+                            <h4>
+                                <HoverSpeakText>Totals</HoverSpeakText>
+                                <TTSButton 
+                                    text="This section displays the invoice totals" 
+                                    className="ml-2"
+                                    size="sm"
+                                />
+                            </h4>
                             <div className={styles.totalsGrid}>
                                 <div className={styles.field}>
-                                    <label className={styles.label}>Sous-total</label>
-                                    <input value={subTotal} disabled className={`${styles.input} ${styles.totalInput}`} />
+                                    <HoverSpeakText textToSpeak="Invoice subtotal">
+                                        <label className={styles.label}>Subtotal</label>
+                                    </HoverSpeakText>
+                                    <HoverSpeakText textToSpeak={`Subtotal: ${subTotal}`}>
+                                        <input value={subTotal} disabled className={`${styles.input} ${styles.totalInput}`} aria-label={`Subtotal: ${subTotal}`} />
+                                    </HoverSpeakText>
                                 </div>
                                 <div className={styles.field}>
-                                    <label className={styles.label}>Remise</label>
+                                    <HoverSpeakText textToSpeak="Invoice discount">
+                                        <label className={styles.label}>Discount</label>
+                                    </HoverSpeakText>
                                     <input
                                         type="number"
                                         step="0.01"
-                                        {...register('discount', { min: { value: 0, message: 'Minimum 0' }, valueAsNumber: true })}
+                                        {...register('discount', {
+                                            min: { value: 0, message: 'Minimum 0' },
+                                            max: { value: subTotal, message: 'Cannot exceed subtotal' },
+                                            valueAsNumber: true
+                                        })}
                                         disabled={loading}
                                         className={styles.input}
+                                        aria-label="Invoice discount"
                                     />
-                                    {errors.discount && <span className={styles.error}>{errors.discount.message}</span>}
+                                    {errors.discount && (
+                                        <span className={styles.error}>
+                                            <HoverSpeakText>{errors.discount.message}</HoverSpeakText>
+                                        </span>
+                                    )}
                                 </div>
                                 <div className={styles.field}>
-                                    <label className={styles.label}>Frais de livraison</label>
+                                    <HoverSpeakText textToSpeak="Shipping charges">
+                                        <label className={styles.label}>Shipping Charges</label>
+                                    </HoverSpeakText>
                                     <input
                                         type="number"
                                         step="0.01"
-                                        {...register('shippingCharges', { min: { value: 0, message: 'Minimum 0' }, valueAsNumber: true })}
+                                        {...register('shippingCharges', {
+                                            min: { value: 0, message: 'Minimum 0' },
+                                            valueAsNumber: true
+                                        })}
                                         disabled={loading}
                                         className={styles.input}
+                                        aria-label="Shipping charges"
                                     />
-                                    {errors.shippingCharges && <span className={styles.error}>{errors.shippingCharges.message}</span>}
+                                    {errors.shippingCharges && (
+                                        <span className={styles.error}>
+                                            <HoverSpeakText>{errors.shippingCharges.message}</HoverSpeakText>
+                                        </span>
+                                    )}
                                 </div>
                                 <div className={styles.field}>
-                                    <label className={styles.label}>Total</label>
-                                    <input value={total} disabled className={`${styles.input} ${styles.totalInput}`} />
+                                    <HoverSpeakText textToSpeak="Invoice total">
+                                        <label className={styles.label}>Total</label>
+                                    </HoverSpeakText>
+                                    <HoverSpeakText textToSpeak={`Total: ${total}`}>
+                                        <input value={total} disabled className={`${styles.input} ${styles.totalInput}`} aria-label={`Total: ${total}`} />
+                                    </HoverSpeakText>
                                 </div>
                             </div>
                         </div>
@@ -595,21 +736,31 @@ const CreateInvoice = () => {
 
                     <div className={styles.notesSection}>
                         <div style={{ flex: 1 }}>
-                            <label className={styles.label}>Notes client</label>
+                            <HoverSpeakText textToSpeak="Customer notes">
+                                <label className={styles.label}>Customer Notes</label>
+                            </HoverSpeakText>
                             <textarea
-                                {...register('customerNotes', { maxLength: { value: 500, message: 'Maximum 500 caractères' } })}
+                                {...register('customerNotes', { maxLength: { value: 500, message: 'Maximum 500 characters' } })}
                                 disabled={loading}
                                 className={styles.textarea}
+                                aria-label="Customer notes"
                             />
-                            {errors.customerNotes && <span className={styles.error}>{errors.customerNotes.message}</span>}
+                            {errors.customerNotes && (
+                                <span className={styles.error}>
+                                    <HoverSpeakText>{errors.customerNotes.message}</HoverSpeakText>
+                                </span>
+                            )}
                         </div>
-                        <button
-                            type="submit"
-                            disabled={loading || Object.keys(errors).length > 0}
-                            className={styles.submitButton}
-                        >
-                            {loading ? 'Création...' : 'Créer la facture'}
-                        </button>
+                        <HoverSpeakText textToSpeak="Create invoice">
+                            <button
+                                type="submit"
+                                disabled={loading || Object.keys(errors).length > 0}
+                                className={styles.submitButton}
+                                aria-label="Create invoice"
+                            >
+                                {loading ? 'Creating...' : 'Create Invoice'}
+                            </button>
+                        </HoverSpeakText>
                     </div>
                 </form>
             </div>

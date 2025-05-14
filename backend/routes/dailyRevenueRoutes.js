@@ -12,6 +12,9 @@ router.post('/', dailyRevenueController.create);
 // Get all daily revenue entries
 router.get('/', dailyRevenueController.list);
 
+// Get daily revenue entries for a specific business
+router.get('/business/:businessId', dailyRevenueController.getByBusiness);
+
 // Get a single daily revenue entry
 router.get('/:id', dailyRevenueController.get);
 

@@ -4,6 +4,15 @@ import { format } from 'date-fns';
 import moment from 'moment';
 import { useCalendar } from '../../context/CalendarContext';
 import DayDetailsModal from '../../components/calendar/DayDetailsModal';
+import {
+    Container,
+    Row,
+    Col,
+    Card,
+    CardHeader,
+    CardBody,
+    Button
+} from 'reactstrap';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import './FinancialCalendarPage.css';
 
@@ -71,7 +80,7 @@ const FinancialCalendarPage = () => {
         <div className="financial-day-content">
           <div className="day-number">{date.getDate()}</div>
           {dayData?.revenue > 0 && (
-            <div className="revenue-indicator">+${dayData.revenue.toFixed(2)}</div>
+            <div className="revenue-indicator">+{dayData.revenue.toFixed(2)}</div>
           )}
           {dayData?.expenses > 0 && (
             <div className="expense-indicator">-${dayData.expenses.toFixed(2)}</div>
@@ -98,64 +107,100 @@ const FinancialCalendarPage = () => {
   };
 
   return (
-    <div className="financial-calendar-container">
-      <h1>Financial Calendar</h1>
-      
-      <div className="calendar-navigation">
-        <button 
-          onClick={() => navigateMonth(-1)}
-          className="nav-button"
-          disabled={isLoading}
-        >
-          Previous Month
-        </button>
-        <h2>{isValidDate(currentDate) ? format(currentDate, 'MMMM yyyy') : 'Loading...'}</h2>
-        <button 
-          onClick={() => navigateMonth(1)}
-          className="nav-button"
-          disabled={isLoading}
-        >
-          Next Month
-        </button>
-      </div>
+    <Container className="mt-4" fluid>
+      <Row>
+        <Col>
+          <Card className="shadow">
+            <CardHeader className="border-0">
+              <Row className="align-items-center justify-content-between">
+                <Col xs="auto">
+                  <h3 className="mb-0">Financial Calendar</h3>
+                </Col>
+                <Col xs="auto">
+                  <Row className="align-items-center">
+                    <Col xs="auto">
+                      <Button 
+                        outline
+                        color="primary"
+                        size="sm"
+                        onClick={() => navigateMonth(-1)}
+                        disabled={isLoading}
+                      >
+                        Previous Month
+                      </Button>
+                    </Col>
+                    <Col xs="auto" className="text-center">
+                      <h4 className="mb-0">{isValidDate(currentDate) ? format(currentDate, 'MMMM yyyy') : 'Loading...'}</h4>
+                    </Col>
+                    <Col xs="auto">
+                      <Button 
+                        outline
+                        color="primary"
+                        size="sm"
+                        onClick={() => navigateMonth(1)}
+                        disabled={isLoading}
+                      >
+                        Next Month
+                      </Button>
+                    </Col>
+                  </Row>
+                </Col>
+              </Row>
+            </CardHeader>
+            <CardBody>
+              {isLoading && !error && (
+                <div className="text-center py-5">
+                  <p>Loading calendar data...</p>
+                </div>
+              )}
+              
+              {error && (
+                <div className="alert alert-danger" role="alert">
+                  {error}
+                </div>
+              )}
 
-      {isLoading && <div className="loading-spinner">Loading calendar data...</div>}
-      
-      {error && <div className="error-message">{error}</div>}
+              {!isLoading && !error && (
+                <>
+                  <div className="calendar-legend mb-3">
+                    <div className="legend-item">
+                      <div className="legend-color profit"></div>
+                      <span>Profit</span>
+                    </div>
+                    <div className="legend-item">
+                      <div className="legend-color loss"></div>
+                      <span>Loss</span>
+                    </div>
+                    <div className="legend-item">
+                      <div className="legend-color neutral"></div>
+                      <span>Break-even</span>
+                    </div>
+                  </div>
 
-      <div className="calendar-legend">
-        <div className="legend-item">
-          <div className="legend-color profit"></div>
-          <span>Profit</span>
-        </div>
-        <div className="legend-item">
-          <div className="legend-color loss"></div>
-          <span>Loss</span>
-        </div>
-        <div className="legend-item">
-          <div className="legend-color neutral"></div>
-          <span>Break-even</span>
-        </div>
-      </div>
-
-      <Calendar
-        localizer={localizer}
-        events={[]}
-        startAccessor="start"
-        endAccessor="end"
-        style={{ height: 700 }}
-        dayPropGetter={dayPropGetter}
-        onSelectSlot={handleSelectSlot}
-        selectable={true}
-        components={{
-          month: {
-            dateHeader: ({ date }) => dayContentRenderer({ date })
-          }
-        }}
-        date={currentDate}
-        defaultDate={currentDate}
-        defaultView="month"
-      />
+                  <Calendar
+                    localizer={localizer}
+                    events={[]}
+                    startAccessor="start"
+                    endAccessor="end"
+                    style={{ height: 700 }}
+                    dayPropGetter={dayPropGetter}
+                    onSelectSlot={handleSelectSlot}
+                    selectable={true}
+                    components={{
+                      month: {
+                        dateHeader: ({ date }) => dayContentRenderer({ date })
+                      }
+                    }}
+                    date={currentDate}
+                    defaultDate={currentDate}
+                    defaultView="month"
+                  />
+                </>
+              )}
+            </CardBody>
+          </Card>
+        </Col>
+      </Row>
 
       {selectedDate && isValidDate(selectedDate) && (
         <DayDetailsModal
@@ -166,7 +211,7 @@ const FinancialCalendarPage = () => {
           isLoading={isLoading}
         />
       )}
-    </div>
+    </Container>
   );
 };
 

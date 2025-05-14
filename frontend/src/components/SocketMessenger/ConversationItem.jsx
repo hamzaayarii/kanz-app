@@ -1,15 +1,15 @@
 import React from 'react';
 
-const ConversationItem = ({ conversation, selectContact }) => {
+const ConversationItem = ({ conversation, selectContact, getUserDisplayName }) => {
   const { participant, lastMessage } = conversation;
-  
+ 
   // Format date to just show time if today, or date if older
   const formatMessageDate = (dateString) => {
     if (!dateString) return '';
-    
+   
     const messageDate = new Date(dateString);
     const today = new Date();
-    
+   
     if (messageDate.toDateString() === today.toDateString()) {
       return messageDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     } else {
@@ -18,10 +18,34 @@ const ConversationItem = ({ conversation, selectContact }) => {
     }
   };
   
+  // Local function to get display name if getUserDisplayName wasn't passed as prop
+  const getDisplayName = (user) => {
+    if (getUserDisplayName) {
+      return getUserDisplayName(user);
+    }
+    
+    // Fallback implementation if prop wasn't passed
+    if (user.fullName && user.fullName.trim() !== '') {
+      return user.fullName;
+    } else if (user.name && user.name.trim() !== '') {
+      return user.name;
+    } else if (user.firstName && user.lastName) {
+      return `${user.firstName} ${user.lastName}`;
+    } else if (user.firstName) {
+      return user.firstName;
+    } else if (user.username) {
+      return user.username;
+    } else if (user.email) {
+      return user.email.split('@')[0];
+    } else {
+      return 'Unknown User';
+    }
+  };
+ 
   return (
     <div
       className="contact-item d-flex p-2 align-items-center"
-      style={{ 
+      style={{
         cursor: 'pointer',
         transition: 'background-color 0.2s',
         borderBottom: '1px solid #EBEBEB',
@@ -31,30 +55,30 @@ const ConversationItem = ({ conversation, selectContact }) => {
       onClick={selectContact}
     >
       <div className="position-relative mr-2">
-        {participant.avatar ? (
+        {participant && participant.avatar ? (
           <img
             src={participant.avatar}
             className="rounded-circle"
-            alt={participant.fullName || participant.name || 'User'}
+            alt={getDisplayName(participant)}
             style={{ width: '48px', height: '48px', objectFit: 'cover' }}
           />
         ) : (
           <div
             className="rounded-circle d-flex align-items-center justify-content-center"
-            style={{ 
-              width: '48px', 
-              height: '48px', 
+            style={{
+              width: '48px',
+              height: '48px',
               backgroundColor: '#0073B1',
               color: 'white',
               fontSize: '18px',
               fontWeight: 'bold'
             }}
           >
-            {(participant.fullName?.charAt(0) || participant.name?.charAt(0) || '?').toUpperCase()}
+            {participant ? (getDisplayName(participant).charAt(0) || '?').toUpperCase() : '?'}
           </div>
         )}
         {/* Online status dot */}
-        {participant.isOnline && (
+        {participant && participant.isOnline && (
           <div
             style={{
               width: '14px',
@@ -69,17 +93,17 @@ const ConversationItem = ({ conversation, selectContact }) => {
           />
         )}
       </div>
-      
+     
       <div style={{ flex: 1 }}>
         <div className="d-flex justify-content-between">
           <div style={{ fontWeight: '500', fontSize: '14px' }}>
-            {participant.fullName || participant.name || 'Unknown'}
+            {participant ? getDisplayName(participant) : 'Unknown User'}
           </div>
           <small style={{ color: '#666666', fontSize: '12px' }}>
             {formatMessageDate(lastMessage?.createdAt)}
           </small>
         </div>
-        <p 
+        <p
           style={{
             whiteSpace: 'nowrap',
             overflow: 'hidden',

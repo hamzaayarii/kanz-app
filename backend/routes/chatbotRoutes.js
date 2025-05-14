@@ -125,14 +125,14 @@ router.post('/chat', async (req, res) => {
     if (!similarDocuments || similarDocuments.length === 0) {
       return res.json({
         success: true,
-        answer: "Je n'ai pas trouvé d'informations pertinentes pour répondre à votre question. Pourriez-vous reformuler ou poser une question plus spécifique sur la comptabilité des PME tunisiennes?"
+        answer: "I couldn't find any relevant information to answer your question. Could you rephrase or ask a more specific question about accounting for Tunisian SMEs?"
       });
     }
     
     const context = similarDocuments.map(doc => doc.text).join('\n\n');
     const answer = await generateResponse(question, context);
     
-    res.json({
+    res.json({  
       success: true,
       answer,
       sources: similarDocuments.map(doc => ({

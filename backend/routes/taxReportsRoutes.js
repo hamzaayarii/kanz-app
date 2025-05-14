@@ -26,7 +26,7 @@ const validateTaxInput = (req, res, next) => {
 
     const currentYear = new Date().getFullYear();
     if (year < 2000 || year > currentYear) {
-        return res.status(400).json({ message: `Year must be between 2000 and ${currentYear}` });
+        return res.status(400).json({ message: `Year must be between 2000 and ${currentYear} `});
     }
 
     next();
@@ -67,9 +67,9 @@ router.post('/generate',
     authenticate,
     validateTaxInput,
     asyncHandler(async (req, res) => {
-        const { income, expenses, year } = req.body;
+        const {  businessId, income, expenses, year } = req.body;
 
-        const existingReport = await TaxReport.findOne({ userId: req.user._id || req.user.id, year });
+        const existingReport = await TaxReport.findOne({ business: businessId, year });
         if (existingReport) {
             return res.status(400).json({ message: 'Tax report for this year already exists' });
         }
@@ -77,7 +77,7 @@ router.post('/generate',
         const calculatedTax = calculateTax(income, expenses);
 
         const taxReport = new TaxReport({
-            userId: req.user._id || req.user.id,
+            business: businessId,
             year,
             income,
             expenses,
@@ -96,7 +96,7 @@ router.post('/generate',
 router.get('/reports',
     authenticate,
     asyncHandler(async (req, res) => {
-        const reports = await TaxReport.find({ userId: req.user._id || req.user.id })
+        const reports = await TaxReport.find({ business: req.query.businessId })
             .sort({ year: -1 });
         res.status(200).json({
             success: true,
@@ -122,7 +122,7 @@ router.put('/update/:id',
         }
 
         const duplicateReport = await TaxReport.findOne({
-            userId: req.user._id || req.user.id,
+            business: req.query.businessId,
             year,
             _id: { $ne: id }
         });

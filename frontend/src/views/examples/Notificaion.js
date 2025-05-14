@@ -15,7 +15,6 @@ import {
   FormGroup,
   Label
 } from 'reactstrap';
-import Header from '../../components/Headers/Header';
 import notificationService from '../../services/notificationService';
 import { formatDistanceToNow, format } from 'date-fns';
 
@@ -192,17 +191,16 @@ const Notifications = () => {
 
   return (
     <>
-      <Header />
-      <Container className="mt--7" fluid>
+      <Container className="mt-4" fluid>
         <Row>
           <Col>
             <Card className="shadow">
               <CardHeader className="border-0">
-                <Row className="align-items-center">
-                  <div className="col">
+                <Row className="align-items-center justify-content-between mb-3">
+                  <Col xs="auto">
                     <h3 className="mb-0">Your Notifications</h3>
-                  </div>
-                  <div className="col text-right">
+                  </Col>
+                  <Col xs="auto">
                     <Button
                       color="primary"
                       onClick={markAllAsRead}
@@ -210,34 +208,36 @@ const Notifications = () => {
                     >
                       Mark All as Read
                     </Button>
-                  </div>
+                  </Col>
                 </Row>
-                <Row className="mt-3">
-                  <Col md="4">
-                    <FormGroup>
-                      <Label for="filterStatus">Filter by Status</Label>
+                <Row className="align-items-end">
+                  <Col md={4} sm={6} xs={12}>
+                    <FormGroup className="mb-2 mb-md-0">
+                      <Label for="filterStatus" className="mr-sm-2 sr-only">Filter by Status</Label>
                       <Input
                         type="select"
                         name="filterStatus"
                         id="filterStatus"
                         value={filter}
                         onChange={(e) => setFilter(e.target.value)}
+                        bsSize="sm"
                       >
-                        <option value="all">All Notifications</option>
+                        <option value="all">All Status</option>
                         <option value="read">Read</option>
                         <option value="unread">Unread</option>
                       </Input>
                     </FormGroup>
                   </Col>
-                  <Col md="4">
-                    <FormGroup>
-                      <Label for="filterType">Filter by Type</Label>
+                  <Col md={4} sm={6} xs={12}>
+                    <FormGroup className="mb-2 mb-md-0">
+                      <Label for="filterType" className="mr-sm-2 sr-only">Filter by Type</Label>
                       <Input
                         type="select"
                         name="filterType"
                         id="filterType"
                         value={typeFilter}
                         onChange={(e) => setTypeFilter(e.target.value)}
+                        bsSize="sm"
                       >
                         <option value="all">All Types</option>
                         <option value="message">Messages</option>
@@ -251,20 +251,21 @@ const Notifications = () => {
                       </Input>
                     </FormGroup>
                   </Col>
-                  <Col md="4">
-                    <FormGroup>
-                      <Label for="itemsPerPage">Items per page</Label>
+                  <Col md={4} sm={12} xs={12}>
+                    <FormGroup className="mb-0">
+                      <Label for="itemsPerPage" className="mr-sm-2 sr-only">Items per page</Label>
                       <Input
                         type="select"
                         name="itemsPerPage"
                         id="itemsPerPage"
                         value={limit}
                         onChange={(e) => setLimit(parseInt(e.target.value))}
+                        bsSize="sm"
                       >
-                        <option value="10">10</option>
-                        <option value="20">20</option>
-                        <option value="50">50</option>
-                        <option value="100">100</option>
+                        <option value="10">10 per page</option>
+                        <option value="20">20 per page</option>
+                        <option value="50">50 per page</option>
+                        <option value="100">100 per page</option>
                       </Input>
                     </FormGroup>
                   </Col>
@@ -309,6 +310,7 @@ const Notifications = () => {
                               </div>
                             </Col>
                             <Col xs="12" md="4" className="text-md-right mt-2 mt-md-0">
+                              {/* View button removed based on user request
                               {notification.url && (
                                 <Button
                                   color="primary"
@@ -320,6 +322,7 @@ const Notifications = () => {
                                   View
                                 </Button>
                               )}
+                              */}
                               <Button
                                 color="danger"
                                 size="sm"
@@ -348,7 +351,7 @@ const Notifications = () => {
                   </Button>
                 </CardFooter>
               )}
-            </Card>
+            </Card> 
           </Col>
         </Row>
       </Container>
