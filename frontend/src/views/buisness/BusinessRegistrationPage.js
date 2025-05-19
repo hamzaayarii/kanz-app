@@ -15,6 +15,61 @@ import {
     FormFeedback
 } from 'reactstrap';
 
+// Custom CSS for the new design
+const customStyles = `
+  .main-content {
+    background-color: #f8f9fa;
+  }
+  .bg-teal {
+    background-color: #095E5C !important;
+  }
+  .btn-teal {
+    background-color: #095E5C;
+    border-color: #095E5C;
+    color: white;
+  }
+  .btn-teal:hover {
+    background-color: #074c4a;
+    border-color: #074c4a;
+  }
+  .header-title {
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+  .form-control-label {
+    font-weight: 500;
+    color: #495057;
+  }
+  .card {
+    border: none;
+    box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.08);
+    border-radius: 0.75rem;
+  }
+  .progress {
+    height: 0.5rem;
+    border-radius: 0.25rem;
+  }
+  .separator {
+    height: 6rem;
+  }
+  .section-title {
+    color: #095E5C;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    position: relative;
+  }
+  .section-title:after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: -8px;
+    width: 50px;
+    height: 3px;
+    background: #095E5C;
+    border-radius: 3px;
+  }
+`;
+
 // Country and state data
 const countries = [
     { name: "Tunisia", code: "TN", states: ["Tunis", "Sfax", "Sousse", "Ariana", "Ben Arous", "Bizerte", "Gabès", "Gafsa", "Jendouba", "Kairouan", "Kasserine", "Kébili", "Le Kef", "Mahdia", "La Manouba", "Médenine", "Monastir", "Nabeul", "Sidi Bouzid", "Siliana", "Tataouine", "Tozeur", "Zaghouan"] },
@@ -22,7 +77,6 @@ const countries = [
     { name: "France", code: "FR", states: ["Auvergne-Rhône-Alpes", "Bourgogne-Franche-Comté", "Bretagne", "Centre-Val de Loire", "Corse", "Grand Est", "Hauts-de-France", "Île-de-France", "Normandie", "Nouvelle-Aquitaine", "Occitanie", "Pays de la Loire", "Provence-Alpes-Côte d'Azur"] },
     { name: "Morocco", code: "MA", states: ["Tanger-Tétouan-Al Hoceima", "L'Oriental", "Fès-Meknès", "Rabat-Salé-Kénitra", "Béni Mellal-Khénifra", "Casablanca-Settat", "Marrakech-Safi", "Drâa-Tafilalet", "Souss-Massa", "Guelmim-Oued Noun", "Laâyoune-Sakia El Hamra", "Dakhla-Oued Ed-Dahab"] },
     { name: "Algeria", code: "DZ", states: ["Adrar", "Chlef", "Laghouat", "Oum El Bouaghi", "Batna", "Béjaïa", "Biskra", "Béchar", "Blida", "Bouira", "Tamanrasset", "Tébessa", "Tlemcen", "Tiaret", "Tizi Ouzou", "Alger", "Djelfa", "Jijel", "Sétif", "Saïda", "Skikda", "Sidi Bel Abbès", "Annaba", "Guelma", "Constantine", "Médéa", "Mostaganem", "M'Sila", "Mascara", "Ouargla", "Oran", "El Bayadh", "Illizi", "Bordj Bou Arréridj", "Boumerdès", "El Tarf", "Tindouf", "Tissemsilt", "El Oued", "Khenchela", "Souk Ahras", "Tipaza", "Mila", "Aïn Defla", "Naâma", "Aïn Témouchent", "Ghardaïa", "Relizane"] },
-    // Add more countries as needed
 ];
 
 // Business types for Tunisia
@@ -348,426 +402,440 @@ const BusinessRegistrationPage = () => {
     const completionPercentage = getCompletionPercentage();
 
     return (
-        <div className="main-content">
-            <div className="header bg-gradient-primary py-7 py-lg-8">
-                <Container>
-                    <div className="header-body text-center mb-5">
-                        <Row className="justify-content-center">
-                            <Col lg="8" md="8">
-                                <h1 className="text-white">Welcome to Your Business Registration</h1>
-                                <p className="text-lead text-white">
-                                    Before you can access the dashboard, please register your business.
-                                </p>
-                            </Col>
-                        </Row>
+        <>
+            <style>{customStyles}</style>
+            <div className="main-content">
+                <div className="header bg-teal py-7 py-lg-8">
+                    <Container>
+                        <div className="header-body text-center mb-5">
+                            <Row className="justify-content-center">
+                                <Col lg="8" md="8">
+                                    <h1 className="text-white header-title">Business Registration</h1>
+                                    <p className="text-lead text-white">
+                                        Complete your business profile to get started with our platform
+                                    </p>
+                                </Col>
+                            </Row>
+                        </div>
+                    </Container>
+
+                    <div className="separator separator-bottom separator-skew zindex-100">
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            preserveAspectRatio="none"
+                            version="1.1"
+                            viewBox="0 0 2560 100"
+                            x="0"
+                            y="0"
+                        >
+                            <polygon
+                                className="fill-white"
+                                points="2560 0 2560 100 0 100"
+                            />
+                        </svg>
                     </div>
-                </Container>
-
-                <div className="separator separator-bottom separator-skew zindex-100">
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        preserveAspectRatio="none"
-                        version="1.1"
-                        viewBox="0 0 2560 100"
-                        x="0"
-                        y="0"
-                    >
-                        <polygon
-                            className="fill-default"
-                            points="2560 0 2560 100 0 100"
-                        />
-                    </svg>
                 </div>
-            </div>
-            <Container className="mt--8 pb-5">
-                <Row className="justify-content-center">
-                    <Col lg="8" md="10">
-                        <Card className="bg-secondary shadow border-0">
-                            <CardHeader className="bg-transparent d-flex justify-content-start align-items-center">
-                                <Button
-                                    color="primary"
-                                    onClick={() => window.location.href = "/admin/index"}
-                                    className="btn-sm"
-                                >
-                                    <i className="fas fa-arrow-left me-2"></i> Back to Dashboard
-                                </Button>
-                                <div className="text-center flex-grow-1">
-                                    <h3>Business Registration</h3>
-                                </div>
-                            </CardHeader>
-                            <CardBody className="px-lg-5 py-lg-5">
-                                {/* Form Completion Progress */}
-                                <div className="mb-4">
-                                    <div className="d-flex justify-content-between mb-1">
-                                        <span>Form Completion</span>
-                                        <span>{completionPercentage}%</span>
+                <Container className="mt--8 pb-5">
+                    <Row className="justify-content-center">
+                        <Col lg="8" md="10">
+                            <Card className="shadow border-0">
+                                <CardHeader className="bg-white d-flex justify-content-start align-items-center border-bottom">
+                                    <Button
+                                        color="teal"
+                                        onClick={() => window.location.href = "/admin/index"}
+                                        className="btn-sm btn-teal"
+                                    >
+                                        <i className="fas fa-arrow-left me-2"></i> Back to Dashboard
+                                    </Button>
+                                    <div className="text-center flex-grow-1">
+                                        <h3 className="mb-0">Business Information</h3>
                                     </div>
-                                    <div className="progress">
-                                        <div 
-                                            className={`progress-bar bg-${completionPercentage === 100 ? 'success' : 'primary'}`}
-                                            role="progressbar" 
-                                            style={{ width: `${completionPercentage}%` }}
-                                            aria-valuenow={completionPercentage} 
-                                            aria-valuemin="0" 
-                                            aria-valuemax="100"
-                                        />
+                                </CardHeader>
+                                <CardBody className="px-lg-5 py-lg-5">
+                                    {/* Form Completion Progress */}
+                                    <div className="mb-4">
+                                        <div className="d-flex justify-content-between mb-1">
+                                            <span className="text-sm font-weight-bold">Form Completion</span>
+                                            <span className="text-sm font-weight-bold">{completionPercentage}%</span>
+                                        </div>
+                                        <div className="progress">
+                                            <div 
+                                                className={`progress-bar bg-${completionPercentage === 100 ? 'success' : 'teal'}`}
+                                                role="progressbar" 
+                                                style={{ width: `${completionPercentage}%` }}
+                                                aria-valuenow={completionPercentage} 
+                                                aria-valuemin="0" 
+                                                aria-valuemax="100"
+                                            />
+                                        </div>
                                     </div>
-                                </div>
-                                
-                                {errors.general && (
-                                    <div className="text-center mb-3 alert alert-danger">
-                                        <small>{errors.general}</small>
-                                    </div>
-                                )}
-                                <Form role="form" onSubmit={handleSubmit}>
-                                    <h6 className="heading-small text-muted mb-4">Basic Business Information</h6>
-                                    <Row>
-                                        <Col md="12">
-                                            <FormGroup>
-                                                <label className="form-control-label">
-                                                    Organization Name*
-                                                    {touched.name && !errors.name && (
-                                                        <i className="fas fa-check-circle text-success ml-2"></i>
-                                                    )}
-                                                </label>
-                                                <Input
-                                                    className="form-control-alternative"
-                                                    name="name"
-                                                    placeholder="Enter your organization name"
-                                                    type="text"
-                                                    value={formData.name}
-                                                    onChange={handleChange}
-                                                    onBlur={handleBlur}
-                                                    invalid={showError('name')}
-                                                    valid={touched.name && !errors.name}
-                                                />
-                                                <FormFeedback>{errors.name}</FormFeedback>
-                                                <small className="form-text text-muted">
-                                                    Must be at least 3 characters
-                                                </small>
-                                            </FormGroup>
-                                        </Col>
-                                    </Row>
                                     
-                                    <Row>
-                                        <Col md="6">
-                                            <FormGroup>
-                                                <label className="form-control-label">
-                                                    Country*
-                                                    {touched.country && !errors.country && (
-                                                        <i className="fas fa-check-circle text-success ml-2"></i>
-                                                    )}
-                                                </label>
-                                                <Input
-                                                    className="form-control-alternative"
-                                                    name="country"
-                                                    type="select"
-                                                    value={formData.country}
-                                                    onChange={handleChange}
-                                                    onBlur={handleBlur}
-                                                    invalid={showError('country')}
-                                                    valid={touched.country && !errors.country}
-                                                >
-                                                    {countries.map(country => (
-                                                        <option key={country.code} value={country.name}>
-                                                            {country.name}
-                                                        </option>
-                                                    ))}
-                                                </Input>
-                                                <FormFeedback>{errors.country}</FormFeedback>
-                                            </FormGroup>
-                                        </Col>
-                                        <Col md="6">
-                                            <FormGroup>
-                                                <label className="form-control-label">
-                                                    State/Province*
-                                                    {touched.state && !errors.state && (
-                                                        <i className="fas fa-check-circle text-success ml-2"></i>
-                                                    )}
-                                                </label>
-                                                <Input
-                                                    className="form-control-alternative"
-                                                    name="state"
-                                                    type="select"
-                                                    value={formData.state}
-                                                    onChange={handleChange}
-                                                    onBlur={handleBlur}
-                                                    invalid={showError('state')}
-                                                    valid={touched.state && !errors.state}
-                                                >
-                                                    <option value="">Select State/Province</option>
-                                                    {availableStates.map(state => (
-                                                        <option key={state} value={state}>
-                                                            {state}
-                                                        </option>
-                                                    ))}
-                                                </Input>
-                                                <FormFeedback>{errors.state}</FormFeedback>
-                                            </FormGroup>
-                                        </Col>
-                                    </Row>
+                                    {errors.general && (
+                                        <div className="text-center mb-3 alert alert-danger">
+                                            <small>{errors.general}</small>
+                                        </div>
+                                    )}
+                                    <Form role="form" onSubmit={handleSubmit}>
+                                        <h6 className="section-title">Basic Business Information</h6>
+                                        <Row>
+                                            <Col md="12">
+                                                <FormGroup>
+                                                    <label className="form-control-label">
+                                                        Organization Name*
+                                                        {touched.name && !errors.name && (
+                                                            <i className="fas fa-check-circle text-success ml-2"></i>
+                                                        )}
+                                                    </label>
+                                                    <Input
+                                                        className="form-control-alternative"
+                                                        name="name"
+                                                        placeholder="Enter your organization name"
+                                                        type="text"
+                                                        value={formData.name}
+                                                        onChange={handleChange}
+                                                        onBlur={handleBlur}
+                                                        invalid={showError('name')}
+                                                        valid={touched.name && !errors.name}
+                                                    />
+                                                    <FormFeedback>{errors.name}</FormFeedback>
+                                                    <small className="form-text text-muted">
+                                                        Must be at least 3 characters
+                                                    </small>
+                                                </FormGroup>
+                                            </Col>
+                                        </Row>
+                                        
+                                        <Row>
+                                            <Col md="6">
+                                                <FormGroup>
+                                                    <label className="form-control-label">
+                                                        Country*
+                                                        {touched.country && !errors.country && (
+                                                            <i className="fas fa-check-circle text-success ml-2"></i>
+                                                        )}
+                                                    </label>
+                                                    <Input
+                                                        className="form-control-alternative"
+                                                        name="country"
+                                                        type="select"
+                                                        value={formData.country}
+                                                        onChange={handleChange}
+                                                        onBlur={handleBlur}
+                                                        invalid={showError('country')}
+                                                        valid={touched.country && !errors.country}
+                                                    >
+                                                        {countries.map(country => (
+                                                            <option key={country.code} value={country.name}>
+                                                                {country.name}
+                                                            </option>
+                                                        ))}
+                                                    </Input>
+                                                    <FormFeedback>{errors.country}</FormFeedback>
+                                                </FormGroup>
+                                            </Col>
+                                            <Col md="6">
+                                                <FormGroup>
+                                                    <label className="form-control-label">
+                                                        State/Province*
+                                                        {touched.state && !errors.state && (
+                                                            <i className="fas fa-check-circle text-success ml-2"></i>
+                                                        )}
+                                                    </label>
+                                                    <Input
+                                                        className="form-control-alternative"
+                                                        name="state"
+                                                        type="select"
+                                                        value={formData.state}
+                                                        onChange={handleChange}
+                                                        onBlur={handleBlur}
+                                                        invalid={showError('state')}
+                                                        valid={touched.state && !errors.state}
+                                                    >
+                                                        <option value="">Select State/Province</option>
+                                                        {availableStates.map(state => (
+                                                            <option key={state} value={state}>
+                                                                {state}
+                                                            </option>
+                                                        ))}
+                                                    </Input>
+                                                    <FormFeedback>{errors.state}</FormFeedback>
+                                                </FormGroup>
+                                            </Col>
+                                        </Row>
 
-                                    <FormGroup>
-                                        <label className="form-control-label">
-                                            Organization Address*
-                                            {touched.address && !errors.address && (
-                                                <i className="fas fa-check-circle text-success ml-2"></i>
-                                            )}
-                                        </label>
-                                        <Input
-                                            className="form-control-alternative"
-                                            name="address"
-                                            placeholder="Enter detailed address"
-                                            type="text"
-                                            value={formData.address}
-                                            onChange={handleChange}
-                                            onBlur={handleBlur}
-                                            invalid={showError('address')}
-                                            valid={touched.address && !errors.address}
-                                        />
-                                        <FormFeedback>{errors.address}</FormFeedback>
-                                        <small className="form-text text-muted">
-                                            Must be at least 5 characters
-                                        </small>
-                                    </FormGroup>
-
-                                    <Row>
-                                        <Col md="6">
-                                            <FormGroup>
-                                                <label className="form-control-label">
-                                                    Legal Structure*
-                                                    {touched.type && !errors.type && (
-                                                        <i className="fas fa-check-circle text-success ml-2"></i>
-                                                    )}
-                                                </label>
-                                                <Input
-                                                    className="form-control-alternative"
-                                                    name="type"
-                                                    type="select"
-                                                    value={formData.type}
-                                                    onChange={handleChange}
-                                                    onBlur={handleBlur}
-                                                    invalid={showError('type')}
-                                                    valid={touched.type && !errors.type}
-                                                >
-                                                    <option value="">Select legal structure</option>
-                                                    {businessTypes.map(type => (
-                                                        <option key={type} value={type}>
-                                                            {type}
-                                                        </option>
-                                                    ))}
-                                                </Input>
-                                                <FormFeedback>{errors.type}</FormFeedback>
-                                            </FormGroup>
-                                        </Col>
-                                        <Col md="6">
-                                            <FormGroup>
-                                                <label className="form-control-label">Business Activity/Sector</label>
-                                                <Input
-                                                    className="form-control-alternative"
-                                                    name="businessActivity"
-                                                    placeholder="Ex: Retail, Software, Food Service"
-                                                    type="text"
-                                                    value={formData.businessActivity}
-                                                    onChange={handleChange}
-                                                    onBlur={handleBlur}
-                                                />
-                                            </FormGroup>
-                                        </Col>
-                                    </Row>
-
-                                    <Row>
-                                    <Col md="6">
-  <FormGroup>
-    <label className="form-control-label">
-      Tax Number (Matricule Fiscal)*
-      {touched.taxNumber && !errors.taxNumber && (
-        <i className="fas fa-check-circle text-success ml-2"></i>
-      )}
-    </label>
-    <Input
-      className="form-control-alternative"
-      name="taxNumber"
-      placeholder="e.g. 12345678A/M/000"
-      type="text"
-      value={formData.taxNumber}
-      onChange={handleChange}
-      onBlur={handleBlur}
-      invalid={showError('taxNumber')}
-      valid={touched.taxNumber && !errors.taxNumber}
-      pattern="^\d{8}[A-Z](/M/\d{3})?$"
-    />
-    <FormFeedback>{errors.taxNumber}</FormFeedback>
-    <small className="form-text text-muted">
-      Format: 12345678A or 12345678A/M/000
-    </small>
-  </FormGroup>
-</Col>
-
-                                        <Col md="6">
                                         <FormGroup>
-  <label className="form-control-label">
-  RNE Number*
-    {touched.rneNumber && !errors.rneNumber && (
-      <i className="fas fa-check-circle text-success ml-2"></i>
-    )}
-  </label>
-  <Input
-    className="form-control-alternative"
-    name="rneNumber"
-    placeholder="e.g. B12345678"
-    type="text"
-    value={formData.rneNumber}
-    onChange={handleChange}
-    onBlur={handleBlur}
-    invalid={showError('rneNumber')}
-    valid={touched.rneNumber && !errors.rneNumber}
-  />
-  <FormFeedback>{errors.rneNumber}</FormFeedback>
-  <small className="form-text text-muted">
-    Format: Letter (A-Z) followed by 7-10 digits (e.g., B12345678)
-  </small>
-</FormGroup>
-                                        </Col>
-                                    </Row>
+                                            <label className="form-control-label">
+                                                Organization Address*
+                                                {touched.address && !errors.address && (
+                                                    <i className="fas fa-check-circle text-success ml-2"></i>
+                                                )}
+                                            </label>
+                                            <Input
+                                                className="form-control-alternative"
+                                                name="address"
+                                                placeholder="Enter detailed address"
+                                                type="text"
+                                                value={formData.address}
+                                                onChange={handleChange}
+                                                onBlur={handleBlur}
+                                                invalid={showError('address')}
+                                                valid={touched.address && !errors.address}
+                                            />
+                                            <FormFeedback>{errors.address}</FormFeedback>
+                                            <small className="form-text text-muted">
+                                                Must be at least 5 characters
+                                            </small>
+                                        </FormGroup>
 
-                                    <Row>
-                                        <Col md="6">
-                                            <FormGroup>
-                                                <label className="form-control-label">
-                                                    Phone Number*
-                                                    {touched.phone && !errors.phone && (
-                                                        <i className="fas fa-check-circle text-success ml-2"></i>
-                                                    )}
-                                                </label>
-                                                <Input
-                                                    className="form-control-alternative"
-                                                    name="phone"
-                                                    placeholder="e.g. +216 12 345 678"
-                                                    type="text"
-                                                    value={formData.phone}
-                                                    onChange={handleChange}
-                                                    onBlur={handleBlur}
-                                                    invalid={showError('phone')}
-                                                    valid={touched.phone && !errors.phone}
-                                                />
-                                                <FormFeedback>{errors.phone}</FormFeedback>
-                                                <small className="form-text text-muted">
-                                                    Enter a valid phone number with country code
-                                                </small>
-                                            </FormGroup>
-                                        </Col>
-                                        <Col md="6">
-                                            <FormGroup>
-                                                <label className="form-control-label">Proposed Capital (TND)</label>
-                                                <Input
-                                                    className="form-control-alternative"
-                                                    name="capital"
-                                                    placeholder="Ex: 1000"
-                                                    type="number"
-                                                    value={formData.capital}
-                                                    onChange={handleChange}
-                                                    onBlur={handleBlur}
-                                                    invalid={showError('capital')}
-                                                    valid={touched.capital && !errors.capital && formData.capital}
-                                                />
-                                                <FormFeedback>{errors.capital}</FormFeedback>
-                                            </FormGroup>
-                                        </Col>
-                                    </Row>
+                                        <Row>
+                                            <Col md="6">
+                                                <FormGroup>
+                                                    <label className="form-control-label">
+                                                        Legal Structure*
+                                                        {touched.type && !errors.type && (
+                                                            <i className="fas fa-check-circle text-success ml-2"></i>
+                                                        )}
+                                                    </label>
+                                                    <Input
+                                                        className="form-control-alternative"
+                                                        name="type"
+                                                        type="select"
+                                                        value={formData.type}
+                                                        onChange={handleChange}
+                                                        onBlur={handleBlur}
+                                                        invalid={showError('type')}
+                                                        valid={touched.type && !errors.type}
+                                                    >
+                                                        <option value="">Select legal structure</option>
+                                                        {businessTypes.map(type => (
+                                                            <option key={type} value={type}>
+                                                                {type}
+                                                            </option>
+                                                        ))}
+                                                    </Input>
+                                                    <FormFeedback>{errors.type}</FormFeedback>
+                                                </FormGroup>
+                                            </Col>
+                                            <Col md="6">
+                                                <FormGroup>
+                                                    <label className="form-control-label">Business Activity/Sector</label>
+                                                    <Input
+                                                        className="form-control-alternative"
+                                                        name="businessActivity"
+                                                        placeholder="Ex: Retail, Software, Food Service"
+                                                        type="text"
+                                                        value={formData.businessActivity}
+                                                        onChange={handleChange}
+                                                        onBlur={handleBlur}
+                                                    />
+                                                </FormGroup>
+                                            </Col>
+                                        </Row>
 
-                                    <Row>
-                                        <Col md="6">
-                                            <FormGroup>
-                                                <label className="form-control-label">Expected Number of Employees</label>
-                                                <Input
-                                                    className="form-control-alternative"
-                                                    name="employeeCount"
-                                                    type="select"
-                                                    value={formData.employeeCount}
-                                                    onChange={handleChange}
-                                                    onBlur={handleBlur}
-                                                >
-                                                    <option value="1-5">1-5</option>
-                                                    <option value="6-10">6-10</option>
-                                                    <option value="11-20">11-20</option>
-                                                    <option value="21-50">21-50</option>
-                                                    <option value="50+">50+</option>
-                                                </Input>
-                                            </FormGroup>
-                                        </Col>
-                                        <Col md="6">
-                                            <FormGroup>
-                                                <label className="form-control-label">
-                                                    Business Email
-                                                    {touched.email && !errors.email && formData.email && (
-                                                        <i className="fas fa-check-circle text-success ml-2"></i>
-                                                    )}
-                                                </label>
-                                                <Input
-                                                    className="form-control-alternative"
-                                                    name="email"
-                                                    placeholder="e.g. business@example.com"
-                                                    type="email"
-                                                    value={formData.email}
-                                                    onChange={handleChange}
-                                                    onBlur={handleBlur}
-                                                    invalid={showError('email')}
-                                                    valid={touched.email && !errors.email && formData.email}
-                                                />
-                                                <FormFeedback>{errors.email}</FormFeedback>
-                                            </FormGroup>
-                                        </Col>
-                                    </Row>
+                                        <h6 className="section-title mt-5">Legal & Contact Information</h6>
+                                        
+                                        <Row>
+                                            <Col md="6">
+                                                <FormGroup>
+                                                    <label className="form-control-label">
+                                                        Tax Number (Matricule Fiscal)*
+                                                        {touched.taxNumber && !errors.taxNumber && (
+                                                            <i className="fas fa-check-circle text-success ml-2"></i>
+                                                        )}
+                                                    </label>
+                                                    <Input
+                                                        className="form-control-alternative"
+                                                        name="taxNumber"
+                                                        placeholder="e.g. 12345678A/M/000"
+                                                        type="text"
+                                                        value={formData.taxNumber}
+                                                        onChange={handleChange}
+                                                        onBlur={handleBlur}
+                                                        invalid={showError('taxNumber')}
+                                                        valid={touched.taxNumber && !errors.taxNumber}
+                                                        pattern="^\d{8}[A-Z](/M/\d{3})?$"
+                                                    />
+                                                    <FormFeedback>{errors.taxNumber}</FormFeedback>
+                                                    <small className="form-text text-muted">
+                                                        Format: 12345678A or 12345678A/M/000
+                                                    </small>
+                                                </FormGroup>
+                                            </Col>
 
-                                    <Row>
-                                        <Col md="6">
-                                            <FormGroup check className="mb-3 mt-3">
-                                                <Input
-                                                    type="checkbox"
-                                                    name="vatRegistration"
-                                                    id="vatRegistration"
-                                                    checked={formData.vatRegistration}
-                                                    onChange={handleChange}
-                                                />
-                                                <label className="form-check-label" htmlFor="vatRegistration">
-                                                    VAT Registration
-                                                </label>
-                                            </FormGroup>
-                                        </Col>
-                                        <Col md="6">
-                                            <FormGroup check className="mb-3 mt-3">
-                                                <Input
-                                                    type="checkbox"
-                                                    name="exportOriented"
-                                                    id="exportOriented"
-                                                    checked={formData.exportOriented}
-                                                    onChange={handleChange}
-                                                />
-                                                <label className="form-check-label" htmlFor="exportOriented">
-                                                    Export Oriented Business
-                                                </label>
-                                            </FormGroup>
-                                        </Col>
-                                    </Row>
+                                            <Col md="6">
+                                                <FormGroup>
+                                                    <label className="form-control-label">
+                                                        RNE Number*
+                                                        {touched.rneNumber && !errors.rneNumber && (
+                                                            <i className="fas fa-check-circle text-success ml-2"></i>
+                                                        )}
+                                                    </label>
+                                                    <Input
+                                                        className="form-control-alternative"
+                                                        name="rneNumber"
+                                                        placeholder="e.g. B12345678"
+                                                        type="text"
+                                                        value={formData.rneNumber}
+                                                        onChange={handleChange}
+                                                        onBlur={handleBlur}
+                                                        invalid={showError('rneNumber')}
+                                                        valid={touched.rneNumber && !errors.rneNumber}
+                                                    />
+                                                    <FormFeedback>{errors.rneNumber}</FormFeedback>
+                                                    <small className="form-text text-muted">
+                                                        Format: Letter (A-Z) followed by 7-10 digits (e.g., B12345678)
+                                                    </small>
+                                                </FormGroup>
+                                            </Col>
+                                        </Row>
 
-                                    <div className="text-center">
-                                        <Button
-                                            className="my-4"
-                                            color={completionPercentage === 100 ? "success" : "primary"}
-                                            type="submit"
-                                            disabled={loading}
-                                        >
-                                            {loading ? 'Registering...' : 'Register Business'}
-                                        </Button>
-                                    </div>
-                                </Form>
-                            </CardBody>
-                        </Card>
-                    </Col>
-                </Row>
-            </Container>
-        </div>
+                                        <Row>
+                                            <Col md="6">
+                                                <FormGroup>
+                                                    <label className="form-control-label">
+                                                        Phone Number*
+                                                        {touched.phone && !errors.phone && (
+                                                            <i className="fas fa-check-circle text-success ml-2"></i>
+                                                        )}
+                                                    </label>
+                                                    <Input
+                                                        className="form-control-alternative"
+                                                        name="phone"
+                                                        placeholder="e.g. +216 12 345 678"
+                                                        type="text"
+                                                        value={formData.phone}
+                                                        onChange={handleChange}
+                                                        onBlur={handleBlur}
+                                                        invalid={showError('phone')}
+                                                        valid={touched.phone && !errors.phone}
+                                                    />
+                                                    <FormFeedback>{errors.phone}</FormFeedback>
+                                                    <small className="form-text text-muted">
+                                                        Enter a valid phone number with country code
+                                                    </small>
+                                                </FormGroup>
+                                            </Col>
+                                            <Col md="6">
+                                                <FormGroup>
+                                                    <label className="form-control-label">Proposed Capital (TND)</label>
+                                                    <Input
+                                                        className="form-control-alternative"
+                                                        name="capital"
+                                                        placeholder="Ex: 1000"
+                                                        type="number"
+                                                        value={formData.capital}
+                                                        onChange={handleChange}
+                                                        onBlur={handleBlur}
+                                                        invalid={showError('capital')}
+                                                        valid={touched.capital && !errors.capital && formData.capital}
+                                                    />
+                                                    <FormFeedback>{errors.capital}</FormFeedback>
+                                                </FormGroup>
+                                            </Col>
+                                        </Row>
+
+                                        <Row>
+                                            <Col md="6">
+                                                <FormGroup>
+                                                    <label className="form-control-label">Expected Number of Employees</label>
+                                                    <Input
+                                                        className="form-control-alternative"
+                                                        name="employeeCount"
+                                                        type="select"
+                                                        value={formData.employeeCount}
+                                                        onChange={handleChange}
+                                                        onBlur={handleBlur}
+                                                    >
+                                                        <option value="1-5">1-5</option>
+                                                        <option value="6-10">6-10</option>
+                                                        <option value="11-20">11-20</option>
+                                                        <option value="21-50">21-50</option>
+                                                        <option value="50+">50+</option>
+                                                    </Input>
+                                                </FormGroup>
+                                            </Col>
+                                            <Col md="6">
+                                                <FormGroup>
+                                                    <label className="form-control-label">
+                                                        Business Email
+                                                        {touched.email && !errors.email && formData.email && (
+                                                            <i className="fas fa-check-circle text-success ml-2"></i>
+                                                        )}
+                                                    </label>
+                                                    <Input
+                                                        className="form-control-alternative"
+                                                        name="email"
+                                                        placeholder="e.g. business@example.com"
+                                                        type="email"
+                                                        value={formData.email}
+                                                        onChange={handleChange}
+                                                        onBlur={handleBlur}
+                                                        invalid={showError('email')}
+                                                        valid={touched.email && !errors.email && formData.email}
+                                                    />
+                                                    <FormFeedback>{errors.email}</FormFeedback>
+                                                </FormGroup>
+                                            </Col>
+                                        </Row>
+
+                                        <h6 className="section-title mt-5">Additional Information</h6>
+                                        
+                                        <Row>
+                                            <Col md="6">
+                                                <FormGroup check className="mb-3">
+                                                    <Input
+                                                        type="checkbox"
+                                                        name="vatRegistration"
+                                                        id="vatRegistration"
+                                                        checked={formData.vatRegistration}
+                                                        onChange={handleChange}
+                                                    />
+                                                    <label className="form-check-label" htmlFor="vatRegistration">
+                                                        VAT Registration
+                                                    </label>
+                                                </FormGroup>
+                                            </Col>
+                                            <Col md="6">
+                                                <FormGroup check className="mb-3">
+                                                    <Input
+                                                        type="checkbox"
+                                                        name="exportOriented"
+                                                        id="exportOriented"
+                                                        checked={formData.exportOriented}
+                                                        onChange={handleChange}
+                                                    />
+                                                    <label className="form-check-label" htmlFor="exportOriented">
+                                                        Export Oriented Business
+                                                    </label>
+                                                </FormGroup>
+                                            </Col>
+                                        </Row>
+
+                                        <div className="text-center mt-5">
+                                            <Button
+                                                className="my-2 px-5 py-2"
+                                                color={completionPercentage === 100 ? "success" : "teal"}
+                                                type="submit"
+                                                disabled={loading}
+                                            >
+                                                {loading ? (
+                                                    <>
+                                                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                                        Registering...
+                                                    </>
+                                                ) : (
+                                                    'Register Business'
+                                                )}
+                                            </Button>
+                                        </div>
+                                    </Form>
+                                </CardBody>
+                            </Card>
+                        </Col>
+                    </Row>
+                </Container>
+            </div>
+        </>
     );
 };
 
