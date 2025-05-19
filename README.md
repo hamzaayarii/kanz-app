@@ -154,15 +154,5 @@ Then run the backend server:
 
 ```bash
 pnpm start
-# Create .env file in root with the following:
-MONGODB_URI=your_mongodb_connection_string
-JWT_SECRET=your_jwt_secret_key
-PORT=5000
-```
-
-Run the application:
-
-```bash
-npm start
 ```
 
