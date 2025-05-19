@@ -2,7 +2,7 @@ import React from 'react';
 import { format } from 'date-fns';
 import './DayDetailsModal.css';
 
-const DayDetailsModal = ({ isOpen, onClose, date, details, isLoading }) => {
+const DayDetailsModal = ({ isOpen, onClose, date, details, isLoading, taxDeadlines = [] }) => {
   if (!isOpen) return null;
   
   // Format date without timezone conversion
@@ -17,6 +17,15 @@ const DayDetailsModal = ({ isOpen, onClose, date, details, isLoading }) => {
     }).format(amount);
   };
   
+  const getPriorityClass = (priority) => {
+    switch(priority) {
+      case 'critical': return 'tax-priority-critical';
+      case 'high': return 'tax-priority-high';
+      case 'medium': return 'tax-priority-medium';
+      default: return 'tax-priority-low';
+    }
+  };
+  
   return (
     <div className="modal-overlay">
       <div className="day-details-modal">
@@ -26,6 +35,27 @@ const DayDetailsModal = ({ isOpen, onClose, date, details, isLoading }) => {
         </div>
         
         <div className="modal-body">
+          {/* Tax Deadlines Section */}
+          {taxDeadlines && taxDeadlines.length > 0 && (
+            <div className="tax-deadlines-section">
+              <h3 className="section-title">Tax Deadlines</h3>
+              <div className="tax-deadlines-list">
+                {taxDeadlines.map((deadline, index) => (
+                  <div key={index} className={`tax-deadline-item ${getPriorityClass(deadline.priority)}`}>
+                    <div className="tax-deadline-header">
+                      <span className="tax-deadline-title">{deadline.title}</span>
+                      <span className={`tax-deadline-priority ${getPriorityClass(deadline.priority)}`}>
+                        {deadline.priority}
+                      </span>
+                    </div>
+                    <div className="tax-deadline-description">{deadline.description}</div>
+                    <div className="tax-deadline-penalties">Warning: {deadline.penalties}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          
           {isLoading ? (
             <div className="loading-spinner">Loading day details...</div>
           ) : !details ? (
@@ -33,7 +63,7 @@ const DayDetailsModal = ({ isOpen, onClose, date, details, isLoading }) => {
           ) : (
             <>
               <div className="summary-section">
-                <h3>Daily Summary</h3>
+                <h3 className="section-title">Daily Summary</h3>
                 <div className="summary-grid">
                   <div className="summary-item revenue">
                     <div className="summary-label">Revenue</div>
@@ -72,7 +102,7 @@ const DayDetailsModal = ({ isOpen, onClose, date, details, isLoading }) => {
               {/* Expense Details Section */}
               {details.expenses && details.expenses.length > 0 && (
                 <div className="details-section">
-                  <h3>Expense Details</h3>
+                  <h3 className="section-title">Expense Details</h3>
                   <table className="details-table">
                     <thead>
                       <tr>
@@ -97,7 +127,7 @@ const DayDetailsModal = ({ isOpen, onClose, date, details, isLoading }) => {
               {/* Revenue Details Section */}
               {details.revenue && details.revenue.categories && details.revenue.categories.length > 0 && (
                 <div className="details-section">
-                  <h3>Revenue Details</h3>
+                  <h3 className="section-title">Revenue Details</h3>
                   <table className="details-table">
                     <thead>
                       <tr>

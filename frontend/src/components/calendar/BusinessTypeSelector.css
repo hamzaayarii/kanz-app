@@ -1,0 +1,15 @@
+.business-type-selector {
+  margin-bottom: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.business-type-selector:hover {
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.business-type-description {
+  padding: 0.5rem;
+  background-color: #f8f9fa;
+  border-radius: 0.25rem;
+  margin-top: 0.5rem;
+}

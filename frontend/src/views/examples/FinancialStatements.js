@@ -384,7 +384,7 @@ const ManualBalanceSheet = () => {
         <div className={styles.container} id="balance-sheet-container">
             <ToastContainer position="top-right" autoClose={7000} hideProgressBar={false} />
             <div className={styles.content}>
-                <h1 className={styles.pageTitle}>
+                <h1 className={styles.pageTitle} style={{ color: '#1BA39C' }}>
                     <HoverSpeakText>Balance Sheet Creation</HoverSpeakText>
                     {isTTSEnabled && (
                         <TTSButton
@@ -629,20 +629,37 @@ const ManualBalanceSheet = () => {
                             )}
                         </div>
                     </div>
-
-                    <HoverSpeakText textToSpeak="Create Balance Sheet">
+                    <HoverSpeakText textToSpeak="Create Balance Sheet" >
                         <button
                             type="submit"
                             disabled={loading}
                             className={styles.submitButton}
                             aria-label="Create Balance Sheet"
+                            style={{
+                                backgroundColor: '#1BA39C',
+                                color: '#FFFFFF',
+                                border: 'none',
+                                padding: '0.5rem 1.5rem',
+                                borderRadius: '4px',
+                                fontWeight: 600,
+                                cursor: loading ? 'not-allowed' : 'pointer',
+                                opacity: loading ? 0.7 : 1,
+                                transition: 'all 0.2s',
+                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                            }}
+                            onMouseOver={(e) => {
+                                e.currentTarget.style.backgroundColor = '#148B88';
+                            }}
+                            onMouseOut={(e) => {
+                                e.currentTarget.style.backgroundColor = '#1BA39C';
+                            }}
                         >
                             {loading ? 'Creating...' : 'Create Balance Sheet'}
                         </button>
                     </HoverSpeakText>
                 </form>
 
-                <h2 className={styles.existingBalancesTitle}>
+                <h2 className={styles.existingBalancesTitle} style={{ color: '#1BA39C' }}>
                     <HoverSpeakText>Existing Balance Sheets</HoverSpeakText>
                     <TTSButton
                         text="This section lists all existing balance sheets"
@@ -652,7 +669,7 @@ const ManualBalanceSheet = () => {
                 </h2>
                 <div className={styles.tableContainer} id="balance-sheets-table">
                     <table className={styles.dataTable}>
-                        <thead className={styles.tableHeader}>
+                        <thead className={styles.tableHeader} style={{ backgroundColor: '#0E6D6B', color: '#FFFFFF' }}>
                         <tr>
                             <th className={styles.tableHeaderCell}>
                                 <HoverSpeakText>No.</HoverSpeakText>
@@ -692,8 +709,24 @@ const ManualBalanceSheet = () => {
                                             <HoverSpeakText textToSpeak={`Download balance sheet ${idx + 1}`}>
                                                 <button
                                                     onClick={() => downloadBalanceSheet(sheet._id)}
-                                                    className={`${styles.actionButton} ${styles.downloadButton}`}
+                                                    className={`${styles.actionButton}`}
                                                     aria-label={`Download balance sheet ${idx + 1}`}
+                                                    style={{
+                                                        backgroundColor: '#1BA39C',
+                                                        color: '#FFFFFF',
+                                                        margin: '0 5px',
+                                                        border: 'none',
+                                                        borderRadius: '4px',
+                                                        padding: '6px 12px',
+                                                        cursor: 'pointer',
+                                                        transition: 'background-color 0.2s'
+                                                    }}
+                                                    onMouseOver={(e) => {
+                                                        e.currentTarget.style.backgroundColor = '#148B88';
+                                                    }}
+                                                    onMouseOut={(e) => {
+                                                        e.currentTarget.style.backgroundColor = '#1BA39C';
+                                                    }}
                                                 >
                                                     Download
                                                 </button>
@@ -701,8 +734,24 @@ const ManualBalanceSheet = () => {
                                             <HoverSpeakText textToSpeak={`Delete balance sheet ${idx + 1}`}>
                                                 <button
                                                     onClick={() => deleteBalanceSheet(sheet._id)}
-                                                    className={`${styles.actionButton} ${styles.deleteButton}`}
+                                                    className={`${styles.actionButton}`}
                                                     aria-label={`Delete balance sheet ${idx + 1}`}
+                                                    style={{
+                                                        backgroundColor: '#dc3545',
+                                                        color: '#FFFFFF',
+                                                        margin: '0 5px',
+                                                        border: 'none',
+                                                        borderRadius: '4px',
+                                                        padding: '6px 12px',
+                                                        cursor: 'pointer',
+                                                        transition: 'background-color 0.2s'
+                                                    }}
+                                                    onMouseOver={(e) => {
+                                                        e.currentTarget.style.backgroundColor = '#c82333';
+                                                    }}
+                                                    onMouseOut={(e) => {
+                                                        e.currentTarget.style.backgroundColor = '#dc3545';
+                                                    }}
                                                 >
                                                     Delete
                                                 </button>
@@ -722,6 +771,28 @@ const ManualBalanceSheet = () => {
                     </table>
                 </div>
             </div>
+            <style>
+                {`
+                    /* Apply color palette */
+                    .${styles.container} {
+                        background-color: #FAFAFA;
+                    }
+                    .${styles.inputField}:focus {
+                        border-color: #1BA39C;
+                        box-shadow: 0 0 0 0.2rem rgba(27, 163, 156, 0.25);
+                    }
+                    /* Make sure table header and action buttons use correct colors */
+                    .${styles.tableHeaderCell} {
+                        background-color: #0E6D6B;
+                        color: #FFFFFF;
+                    }
+                    /* Create focus/hover style for submit button */
+                    .${styles.submitButton}:focus {
+                        outline: none;
+                        box-shadow: 0 0 0 0.2rem rgba(27, 163, 156, 0.4);
+                    }
+                `}
+            </style>
         </div>
     );
 };

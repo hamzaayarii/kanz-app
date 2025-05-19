@@ -1,0 +1,40 @@
+.tax-alert-modal .modal-content {
+  border-top: 4px solid #dc3545;
+}
+
+.alert-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.alert-title h4 {
+  margin-bottom: 0;
+  font-weight: 600;
+}
+
+.alert-due-date {
+  font-size: 1rem;
+  background-color: #f8f9fa;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+}
+
+.days-remaining {
+  font-weight: 600;
+  margin-left: 0.5rem;
+}
+
+.alert-description {
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.alert-actions ul {
+  padding-left: 1.5rem;
+}
+
+.alert-actions li {
+  margin-bottom: 0.5rem;
+}

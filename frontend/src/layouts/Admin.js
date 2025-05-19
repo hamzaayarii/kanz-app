@@ -86,6 +86,43 @@ const Admin = (props) => {
     localStorage.setItem('currentPageTitle', name);
   };
 
+  // Inject custom styles for ChatbotWindow via CSS
+  useEffect(() => {
+    // Create a style element
+    const style = document.createElement('style');
+    
+    // Add CSS rules to override component styles
+    style.textContent = `
+      /* Target the ChatbotWindow component and its internal elements */
+      .chatbot-window-wrapper {
+        height: 500px !important;
+        max-height: 500px !important;
+      }
+      
+      /* Target any chat container inside ChatbotWindow */
+      .chatbot-window-wrapper .chat-container, 
+      .chatbot-window-wrapper .messages-container,
+      .chatbot-window-wrapper .conversation-container {
+        height: 450px !important;
+        max-height: 450px !important;
+      }
+      
+      /* Make ChatWindow smaller if needed */
+      .chat-window-container {
+        height: 300px !important;
+        max-height: 300px !important;
+      }
+    `;
+    
+    // Append to head
+    document.head.appendChild(style);
+    
+    // Clean up on unmount
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+
   return (
     <>
       <Sidebar
@@ -108,8 +145,29 @@ const Admin = (props) => {
         <Container fluid>
           <AdminFooter />
         </Container>
-        <ChatbotWindow />
-        {isAuthenticated && <ChatWindow />}
+        
+        {/* Apply class for styling via our CSS injection */}
+        <div className="chatbot-window-wrapper" style={{
+        position: 'fixed',
+bottom: '20px',
+left: '20px',
+        }}>
+          <ChatbotWindow />
+        </div>
+      
+        {/* Only render ChatWindow if authenticated - positioned far away from ChatbotWindow */}
+        {isAuthenticated && (
+          <div className="chat-window-container" style={{
+            position: 'fixed',
+            bottom: '20px',
+            left: '20px', /* Position it on the opposite side of the screen */
+            zIndex: 999,
+            height: '300px',
+            width: '350px'
+          }}>
+            <ChatWindow />
+          </div>
+        )}
       </div>
     </>
   );

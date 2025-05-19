@@ -1,12 +1,11 @@
 import React, { useEffect, useState, useMemo, useCallback } from "react";
 import axios from "axios";
-import { Card, Container, Row, Button, Form, FormGroup, Label, Input, Table, Col, CardHeader, CardBody } from "reactstrap";
+import { Card, Container, Row, Button, Form, FormGroup, Label, Input, Table, Col, CardHeader, CardBody ,Alert } from "reactstrap";
 import { useNavigate } from "react-router-dom";
-import debounce from "lodash/debounce";
 import HoverSpeakText from '../../components/TTS/HoverSpeakText'; // Adjust path as needed
 import TTSButton from '../../components/TTS/TTSButton'; // Adjust path as needed
 import { useTTS } from '../../components/TTS/TTSContext'; // Adjust path as needed
-
+import ReceiptScanner from '../../components/ReceiptScanner/ReceiptScanner.jsx'; 
 const Expenses = () => {
   const navigate = useNavigate();
   const { isTTSEnabled, speak, stop } = useTTS();
@@ -18,6 +17,8 @@ const Expenses = () => {
     categories: [],
     totalExpenses: { normaltotalExpenses: 0, dailytotalExpenses: 0, taxtotalExpenses: 0, totalExpenses: 0 },
   });
+  const [showReceiptScanner, setShowReceiptScanner] = useState(false);
+const [scannedData, setScannedData] = useState(null);
   const [selectedBusiness, setSelectedBusiness] = useState("");
   const [form, setForm] = useState({
     isVisible: false,
@@ -25,8 +26,25 @@ const Expenses = () => {
     data: { business: "", category: "", date: "", amount: "", tax: "", vendor: "", reference: "", description: "" },
     errors: {},
   });
-
+const handleReceiptScan = (data) => {
+  setScannedData(data);
+  setShowReceiptScanner(false);
   
+  // Auto-fill the form with scanned data
+  setForm(prev => ({
+    ...prev,
+    isVisible: true,
+    data: {
+      ...prev.data,
+      date: data.date || "",
+      amount: data.amount || "",
+      tax: data.tax || "",
+      vendor: data.vendor || "",
+      reference: data.reference || "",
+      description: data.description || ""
+    }
+  }));
+};
   const validationRules = useMemo(
     () => ({
       category: { required: true, message: "Category is required" },
@@ -60,14 +78,16 @@ const Expenses = () => {
         return;
       }
       const headers = { Authorization: `Bearer ${token}` };
-      const [businessesRes, categoriesRes] = await Promise.all([
+      const [businessesRes, categoriesRes, taxReportRes] = await Promise.all([
         axios.get("http://localhost:5000/api/business/user-businesses", { headers }),
         axios.get("http://localhost:5000/api/categories", { headers }),
+        axios.get("http://localhost:5000/api/expenses/taxreport-expenses", { headers }),
       ]);
       setData((prev) => ({
         ...prev,
         businesses: businessesRes.data.businesses,
         categories: categoriesRes.data,
+        taxReportExpenses: taxReportRes.data,
       }));
       if (businessesRes.data.businesses.length > 0) {
         setSelectedBusiness(businessesRes.data.businesses[0]._id);
@@ -85,18 +105,16 @@ const Expenses = () => {
         return;
       }
       const headers = { Authorization: `Bearer ${token}` };
-      const [expensesRes, dailyExpensesRes, totalExpensesRes,  taxReportRes] = await Promise.all([
+      const [expensesRes, dailyExpensesRes, totalExpensesRes] = await Promise.all([
         axios.get(`http://localhost:5000/api/expenses?business=${businessId}`, { headers }),
         axios.get(`http://localhost:5000/api/expenses/daily-expenses?business=${businessId}`, { headers }),
         axios.get(`http://localhost:5000/api/expenses/total-expenses?business=${businessId}`, { headers }),
-        axios.get(`http://localhost:5000/api/expenses/taxreport-expenses?business=${businessId}`, { headers })
       ]);
       setData((prev) => ({
         ...prev,
         expenses: expensesRes.data,
         dailyExpenses: dailyExpensesRes.data,
         totalExpenses: totalExpensesRes.data,
-        taxReportExpenses: taxReportRes.data,
       }));
     } catch (error) {
       console.error("Error fetching business data", error);
@@ -136,21 +154,18 @@ const Expenses = () => {
     }
   }, [navigate]);
 
-  const handleChange = useMemo(
-    () =>
-      debounce((e) => {
-        const { name, value } = e.target;
-        setForm((prev) => ({
-          ...prev,
-          data: { ...prev.data, [name]: value },
-          errors: {
-            ...prev.errors,
-            [name]: validationRules[name]?.required && !value ? validationRules[name].message : undefined,
-          },
-        }));
-      }, 300),
-    [validationRules]
-  );
+  // Remove debounce, handle change immediately
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({
+      ...prev,
+      data: { ...prev.data, [name]: value },
+      errors: {
+        ...prev.errors,
+        [name]: validationRules[name]?.required && !value ? validationRules[name].message : undefined,
+      },
+    }));
+  };
 
   const handleSubmit = useCallback(
     async (e) => {
@@ -250,7 +265,7 @@ const Expenses = () => {
                     invalid={!!errors[name]}
                     required={!optional}
                   >
-                    <option value="">Select a category</option>
+                    <option value="">Select a {label.toLowerCase()}</option>
                     {categories.map((category) => (
                       <option key={category._id} value={category._id}>
                         {category.name}
@@ -270,6 +285,7 @@ const Expenses = () => {
                 {errors[name] && <div className="text-danger">{errors[name]}</div>}
               </FormGroup>
             ))}
+            
             <Button type="submit" color="success">
               {editingExpense ? "Update Expense" : "Submit"}
             </Button>
@@ -282,13 +298,16 @@ const Expenses = () => {
         ),
     []
   );
-
   return (
     <Container className="mt-4" fluid>
       <Row>
         <Col>
-          <Card className="shadow" id="expenses-container">
-            <CardHeader className="border-0">
+          <Card className="shadow" id="expenses-container" style={{ backgroundColor: '#FFFFFF', borderRadius: '10px' }}>
+            <CardHeader className="border-0" style={{ 
+              background: 'linear-gradient(to right, #0E6D6B, #1BA39C)', 
+              color: '#FFFFFF',
+              borderRadius: '10px 10px 0 0'
+            }}>
               <Row className="align-items-center justify-content-between">
                 <Col md="auto">
                   <h3 className="mb-0">
@@ -306,7 +325,7 @@ const Expenses = () => {
                 <Col md="auto">
                   <Row className="align-items-center">
                     <Col xs="auto" className="pr-2">
-                        <FormGroup className="mb-0">
+                      <FormGroup className="mb-0">
                         <HoverSpeakText textToSpeak="Select Business">
                           <Input
                             type="select"
@@ -324,8 +343,37 @@ const Expenses = () => {
                       </FormGroup>
                     </Col>
                     <Col xs="auto">
+                      <HoverSpeakText textToSpeak="Scan receipt">
+                        <Button
+                          color="info"
+                          size="sm"
+                          onClick={() => setShowReceiptScanner(true)}
+                          className="mr-2"
+                          style={{ 
+                            backgroundColor: '#00BCD4', 
+                            borderColor: '#00BCD4'
+                          }}
+                        >
+                          Scan Receipt
+                        </Button>
+                      </HoverSpeakText>
                       <HoverSpeakText textToSpeak={form.isVisible ? "Hide expense form" : "Add new expense"}>
-                        <Button color="primary" size="sm" onClick={() => setForm((prev) => ({ ...prev, isVisible: !prev.isVisible }))}>
+                        <Button
+                          color="primary"
+                          size="sm"
+                          onClick={() =>
+                            setForm({
+                              isVisible: true,
+                              editingExpense: null,
+                              data: { business: "", category: "", date: "", amount: "", tax: "", vendor: "", reference: "", description: "" },
+                              errors: {},
+                            })
+                          }
+                          style={{ 
+                            backgroundColor: '#1BA39C', 
+                            borderColor: '#1BA39C'
+                          }}
+                        >
                           {form.isVisible ? "Hide Form" : "Add Expense"}
                         </Button>
                       </HoverSpeakText>
@@ -335,6 +383,15 @@ const Expenses = () => {
               </Row>
             </CardHeader>
             <CardBody>
+              {/* NEW: Notification when scanned data is available */}
+              {scannedData && form.isVisible && (
+                <Alert color="info" className="mb-3">
+                  <HoverSpeakText>
+                    Form pre-filled with data from scanned receipt. Please review and complete the remaining fields.
+                  </HoverSpeakText>
+                </Alert>
+              )}
+
               <ExpenseForm
                 isVisible={form.isVisible}
                 formData={form.data}
@@ -352,10 +409,11 @@ const Expenses = () => {
                 }
                 editingExpense={form.editingExpense}
               />
-              
+
               {form.isVisible && <hr />}
 
-              <h4>
+              {/* Expenses Table */}
+              <h4 style={{ color: '#1BA39C' }}>
                 <HoverSpeakText>Normal Expenses</HoverSpeakText>
                 <TTSButton 
                   text="This table shows all your normal expenses by category, date, amount, and vendor information"
@@ -364,7 +422,7 @@ const Expenses = () => {
                 />
               </h4>
               <Table bordered responsive>
-                <thead>
+                <thead style={{ backgroundColor: '#0E6D6B', color: 'white' }}>
                   <tr>
                     {['Category', 'Date', 'Amount', 'Tax', 'Vendor', 'Reference', 'Description', 'Actions'].map((header) => (
                       <th key={header}>
@@ -386,12 +444,26 @@ const Expenses = () => {
                         <td><HoverSpeakText>{expense.description}</HoverSpeakText></td>
                         <td>
                           <HoverSpeakText textToSpeak={`Edit ${getCategoryName(expense.category)} expense`}>
-                            <Button color="warning" size="sm" onClick={() => handleEdit(expense)}>
+                            <Button 
+                              color="warning" 
+                              size="sm" 
+                              onClick={() => handleEdit(expense)}
+                              style={{ 
+                                backgroundColor: '#F57C00', 
+                                borderColor: '#F57C00',
+                                marginRight: '8px'
+                              }}
+                            >
                               Edit
                             </Button>
                           </HoverSpeakText>
                           <HoverSpeakText textToSpeak={`Delete ${getCategoryName(expense.category)} expense`}>
-                            <Button color="danger" size="sm" className="ml-2" onClick={() => handleDelete(expense._id)}>
+                            <Button 
+                              color="danger" 
+                              size="sm" 
+                              className="ml-2" 
+                              onClick={() => handleDelete(expense._id)}
+                            >
                               Delete
                             </Button>
                           </HoverSpeakText>
@@ -407,117 +479,18 @@ const Expenses = () => {
                   )}
                 </tbody>
               </Table>
-              
-              <hr />
-              <h4>
-                <HoverSpeakText>Daily Expenses</HoverSpeakText>
-                <TTSButton 
-                  text="This table shows your daily expenses summary"
-                  className="ml-2"
-                  size="sm"
-                />
-              </h4>
-              <Table bordered responsive>
-                <thead>
-                  <tr>
-                    {['Date', 'Amount', 'Notes'].map((header) => (
-                      <th key={header}>
-                        <HoverSpeakText>{header}</HoverSpeakText>
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.dailyExpenses.length > 0 ? (
-                    data.dailyExpenses.map((expense) => (
-                      <tr key={expense._id}>
-                        <td><HoverSpeakText>{new Date(expense.date).toLocaleDateString()}</HoverSpeakText></td>
-                        <td><HoverSpeakText>${expense.summary?.totalExpenses || 0}</HoverSpeakText></td>
-                        <td><HoverSpeakText>{expense.notes}</HoverSpeakText></td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan="3" className="text-center">
-                        <HoverSpeakText>No daily expenses found</HoverSpeakText>
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </Table>
-              
-              <hr />
-              <h4>
-                <HoverSpeakText>Tax Report Expenses</HoverSpeakText>
-                <TTSButton 
-                  text="This table shows your tax report expenses by year"
-                  className="ml-2"
-                  size="sm"
-                />
-              </h4>
-              <Table bordered responsive>
-                <thead>
-                  <tr>
-                    {['Year', 'Amount', 'Status'].map((header) => (
-                      <th key={header}>
-                        <HoverSpeakText>{header}</HoverSpeakText>
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.taxReportExpenses.length > 0 ? (
-                    data.taxReportExpenses.map((expense) => (
-                      <tr key={expense._id}>
-                        <td><HoverSpeakText>{expense.year}</HoverSpeakText></td>
-                        <td><HoverSpeakText>${expense.expenses}</HoverSpeakText></td>
-                        <td><HoverSpeakText>{expense.status}</HoverSpeakText></td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan="3" className="text-center">
-                        <HoverSpeakText>No tax report expenses found</HoverSpeakText>
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </Table>
-              
-              <hr />
-              <h4>
-                <HoverSpeakText>Summary</HoverSpeakText>
-                <TTSButton 
-                  text="This section shows the total amounts for all expense categories"
-                  className="ml-2"
-                  size="sm"
-                />
-              </h4>
-              <Table bordered>
-                <tbody>
-                  {[
-                    { label: "Normal Expenses Total", value: data.totalExpenses.normaltotalExpenses },
-                    { label: "Daily Expenses Total", value: data.totalExpenses.dailytotalExpenses },
-                    { label: "Tax Report Expenses Total", value: data.totalExpenses.taxtotalExpenses },
-                    { label: "All Expenses Total", value: data.totalExpenses.totalExpenses }
-                  ].map((item) => (
-                    <tr key={item.label}>
-                      <td>
-                        <HoverSpeakText>
-                          <strong>{item.label}</strong>
-                        </HoverSpeakText>
-                      </td>
-                      <td>
-                        <HoverSpeakText>${item.value}</HoverSpeakText>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </Table>
-              
+
               <hr />
               <HoverSpeakText textToSpeak="Generate expense report">
-                <Button color="success" size="m" onClick={() => generateExpenseReport(selectedBusiness)}>
+                <Button
+                  color="success"
+                  size="m"
+                  onClick={() => generateExpenseReport(selectedBusiness)}
+                  style={{ 
+                    backgroundColor: '#4CAF50', 
+                    borderColor: '#4CAF50'
+                  }}
+                >
                   Generate Expense Report
                 </Button>
               </HoverSpeakText>
@@ -525,6 +498,14 @@ const Expenses = () => {
           </Card>
         </Col>
       </Row>
+
+      {/* NEW: Receipt Scanner Modal */}
+      {showReceiptScanner && (
+        <ReceiptScanner 
+          onDataExtracted={handleReceiptScan}
+          onClose={() => setShowReceiptScanner(false)}
+        />
+      )}
     </Container>
   );
 };

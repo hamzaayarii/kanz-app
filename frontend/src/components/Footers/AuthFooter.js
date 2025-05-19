@@ -34,7 +34,7 @@ const Login = () => {
                   href="https://www.creative-tim.com?ref=adr-auth-footer"
                   target="_blank"
                 >
-                  Creative Tim
+                  Chill guys
                 </a>
               </div>
             </Col>
@@ -45,7 +45,7 @@ const Login = () => {
                     href="https://www.creative-tim.com?ref=adr-auth-footer"
                     target="_blank"
                   >
-                    Creative Tim
+                    Chill guys
                   </NavLink>
                 </NavItem>
                 <NavItem>

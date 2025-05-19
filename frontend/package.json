@@ -25,13 +25,17 @@
   "homepage": "https://demos.creative-tim.com/argon-dashboard-react/",
   "scripts": {
     "start": "react-scripts start",
+    "start:fast": "FAST_REFRESH=true NODE_ENV=production BROWSER=none craco start",
     "build": "cross-env PUBLIC_URL=/ react-scripts build",
+    "build:fast": "cross-env PUBLIC_URL=/ GENERATE_SOURCEMAP=false craco build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "install:clean": "rm -rf node_modules/ && rm -rf package-lock.json && npm install && npm start",
     "compile:scss": "sass src/assets/scss/argon-dashboard-react.scss src/assets/css/argon-dashboard-react.css",
     "minify:scss": "sass src/assets/scss/argon-dashboard-react.scss src/assets/css/argon-dashboard-react.min.css --style compressed",
-    "build:scss": "npm run compile:scss && npm run minify:scss && npm run map:scss"
+    "build:scss": "npm run compile:scss && npm run minify:scss && npm run map:scss",
+    "optimize": "node optimize.js",
+    "build:cached": "cross-env PUBLIC_URL=/ GENERATE_SOURCEMAP=false craco build"
   },
   "eslintConfig": {
     "extends": "react-app"
@@ -97,6 +101,7 @@
     "react-router-dom": "6.21.1",
     "react-scripts": "^5.0.1",
     "react-toastify": "^11.0.5",
+    "react-webcam": "^7.2.0",
     "reactstrap": "^8.10.1",
     "recharts": "^2.15.3",
     "sanitize-html": "^2.15.0",
@@ -108,6 +113,7 @@
     "yup": "^1.6.1"
   },
   "devDependencies": {
+    "@craco/craco": "^7.1.0",
     "cross-env": "^7.0.3",
     "gulp": "4.0.2",
     "gulp-append-prepend": "1.0.9"

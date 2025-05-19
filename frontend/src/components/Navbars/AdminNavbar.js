@@ -133,6 +133,7 @@ const AdminNavbar = ({ brandText, userData }) => {
   return (
     <Navbar className="navbar-top navbar-dark" expand="md" id="navbar-main" style={{ zIndex: 2000, position: "relative" }}>
       <Container fluid>
+         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
         <HoverSpeakText textToSpeak={`Current page: ${brandText || 'Dashboard'}`}>
           <Link 
             to="/" 
@@ -149,6 +150,12 @@ const AdminNavbar = ({ brandText, userData }) => {
             {brandText || 'Dashboard'}
           </Link>
         </HoverSpeakText>
+      {state.user && (
+        <span style={{ fontSize: '1rem', color: '#095E5C', fontWeight: 500, marginTop: '2px' }}>
+          Hello, {state.user.fullName}
+        </span>
+      )}
+    </div>
         {isTTSEnabled && (
           <TTSButton
             elementId="navbar-main"
@@ -221,14 +228,17 @@ const AdminNavbar = ({ brandText, userData }) => {
           <Suspense fallback={<HoverSpeakText>Loading notifications...</HoverSpeakText>}>
             <NotificationDropdown />
           </Suspense>
+          
           <UncontrolledDropdown nav>
             <HoverSpeakText textToSpeak={`User menu for ${state.user?.name || "user"}`}>
               <DropdownToggle className="pr-0" nav aria-label={`User menu for ${state.user?.name || "user"}`}>
                 <Media className="align-items-center">
                   <span className="avatar avatar-sm rounded-circle">
+                    
                     <img
                       alt="Profile"
                       src={state.user?.avatar || require("../../assets/img/theme/team-1-800x800.jpg")}
+                      
                     />
                   </span>
                   <Media className="ml-2 d-none d-lg-block">

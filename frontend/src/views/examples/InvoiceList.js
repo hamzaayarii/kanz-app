@@ -177,7 +177,7 @@ const InvoiceList = () => {
         <ErrorBoundary>
             <div style={{
                 minHeight: '100vh',
-                background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+                background: '#FAFAFA',
                 padding: '40px 20px',
                 fontFamily: "'Arial', sans-serif"
             }}
@@ -186,13 +186,13 @@ const InvoiceList = () => {
                 <div style={{
                     maxWidth: '1200px',
                     margin: '0 auto',
-                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                    backgroundColor: '#FFFFFF',
                     borderRadius: '20px',
                     boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1)',
                     overflow: 'hidden'
                 }}>
                     <div style={{
-                        background: 'linear-gradient(to right, #5e72e4, #8965e0)',
+                        background: 'linear-gradient(to right, #0B7C7A, #26A69A)',
                         padding: '30px',
                         color: 'white',
                         borderRadius: '20px 20px 0 0',
@@ -274,7 +274,7 @@ const InvoiceList = () => {
                                             marginLeft: '10px',
                                             background: 'none',
                                             border: 'none',
-                                            color: '#4facfe',
+                                            color: '#1BA39C',
                                             textDecoration: 'underline',
                                             cursor: 'pointer'
                                         }}
@@ -304,7 +304,7 @@ const InvoiceList = () => {
                                             padding: '20px',
                                             boxShadow: '0 5px 15px rgba(0,0,0,0.05)',
                                             transition: 'all 0.3s ease',
-                                            borderLeft: '5px solid #4facfe'
+                                            borderLeft: '5px solid #1BA39C'
                                         }}
                                              onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-5px)'}
                                              onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
@@ -312,7 +312,7 @@ const InvoiceList = () => {
                                             <div style={{ marginBottom: '15px' }}>
                                                 <p style={{ fontSize: '18px', color: '#333', fontWeight: '600' }}>
                                                     <HoverSpeakText textToSpeak="Client">
-                                                        <span style={{ color: '#4facfe' }}>Client: </span>
+                                                        <span style={{ color: '#1BA39C' }}>Client: </span>
                                                     </HoverSpeakText>
                                                     <HoverSpeakText>
                                                         {invoice.customerName || 'Non spécifié'}
@@ -320,7 +320,7 @@ const InvoiceList = () => {
                                                 </p>
                                                 <p style={{ fontSize: '16px', color: '#666' }}>
                                                     <HoverSpeakText textToSpeak="Amount">
-                                                        <span style={{ color: '#4facfe' }}>Amount: </span>
+                                                        <span style={{ color: '#1BA39C' }}>Amount: </span>
                                                     </HoverSpeakText>
                                                     <HoverSpeakText>
                                                         {invoice.total ? invoice.total.toFixed(2) : '0.00'} TND
@@ -328,7 +328,7 @@ const InvoiceList = () => {
                                                 </p>
                                                 <p style={{ fontSize: '14px', color: '#888' }}>
                                                     <HoverSpeakText textToSpeak="Échéance">
-                                                        <span style={{ color: '#4facfe' }}>Due date: </span>
+                                                        <span style={{ color: '#1BA39C' }}>Due date: </span>
                                                     </HoverSpeakText>
                                                     <HoverSpeakText>
                                                         {invoice.dueDate
@@ -343,7 +343,7 @@ const InvoiceList = () => {
                                                         onClick={() => downloadPDF(invoice._id, invoice.invoiceNumber)}
                                                         disabled={loading}
                                                         style={{
-                                                            background: 'linear-gradient(to right, #4facfe, #00f2fe)',
+                                                            background: '#1BA39C',
                                                             color: 'white',
                                                             padding: '10px 20px',
                                                             borderRadius: '20px',
@@ -351,11 +351,11 @@ const InvoiceList = () => {
                                                             fontSize: '14px',
                                                             cursor: loading ? 'not-allowed' : 'pointer',
                                                             transition: 'all 0.3s ease',
-                                                            boxShadow: '0 2px 10px rgba(79, 172, 254, 0.3)',
+                                                            boxShadow: '0 2px 10px rgba(27, 163, 156, 0.3)',
                                                             opacity: loading ? 0.6 : 1
                                                         }}
-                                                        onMouseEnter={(e) => !loading && (e.target.style.transform = 'scale(1.05)')}
-                                                        onMouseLeave={(e) => !loading && (e.target.style.transform = 'scale(1)')}
+                                                        onMouseEnter={(e) => !loading && (e.target.style.background = '#148B88')}
+                                                        onMouseLeave={(e) => !loading && (e.target.style.background = '#1BA39C')}
                                                         aria-label={`Download the invoice PDF ${invoice.invoiceNumber || invoice._id}`}
                                                     >
                                                         Télécharger PDF
@@ -397,7 +397,7 @@ const InvoiceList = () => {
                                                 style={{
                                                     padding: '10px 20px',
                                                     borderRadius: '5px',
-                                                    background: page === 1 ? '#ddd' : '#4facfe',
+                                                    background: page === 1 ? '#ddd' : '#1BA39C',
                                                     color: 'white',
                                                     border: 'none',
                                                     cursor: page === 1 ? 'not-allowed' : 'pointer'
@@ -419,7 +419,7 @@ const InvoiceList = () => {
                                                 style={{
                                                     padding: '10px 20px',
                                                     borderRadius: '5px',
-                                                    background: page === totalPages ? '#ddd' : '#4facfe',
+                                                    background: page === totalPages ? '#ddd' : '#1BA39C',
                                                     color: 'white',
                                                     border: 'none',
                                                     cursor: page === totalPages ? 'not-allowed' : 'pointer'
@@ -436,6 +436,23 @@ const InvoiceList = () => {
                     </div>
                 </div>
             </div>
+            
+            <style>{`
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+                
+                /* Loading spinner updated to use teal */
+                .spinner-border {
+                    border: 4px solid #f3f3f3;
+                    border-top: 4px solid #1BA39C;
+                    border-radius: 50%;
+                    width: 40px;
+                    height: 40px;
+                    animation: spin 1s linear infinite;
+                }
+            `}</style>
         </ErrorBoundary>
     );
 };

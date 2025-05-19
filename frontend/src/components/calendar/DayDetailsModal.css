@@ -240,3 +240,109 @@
     bottom: 0;
     background-color: white;
   }
+  
+  /* Tax Deadlines styling */
+  .section-title {
+    border-bottom: 2px solid #f1f1f1;
+    padding-bottom: 8px;
+    margin-bottom: 15px;
+    color: #333;
+    font-weight: 600;
+  }
+  
+  .tax-deadlines-section {
+    margin-bottom: 25px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #007bff;
+  }
+  
+  .tax-deadlines-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .tax-deadline-item {
+    padding: 12px;
+    border-radius: 6px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    background-color: white;
+    transition: transform 0.2s;
+  }
+  
+  .tax-deadline-item:hover {
+    transform: translateY(-3px);
+  }
+  
+  .tax-deadline-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  
+  .tax-deadline-title {
+    font-weight: 600;
+    font-size: 1rem;
+  }
+  
+  .tax-deadline-priority {
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  
+  .tax-deadline-description {
+    margin-bottom: 8px;
+    color: #495057;
+    font-size: 0.9rem;
+  }
+  
+  .tax-deadline-penalties {
+    font-size: 0.85rem;
+    color: #dc3545;
+    padding: 5px 8px;
+    background-color: rgba(220, 53, 69, 0.1);
+    border-radius: 4px;
+  }
+  
+  /* Priority colors */
+  .tax-priority-critical {
+    border-left: 4px solid #dc3545;
+  }
+  
+  .tax-priority-high {
+    border-left: 4px solid #fd7e14;
+  }
+  
+  .tax-priority-medium {
+    border-left: 4px solid #007bff;
+  }
+  
+  .tax-priority-low {
+    border-left: 4px solid #28a745;
+  }
+  
+  .tax-deadline-priority.tax-priority-critical {
+    background-color: #dc3545;
+    color: white;
+  }
+  
+  .tax-deadline-priority.tax-priority-high {
+    background-color: #fd7e14;
+    color: white;
+  }
+  
+  .tax-deadline-priority.tax-priority-medium {
+    background-color: #007bff;
+    color: white;
+  }
+  
+  .tax-deadline-priority.tax-priority-low {
+    background-color: #28a745;
+    color: white;
+  }

@@ -217,7 +217,8 @@ const PayrollManagement = () => {
 
     return (
         <div className={styles.container}>
-            <h2 className={styles.title}><FaMoneyCheckAlt/> Payroll Center</h2>            {error &&
+            <h2 className={styles.title}><FaMoneyCheckAlt/> Payroll Center</h2>
+            {error &&
             <Alert color="danger" className={styles.alert}>{error}</Alert>}
             {success && <Alert color="success" className={styles.alert}>{success}</Alert>}
             {(loading.fetch || loading.submit) && (
@@ -274,6 +275,7 @@ const PayrollManagement = () => {
                                 color="primary"
                                 onClick={() => handleSubmit(!!editPayroll)}
                                 disabled={loading.submit || Object.values(formErrors).some(err => !!err)}
+                                style={{ backgroundColor: '#1BA39C', borderColor: '#1BA39C' }}
                             >
                                 {loading.submit ?
                                     <FaSpinner className="fa-spin"/> : editPayroll ? 'Update' : 'Generate'}
@@ -321,6 +323,7 @@ const PayrollManagement = () => {
                             color="info"
                             onClick={handleGenerateCnssDeclaration}
                             disabled={loading.submit || !!cnssPeriodError}
+                            style={{ backgroundColor: '#1BA39C', borderColor: '#1BA39C' }}
                         >
                             {loading.submit ? <FaSpinner className="fa-spin"/> : 'Generate CNSS Declaration'}
                         </Button>

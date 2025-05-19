@@ -1,36 +1,25 @@
 /* FinancialStatements.module.css */
 
 .container {
-    background: linear-gradient(135deg, #f0f4f8 0%, #d9e2ec 100%);
-    min-height: 100vh;
-    padding: 2rem;
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #FAFAFA;
 }
 
 .content {
-    width: 100%;
-    max-width: 64rem;
+  flex: 1;
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 .pageTitle {
-    font-size: 2.5rem;
-    font-weight: 900;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
-    margin-bottom: 2rem;
-    text-align: center;
-    background: linear-gradient(90deg, #5e72e4, #8965e0);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    animation: gradientShift 5s ease infinite;
-}
-
-@keyframes gradientShift {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
+  color: #0B7C7A;
+  margin-bottom: 1.5rem;
+  font-size: 1.8rem;
+  font-weight: 600;
 }
 
 .errorMessage {
@@ -45,17 +34,11 @@
 }
 
 .formContainer {
-    background: #ffffff;
-    padding: 2rem;
-    border-radius: 1rem;
-    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
-    border: 2px solid #bfdbfe;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.formContainer:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 15px 25px rgba(0, 0, 0, 0.15);
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
 }
 
 .sectionHeading {
@@ -87,161 +70,126 @@
     100% { width: 0; }
 }
 
+.inputLabel {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #555;
+}
+
 .inputField {
-    border: 2px solid #d1d5db;
-    border-radius: 0.5rem;
-    padding: 0.75rem;
-    font-size: 1rem;
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
-    width: 100%;
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.9rem;
 }
 
 .inputField:focus {
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
-    outline: none;
-}
-
-.inputLabel {
-    display: block;
-    font-size: 1.125rem;
-    font-weight: 600;
-    color: #374151;
-    margin-bottom: 0.5rem;
-}
-
-.submitButton {
-    background: linear-gradient(90deg, #5e72e4, #8965e0);
-    color: #ffffff;
-    font-weight: 600;
-    padding: 0.75rem 1.5rem;
-    border-radius: 0.5rem;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 6px rgba(94, 114, 228, 0.2);
-    width: 100%;
-    cursor: pointer;
-    margin-top: 2rem;
-}
-
-.submitButton:hover {
-    background: linear-gradient(90deg, #5151e0, #7852d8);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(81, 81, 224, 0.3);
-}
-
-.submitButton:disabled {
-    background: #9ca3af;
-    cursor: not-allowed;
-}
-
-.tableContainer {
-    background: #ffffff;
-    padding: 1.5rem;
-    border-radius: 1rem;
-    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
-    border: 2px solid #bfdbfe;
-    overflow-x: auto;
-    margin-top: 3rem;
-}
-
-.dataTable {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.tableHeader {
-    background: #f6f9fc;
-}
-
-.tableHeaderCell {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: #1e3a8a;
-    padding: 0.75rem 1rem;
-    text-align: left;
-    border-bottom: 2px solid #dee2e6;
-}
-
-.tableCell {
-    padding: 0.75rem 1rem;
-    background: #ffffff;
-    transition: background-color 0.3s ease;
-    border-bottom: 1px solid #e9ecef;
-    font-size: 0.85rem;
-}
-
-.tableRow:last-child .tableCell {
-    border-bottom: none;
-}
-
-.tableRow:hover .tableCell {
-    background: #f1f5f9;
-}
-
-.actionButton {
-    padding: 0.5rem 1rem;
-    border-radius: 0.5rem;
-    color: white;
-    font-weight: 600;
-    transition: background-color 0.3s ease, transform 0.2s ease;
-}
-
-.downloadButton {
-    background-color: #16a34a;
-}
-
-.downloadButton:hover {
-    background-color: #166534;
-    transform: translateY(-2px);
-}
-
-.deleteButton {
-    background-color: #dc2626;
-}
-
-.deleteButton:hover {
-    background-color: #991b1b;
-    transform: translateY(-2px);
-}
-
-.actionButtonsContainer {
-    display: flex;
-    gap: 1rem;
-}
-
-.gridContainer {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-}
-
-@media (min-width: 768px) {
-    .gridContainer {
-        grid-template-columns: 1fr 1fr;
-    }
-
-    .passifGrid {
-        grid-template-columns: 1fr 1fr 1fr;
-    }
+  outline: none;
+  border-color: #1BA39C;
+  box-shadow: 0 0 0 2px rgba(27, 163, 156, 0.2);
 }
 
 .validationError {
-    color: #ef4444;
-    font-size: 0.875rem;
-    margin-top: 0.25rem;
+  color: #f44336;
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+  display: block;
 }
 
-.emptyMessage {
-    text-align: center;
-    color: #6b7280;
-    padding: 1.5rem;
-    font-style: italic;
+.submitButton {
+  background-color: #1BA39C;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.submitButton:hover {
+  background-color: #148B88;
+}
+
+.submitButton:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
 }
 
 .existingBalancesTitle {
-    font-size: 1.875rem;
-    font-weight: 700;
-    text-align: center;
-    color: #5e72e4;
-    margin: 3rem 0 1.5rem;
+  margin: 2rem 0 1rem;
+  color: #0E6D6B;
+  font-size: 1.4rem;
+}
+
+.tableContainer {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: auto;
+}
+
+.dataTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tableHeader {
+  background: linear-gradient(to right, #0E6D6B, #1BA39C);
+  color: white;
+}
+
+.tableHeaderCell {
+  padding: 1rem;
+  text-align: left;
+  font-weight: 500;
+}
+
+.tableRow:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.tableCell {
+  padding: 1rem;
+  border-bottom: 1px solid #eee;
+}
+
+.actionButtonsContainer {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.actionButton {
+  padding: 0.5rem 0.75rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: background-color 0.3s;
+}
+
+.downloadButton {
+  background-color: #1BA39C;
+  color: white;
+}
+
+.downloadButton:hover {
+  background-color: #148B88;
+}
+
+.deleteButton {
+  background-color: #f44336;
+  color: white;
+}
+
+.deleteButton:hover {
+  background-color: #d32f2f;
+}
+
+.emptyMessage {
+  text-align: center;
+  padding: 2rem;
+  color: #757575;
 }

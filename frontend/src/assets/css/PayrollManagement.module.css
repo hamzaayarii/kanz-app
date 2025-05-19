@@ -1,9 +1,9 @@
 /* Modern container with centered content */
 .container {
-    padding: 30px;
+    padding: 20px;
     max-width: 1000px;
     margin: 0 auto;
-    background: linear-gradient(135deg, #f5f7fa 0%, #e4e7eb 100%);
+    background-color: #FAFAFA;
     border-radius: 12px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
     min-height: 100vh;
@@ -11,13 +11,12 @@
 
 /* Stylish title with gradient text */
 .title {
-    text-align: center;
-    margin-bottom: 30px;
-    font-size: 2.5rem;
-    font-weight: 700;
-    background: linear-gradient(45deg, #5e72e4, #8965e0);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color: #0B7C7A;
+    margin-bottom: 20px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 /* Alerts with smooth transitions */
@@ -31,23 +30,22 @@
 
 /* Spinner with modern animation */
 .spinner {
-    text-align: center;
-    margin: 30px 0;
-    font-size: 1.2rem;
-    color: #5e72e4;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
+    color: #1BA39C;
+    margin: 20px 0;
+    gap: 8px;
+    font-size: 1.2rem;
 }
 
 /* Card with hover effect */
 .card {
-    margin-bottom: 30px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     border: none;
-    border-radius: 12px;
     background: #ffffff;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
@@ -58,11 +56,14 @@
 
 /* Card title with modern styling */
 .cardTitle {
-    padding: 15px;
-    background: #5e72e4;
+    background: linear-gradient(to right, #0B7C7A, #26A69A);
     color: white;
-    border-top-left-radius: 12px;
-    border-top-right-radius: 12px;
+    padding: 15px;
+    margin-bottom: 0;
+    border-radius: 8px 8px 0 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
     font-size: 1.5rem;
     font-weight: 600;
 }
@@ -77,7 +78,7 @@
 
 /* Form field with modern input styling */
 .field {
-    margin-bottom: 20px;
+    margin-bottom: 15px;
 }
 
 .field label {
@@ -106,7 +107,8 @@
 /* Button group with responsive layout */
 .buttonGroup {
     display: flex;
-    gap: 15px;
+    gap: 10px;
+    margin-top: 20px;
     flex-wrap: wrap;
 }
 
@@ -125,8 +127,9 @@
 }
 
 .cancelButton {
-    background: #6c757d;
+    background-color: #9e9e9e;
     color: white;
+    border: none;
 }
 
 .cancelButton:hover {
@@ -135,17 +138,19 @@
 
 /* CNSS Declaration Section */
 .cnssDeclaration {
-    margin-top: 25px;
-    padding: 20px;
-    background: #f8f9fa;
-    border-radius: 8px;
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f5f5f5;
+    border-radius: 4px;
     border-left: 4px solid #5e72e4;
 }
 
 .cnssEmployee {
-    border-bottom: 1px solid #e9ecef;
-    padding: 15px 0;
-    font-size: 0.95rem;
+    margin-bottom: 10px;
+    padding: 10px;
+    background-color: white;
+    border-radius: 4px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .cnssEmployee p {
@@ -154,22 +159,23 @@
 
 /* Payroll List */
 .payrollList {
-    margin-top: 40px;
+    margin-top: 30px;
 }
 
 .subtitle {
+    color: #0E6D6B;
+    margin-bottom: 15px;
+    font-weight: 500;
     font-size: 1.8rem;
-    font-weight: 600;
-    color: #333;
-    margin-bottom: 20px;
 }
 
 /* Payroll Card with grid layout */
 .payrollCard {
-    margin-bottom: 20px;
+    margin-bottom: 15px;
     border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border: none;
     background: #ffffff;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     transition: transform 0.3s ease;
 }
 
@@ -185,6 +191,10 @@
     padding: 20px;
 }
 
+.payrollInfo {
+    margin-bottom: 15px;
+}
+
 .payrollInfo p {
     margin: 8px 0;
     font-size: 0.95rem;
@@ -197,7 +207,6 @@
 /* Payroll Actions */
 .payrollActions {
     display: flex;
-    flex-direction: column;
     gap: 10px;
     align-items: flex-end;
 }
@@ -215,21 +224,27 @@
 }
 
 .editButton {
-    background: #28a745;
+    background-color: #1BA39C;
+    border-color: #1BA39C;
     color: white;
 }
 
 .editButton:hover {
-    background: #218838;
+    background-color: #148B88;
+    border-color: #148B88;
+    color: white;
 }
 
 .deleteButton {
-    background: #dc3545;
+    background-color: #f44336;
+    border-color: #f44336;
     color: white;
 }
 
 .deleteButton:hover {
-    background: #c82333;
+    background-color: #d32f2f;
+    border-color: #d32f2f;
+    color: white;
 }
 
 /* Responsive adjustments */

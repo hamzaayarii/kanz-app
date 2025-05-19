@@ -406,6 +406,7 @@ const EmployeeManagement = () => {
                             className={styles.submitButton}
                             onClick={(e) => handleSubmit(e, false)}
                             disabled={loading.submit || Object.values(formErrors).some(err => !!err)}
+                            style={{ backgroundColor: '#1BA39C', borderColor: '#1BA39C' }}
                         >
                             {loading.submit ? <FaSpinner className="fa-spin" /> : 'Add'}
                         </Button>
@@ -482,9 +483,21 @@ const EmployeeManagement = () => {
                 )}
                 {totalPages > 1 && (
                     <div className={styles.pagination}>
-                        <Button disabled={currentPage === 1} onClick={() => setCurrentPage(prev => prev - 1)} className={styles.pageButton}>Previous</Button>
+                        <Button 
+                            disabled={currentPage === 1} 
+                            onClick={() => setCurrentPage(prev => prev - 1)} 
+                            className={styles.pageButton}
+                        >
+                            Previous
+                        </Button>
                         <span className={styles.pageInfo}>Page {currentPage} of {totalPages}</span>
-                        <Button disabled={currentPage === totalPages} onClick={() => setCurrentPage(prev => prev + 1)} className={styles.pageButton}>Next</Button>
+                        <Button 
+                            disabled={currentPage === totalPages} 
+                            onClick={() => setCurrentPage(prev => prev + 1)} 
+                            className={styles.pageButton}
+                        >
+                            Next
+                        </Button>
                     </div>
                 )}
             </div>
@@ -587,6 +600,7 @@ const EmployeeManagement = () => {
                         color="primary"
                         onClick={(e) => handleSubmit(e, true)}
                         disabled={loading.submit || Object.values(formErrors).some(err => !!err)}
+                        style={{ backgroundColor: '#1BA39C', borderColor: '#1BA39C' }}
                     >
                         {loading.submit ? <FaSpinner className="fa-spin" /> : 'Update'}
                     </Button>
@@ -664,6 +678,7 @@ const EmployeeManagement = () => {
                         color="primary"
                         onClick={handleAddAbsence}
                         disabled={loading.submit || Object.values(absenceErrors).some(err => !!err)}
+                        style={{ backgroundColor: '#1BA39C', borderColor: '#1BA39C' }}
                     >
                         {loading.submit ? <FaSpinner className="fa-spin" /> : 'Save'}
                     </Button>
@@ -724,7 +739,13 @@ const EmployeeManagement = () => {
                     )}
                 </ModalBody>
                 <ModalFooter>
-                    <Button color="secondary" onClick={() => setShowAbsenceListModal(false)}>Close</Button>
+                    <Button 
+                        color="secondary" 
+                        onClick={() => setShowAbsenceListModal(false)}
+                        style={{ backgroundColor: '#9e9e9e', borderColor: '#9e9e9e' }}
+                    >
+                        Close
+                    </Button>
                 </ModalFooter>
             </Modal>
         </div>

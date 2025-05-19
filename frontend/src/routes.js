@@ -46,6 +46,7 @@ import ManualTreasuryDashboardAccountant from "./views/examples/ManualTreasuryDa
 import BusinessFinanceDashboard from './views/examples/BusinessFinanceDashboard.js';
 import FinanceManagement from './views/examples/FinanceManagement.js';
 import PredictCashFlowAccountant from './views/examples/PredictCashFlowAccountant.js';
+import Logout from './views/examples/Logout.js';
 
 
 
@@ -56,7 +57,7 @@ const routes = [
  {
     path: '/index',
     name: 'Dashboard Hub',
-    icon: 'ni ni-tv-2 text-primary',
+    icon: 'ni ni-tv-2 text-white',
     description: 'Your business at a glance',
     component: <AuthRoute><BusinessFinanceDashboard /></AuthRoute>,
     layout: '/admin',
@@ -67,7 +68,7 @@ const routes = [
   {
     path: '/buisness asigned to',
     name: 'My Clients',
-    icon: 'ni ni-money-coins text-success',
+    icon: 'ni ni-briefcase-24 text-white',
     description: 'Track your daily revenue flow',
     component: <AuthRoute><AccountantBusinessOwners /></AuthRoute>,
     layout: '/admin',
@@ -80,7 +81,7 @@ const routes = [
  {
 
   name: "Finance",
-    icon: "ni ni-collection text-cyan",
+    icon: "ni ni-chart-pie-35 text-white",
     category: "Finance",
     collapse: true,
     state: "invoiceCollapse",
@@ -88,16 +89,16 @@ const routes = [
     {
       path: "/expenses",
       name: "Expenses",
-      icon: "ni ni-credit-card text-red",
+      icon: "ni ni-credit-card text-white",
       description: "Keep expenses in check",
       component: <AuthRoute><Expenses /></AuthRoute>,
       layout: "/admin",
       showInSidebar: isUserBusinessOwner,
     },
  {
-    path: '/daily-revenue',
-    name: 'Daily Money Flow',
-    icon: 'ni ni-money-coins text-success',
+     path: "/daily-revenue",
+    name: "Revenue",
+    icon: 'ni ni-money-coins text-white',
     description: 'Track your daily revenue flow',
     component: <AuthRoute><DailyRevenue /></AuthRoute>,
     layout: '/admin',
@@ -105,9 +106,9 @@ const routes = [
     showInSidebar: isUserBusinessOwner,
   },
   {
-    path: '/daily-revenue-list',
-    name: 'Daily Money Flow History',
-    icon: 'ni ni-chart-pie-35 text-info',
+     path: "/daily-revenue-list",
+      name: "Revenue History",
+    icon: 'ni ni-calendar-grid-58 text-white',
     description: 'View all daily revenue entries',
     component: <AuthRoute><DailyRevenueList /></AuthRoute>,
     layout: '/admin',
@@ -117,7 +118,7 @@ const routes = [
     {
     path: '/client-daily-revenue',
     name: 'Client Money Flow History',
-    icon: 'ni ni-chart-pie-35 text-info',
+    icon: 'ni ni-chart-bar-32 text-white',
     description: 'View client daily revenue entries',
     component: <AuthRoute><DailyRevenueList isAccountantView={true} /></AuthRoute>,
     layout: '/admin',
@@ -127,7 +128,7 @@ const routes = [
       {
     path: '/financial-statements',
     name: 'Financial Reports',
-    icon: 'ni ni-chart-bar-32 text-purple',
+    icon: 'ni ni-single-copy-04 text-white',
     description: 'Detailed financial insights',
     component: <BusinessOwnerRoute><FinancialStatements /></BusinessOwnerRoute>,
     layout: '/admin',
@@ -137,7 +138,7 @@ const routes = [
   {
     path: '/income-statement',
     name: 'Income Statement',
-    icon: 'ni ni-money-coins text-green',
+    icon: 'ni ni-chart-bar-32 text-white',
     description: 'Revenue and expense reports',
     component: <AuthRoute><IncomeStatement /></AuthRoute>,
     layout: '/admin',
@@ -148,7 +149,7 @@ const routes = [
   {
     path: '/treasury',
     name: 'Treasury',
-    icon: 'ni ni-money-coins text-blue',
+    icon: 'ni ni-money-coins text-white',
     description: 'Detailed financial insights',
     component: <AuthRoute><ManualTreasuryDashboard /></AuthRoute>,
     layout: '/admin',
@@ -160,7 +161,7 @@ const routes = [
    {
     path: '/accountant/treasury',
     name: 'Treasury',
-    icon: 'ni ni-money-coins text-blue',
+    icon: 'ni ni-money-coins text-white',
     description: 'Detailed financial insights',
     component: <AuthRoute><ManualTreasuryDashboardAccountant /></AuthRoute>,
     layout: '/admin',
@@ -173,7 +174,7 @@ const routes = [
 ,
  {
     name: "Invoice",
-    icon: "ni ni-collection text-cyan",
+    icon: "ni ni-collection text-white",
     category: "Finance",
     collapse: true,
     state: "invoiceCollapse",
@@ -181,7 +182,7 @@ const routes = [
       {
         path: "/create-invoice",
         name: "Add Invoice",
-        icon: "ni ni-fat-add text-teal",
+        icon: "ni ni-fat-add text-white",
         description: "Create a fresh invoice",
         component: <AuthRoute><CreateInvoice /></AuthRoute>,
         layout: "/admin",
@@ -190,7 +191,7 @@ const routes = [
       {
         path: "/invoices",
         name: "All Invoices",
-        icon: "ni ni-bullet-list-67 text-green",
+        icon: "ni ni-bullet-list-67 text-white",
         description: "View all invoices",
         component: <AuthRoute><InvoiceList /></AuthRoute>,
         layout: "/admin",
@@ -199,7 +200,7 @@ const routes = [
        {
     path: '/tax-report',
     name: 'Tax Report Generator',
-    icon: 'ni ni-single-copy-04 text-green',
+    icon: 'ni ni-single-copy-04 text-white',
     description: 'Prepare your tax reports',
     component: <AuthRoute><TaxReportForm /></AuthRoute>,
     layout: '/admin',
@@ -209,7 +210,7 @@ const routes = [
   {
     path: '/tax-reports',
     name: 'Tax Reports Archive',
-    icon: 'ni ni-archive-2 text-purple',
+    icon: 'ni ni-archive-2 text-white',
     description: 'Browse past tax reports',
     component: <AuthRoute><TaxReportsList /></AuthRoute>,
     layout: '/admin',
@@ -221,7 +222,7 @@ const routes = [
   {
     path: '/client-daily-revenue',
     name: 'Client Money Flow History',
-    icon: 'ni ni-chart-pie-35 text-info',
+    icon: 'ni ni-chart-pie-35 text-white',
     description: 'View client daily revenue entries',
     component: <AuthRoute><DailyRevenueList isAccountantView={true} /></AuthRoute>,
     layout: '/admin',
@@ -231,7 +232,7 @@ const routes = [
   {
     path: '/financial-calendar',
     name: 'financial-calendar',
-    icon: 'ni ni-money-coins text-purple',
+    icon: 'ni ni-calendar-grid-58 text-white',
     description: 'Track your daily revenue flow',
     component: (
       <AuthRoute>
@@ -248,7 +249,7 @@ const routes = [
   {
     path: '/dashboard/:businessId',
     name: 'dashboard.business',
-    icon: 'ni ni-chart-bar-32 text-primary',
+    icon: 'ni ni-chart-bar-32 text-white',
     description: 'Get a high-level financial overview',
     component: (
       <AuthRoute>
@@ -262,7 +263,7 @@ const routes = [
   {
     path: '/daily-revenue',
     name: 'Daily Money Flow',
-    icon: 'ni ni-money-coins text-success',
+    icon: 'ni ni-money-coins text-white',
     description: 'Track your daily revenue flow',
     component: <AuthRoute><DailyRevenue /></AuthRoute>,
     layout: '/admin',
@@ -272,7 +273,7 @@ const routes = [
   {
     path: '/daily-revenue-list',
     name: 'Daily Money Flow History',
-    icon: 'ni ni-chart-pie-35 text-info',
+    icon: 'ni ni-calendar-grid-58 text-white',
     description: 'View all daily revenue entries',
     component: <AuthRoute><DailyRevenueList /></AuthRoute>,
     layout: '/admin',
@@ -282,7 +283,7 @@ const routes = [
   {
     path: '/daily-revenue/edit/:id',
     name: 'Edit Daily Money Flow',
-    icon: 'ni ni-money-coins text-success',
+    icon: 'ni ni-money-coins text-white',
     description: 'Edit daily revenue entry',
     component: <AuthRoute><DailyRevenue /></AuthRoute>,
     layout: '/admin',
@@ -294,7 +295,7 @@ const routes = [
   {
     path: '/journal',
     name: 'Accounting Journal',
-    icon: 'ni ni-book-bookmark text-indigo',
+    icon: 'ni ni-book-bookmark text-white',
     description: 'Log all your financial entries',
     component: <AuthRoute><Journal /></AuthRoute>,
     layout: '/admin',
@@ -304,7 +305,7 @@ const routes = [
   {
     path: '/expenses',
     name: 'Expenses',
-    icon: 'ni ni-credit-card text-red',
+    icon: 'ni ni-credit-card text-white',
     description: 'Keep expenses in check',
     component: <AuthRoute><Expenses /></AuthRoute>,
     layout: '/admin',
@@ -315,7 +316,7 @@ const routes = [
   {
     path: '/notifications',
     name: 'notifications',
-    icon: 'ni ni-bell-55 text-yellow',
+    icon: 'ni ni-bell-55 text-white',
     component: <AuthRoute><Notifications /></AuthRoute>,
     layout: '/admin',
     category: 'Overview',
@@ -324,7 +325,7 @@ const routes = [
   {
     path: '/predictCashFlow',
     name: 'Cash FLow Prediction',
-    icon: 'ni ni-chart-bar-32 text-success',
+    icon: 'ni ni-chart-bar-32 text-white',
     description: 'Predict Cash Flow',
     component: <AuthRoute><PredictCashFlow /></AuthRoute>,
     layout: '/admin',
@@ -335,7 +336,7 @@ const routes = [
    {
     path: '/accountant/predictCashFlow',
     name: 'Cash FLow Prediction',
-    icon: 'ni ni-chart-bar-32 text-success',
+    icon: 'ni ni-chart-bar-32 text-white',
     description: 'Predict Cash Flow',
     component: <AuthRoute><PredictCashFlowAccountant /></AuthRoute>,
     layout: '/admin',
@@ -345,7 +346,7 @@ const routes = [
   {
     path: '/invoices1',
     name: 'Invoice Tracker',
-    icon: 'ni ni-paper-diploma text-blue',
+    icon: 'ni ni-paper-diploma text-white',
     description: 'Monitor all invoices',
     component: <AuthRoute><Invoices /></AuthRoute>,
     layout: '/admin',
@@ -355,7 +356,7 @@ const routes = [
   {
     path: '/create-invoice',
     name: 'New Invoice',
-    icon: 'ni ni-fat-add text-teal',
+    icon: 'ni ni-fat-add text-white',
     description: 'Create a fresh invoice',
     component: <AuthRoute><CreateInvoice /></AuthRoute>,
     layout: '/admin',
@@ -365,7 +366,7 @@ const routes = [
   {
     path: '/invoices',
     name: 'Invoice List',
-    icon: 'ni ni-bullet-list-67 text-green',
+    icon: 'ni ni-bullet-list-67 text-white',
     description: 'View all invoices',
     component: <AuthRoute><InvoiceList /></AuthRoute>,
     layout: '/admin',
@@ -376,7 +377,7 @@ const routes = [
   {
     path: '/financial-statements',
     name: 'Financial Reports',
-    icon: 'ni ni-bullet-list-67 text-purple',
+    icon: 'ni ni-bullet-list-67 text-white',
     description: 'Detailed financial insights',
     component: <BusinessOwnerRoute><FinancialStatements /></BusinessOwnerRoute>,
     layout: '/admin',
@@ -387,7 +388,7 @@ const routes = [
   {
     path: '/income-statement',
     name: 'Income Statement',
-    icon: 'ni ni-money-coins text-green',
+    icon: 'ni ni-money-coins text-white',
     description: 'Revenue and expense reports',
     component: <AuthRoute><IncomeStatement /></AuthRoute>,
     layout: '/admin',
@@ -398,7 +399,7 @@ const routes = [
   {
     path: '/treasury',
     name: 'Treasury',
-    icon: 'ni ni-money-coins text-blue',
+    icon: 'ni ni-money-coins text-white',
     description: 'Detailed financial insights',
     component: <AuthRoute><ManualTreasuryDashboard /></AuthRoute>,
     layout: '/admin',
@@ -410,7 +411,7 @@ const routes = [
    {
     path: '/accountant/treasury',
     name: 'Treasury',
-    icon: 'ni ni-money-coins text-blue',
+    icon: 'ni ni-money-coins text-white',
     description: 'Detailed financial insights',
     component: <AuthRoute><ManualTreasuryDashboardAccountant /></AuthRoute>,
     layout: '/admin',
@@ -422,7 +423,7 @@ const routes = [
   {
     path: '/tax-report',
     name: 'Tax Report Generator',
-    icon: 'ni ni-single-copy-04 text-green',
+    icon: 'ni ni-single-copy-04 text-white',
     description: 'Prepare your tax reports',
     component: <AuthRoute><TaxReportForm /></AuthRoute>,
     layout: '/admin',
@@ -432,7 +433,7 @@ const routes = [
   {
     path: '/tax-reports',
     name: 'Tax Reports Archive',
-    icon: 'ni ni-archive-2 text-purple',
+    icon: 'ni ni-archive-2 text-white',
     description: 'Browse past tax reports',
     component: <AuthRoute><TaxReportsList /></AuthRoute>,
     layout: '/admin',
@@ -444,7 +445,7 @@ const routes = [
   {
     path: '/business-management',
     name: 'Business Control',
-    icon: 'ni ni-building text-primary',
+    icon: 'ni ni-building text-white',
     description: 'Manage your business settings',
     component: <AuthRoute><BusinessManagement /></AuthRoute>,
     layout: '/admin',
@@ -454,7 +455,7 @@ const routes = [
    {
  
   name: "Human Resources",
-  icon: "ni ni-single-02 text-orange",
+  icon: "ni ni-single-02 text-white",
   description: "Manage your employees and payroll",
  
   showInSidebar: isUserBusinessOwner,
@@ -465,7 +466,7 @@ const routes = [
     {
     path: '/employee-management',
     name: 'Employee Management',
-    icon: 'ni ni-badge text-yellow',
+    icon: 'ni ni-badge text-white',
     description: 'Oversee your employees',
     component: <AuthRoute><EmployeeManagement /></AuthRoute>,
     layout: '/admin',
@@ -475,7 +476,7 @@ const routes = [
      {
     path: '/payroll-management',
     name: 'Payroll Center',
-    icon: 'ni ni-money-coins text-teal',
+    icon: 'ni ni-money-coins text-white',
     description: 'Handle payroll with ease',
     component: <AuthRoute><PayrollManagement /></AuthRoute>,
     layout: '/admin',
@@ -488,7 +489,7 @@ const routes = [
   {
     path: '/employee-management',
     name: 'Employee Management',
-    icon: 'ni ni-badge text-yellow',
+    icon: 'ni ni-badge text-white',
     description: 'Oversee your employees',
     component: <AuthRoute><EmployeeManagement /></AuthRoute>,
     layout: '/admin',
@@ -498,7 +499,7 @@ const routes = [
   {
     path: '/payroll-management',
     name: 'Payroll Center',
-    icon: 'ni ni-money-coins text-teal',
+    icon: 'ni ni-money-coins text-white',
     description: 'Handle payroll with ease',
     component: <AuthRoute><PayrollManagement /></AuthRoute>,
     layout: '/admin',
@@ -508,7 +509,7 @@ const routes = [
   {
     path: '/assign-accountant',
     name: 'Accountant Setup',
-    icon: 'ni ni-single-02 text-green',
+    icon: 'ni ni-single-02 text-white',
     description: 'Link an accountant',
     component: <AuthRoute><AssignAccountant /></AuthRoute>,
     layout: '/admin',
@@ -520,7 +521,7 @@ const routes = [
   {
     path: '/items',
     name: 'Inventory',
-    icon: 'ni ni-box-2 text-orange',
+    icon: 'ni ni-box-2 text-white',
     description: 'Track your stock',
     component: <AuthRoute><Items /></AuthRoute>,
     layout: '/admin',
@@ -532,7 +533,7 @@ const routes = [
   {
     path: '/user-profile',
     name: 'My Profile',
-    icon: 'ni ni-circle-08 text-yellow',
+    icon: 'ni ni-circle-08 text-white',
     description: 'Update your details',
     component: <AuthRoute><Profile /></AuthRoute>,
     layout: '/admin',
@@ -541,7 +542,7 @@ const routes = [
   {
     path: '/users',
     name: 'User Directory',
-    icon: 'ni ni-single-02 text-red',
+    icon: 'ni ni-single-02 text-white',
     description: 'Manage all users',
     component: <AdminRoute><UserList /></AdminRoute>,
     layout: '/admin',
@@ -552,7 +553,7 @@ const routes = [
   {
     path: '/login',
     name: 'Login',
-    icon: 'ni ni-key-25 text-info',
+    icon: 'ni ni-key-25 text-white',
     component: <Login />,
     layout: '/auth',
     showInSidebar: false,
@@ -560,7 +561,7 @@ const routes = [
   {
     path: '/register',
     name: 'Sign Up',
-    icon: 'ni ni-circle-08 text-pink',
+    icon: 'ni ni-circle-08 text-white',
     component: <Register />,
     layout: '/auth',
     showInSidebar: false,
@@ -568,7 +569,7 @@ const routes = [
   {
     path: '/verify-email/:token',
     name: 'Verify Email',
-    icon: 'ni ni-check-bold text-green',
+    icon: 'ni ni-check-bold text-white',
     component: <EmailVerification />,
     layout: '/auth',
     showInSidebar: false,
@@ -576,7 +577,7 @@ const routes = [
   {
     path: '/password-reset',
     name: 'Reset Password',
-    icon: 'ni ni-lock-circle-open text-pink',
+    icon: 'ni ni-lock-circle-open text-white',
     component: <PasswordReset />,
     layout: '/auth',
     showInSidebar: false,
@@ -584,7 +585,7 @@ const routes = [
   {
     path: '/new-password/:token',
     name: 'Set New Password',
-    icon: 'ni ni-lock-circle-open text-pink',
+    icon: 'ni ni-lock-circle-open text-white',
     component: <NewPassword />,
     layout: '/auth',
     showInSidebar: false,
@@ -594,7 +595,7 @@ const routes = [
   {
     path: '/business-registration',
     name: 'Start Your Business',
-    icon: 'ni ni-briefcase-24 text-primary',
+    icon: 'ni ni-briefcase-24 text-white',
     component: <BusinessOwnerRoute><BusinessRegistrationPage /></BusinessOwnerRoute>,
     layout: '/standalone',
     showInSidebar: isUserBusinessOwner,
@@ -602,7 +603,7 @@ const routes = [
   {
     path: '/business-update/:id',  // New route for updates
     name: 'Update Business',
-    icon: 'ni ni-briefcase-24 text-primary',
+    icon: 'ni ni-briefcase-24 text-white',
     component: <BusinessOwnerRoute><BusinessUpdatePage /></BusinessOwnerRoute>,
     layout: '/admin',
     showInSidebar: false,  // Typically don't show update in sidebar as it's context-specific
@@ -610,6 +611,7 @@ const routes = [
   {
     path: '/category',
     name: 'Category Management',
+    icon: 'ni ni-tag text-white',
     component: (
         <AuthRoute>
           <Categories />
@@ -621,13 +623,22 @@ const routes = [
   {
     path: '/anomaly-detection',
     name: 'Anomaly Detection',
-    icon: 'ni ni-chart-bar-32 text-red',
+    icon: 'ni ni-notification-70 text-white',
     description: 'Detect financial anomalies',
     component: <AuthRoute><AnomalyDetection /></AuthRoute>,
     layout: '/admin',
     category: 'Finance',
     showInSidebar: isUserAccountant || isUserBusinessOwner,
   },
+ {
+  path: '/sign-out',
+  name: 'Sign Out',
+  icon: 'ni ni-user-run text-white',
+  description: 'Sign out of your account',
+  component: <Logout />, // Use the new Logout component
+  layout: '/auth',
+  showInSidebar: () => true,
+},
 ];
 
 export default routes;

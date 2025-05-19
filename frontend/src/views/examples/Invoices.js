@@ -129,8 +129,8 @@ const Invoices = () => {
             <Container className="mt-4" fluid>
                 <Row>
                     <Col>
-                        <Card className="shadow mb-4" id="upload-invoice-card">
-                            <CardHeader className="border-0">
+                        <Card className="shadow mb-4" id="upload-invoice-card" style={{ backgroundColor: '#FFFFFF', borderRadius: '10px' }}>
+                            <CardHeader className="border-0" style={{ background: 'linear-gradient(to right, #0E6D6B, #1BA39C)', color: '#FFFFFF' }}>
                                 <h3 className="mb-0">
                                     <HoverSpeakText>📤 Upload Invoice</HoverSpeakText>
                                     {isTTSEnabled && (
@@ -199,7 +199,17 @@ const Invoices = () => {
                                         <Input type="file" id="file" onChange={handleFileChange} required />
                                     </FormGroup>
                                     <HoverSpeakText textToSpeak={loading ? "Uploading..." : "Upload Invoice"}>
-                                        <Button type="submit" color="primary" disabled={loading}>
+                                        <Button 
+                                            type="submit" 
+                                            color="primary" 
+                                            disabled={loading}
+                                            style={{ 
+                                                backgroundColor: '#1BA39C', 
+                                                borderColor: '#1BA39C',
+                                                color: '#FFFFFF'
+                                            }}
+                                            className="custom-button"
+                                        >
                                             {loading ? <Spinner size="sm" /> : "Upload"}
                                         </Button>
                                     </HoverSpeakText>
@@ -207,8 +217,8 @@ const Invoices = () => {
                             </CardBody>
                         </Card>
 
-                        <Card className="shadow" id="uploaded-invoices-card">
-                            <CardHeader className="border-0">
+                        <Card className="shadow" id="uploaded-invoices-card" style={{ backgroundColor: '#FFFFFF', borderRadius: '10px' }}>
+                            <CardHeader className="border-0" style={{ background: 'linear-gradient(to right, #0E6D6B, #1BA39C)', color: '#FFFFFF' }}>
                                 <h3 className="mb-0">
                                     <HoverSpeakText>🧾 Uploaded Invoices</HoverSpeakText>
                                     <TTSButton
@@ -230,6 +240,7 @@ const Invoices = () => {
                                         <ListGroupItem
                                             key={invoice._id}
                                             className="d-flex justify-content-between align-items-center"
+                                            style={{ marginBottom: '8px', borderRadius: '5px' }}
                                         >
                                             <div>
                                                 <HoverSpeakText>
@@ -241,6 +252,7 @@ const Invoices = () => {
                                                         href={`http://localhost:5000/${invoice.filePath}?token=${token}`}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
+                                                        style={{ color: '#1BA39C' }}
                                                     >
                                                         View File
                                                     </a>
@@ -263,6 +275,37 @@ const Invoices = () => {
                     </Col>
                 </Row>
             </Container>
+            <style>
+                {`
+                    /* Custom button styles */
+                    .btn-primary {
+                        background-color: #1BA39C !important;
+                        border-color: #1BA39C !important;
+                    }
+                    
+                    .btn-primary:hover, .btn-primary:focus, .btn-primary:active {
+                        background-color: #148B88 !important;
+                        border-color: #148B88 !important;
+                    }
+                    
+                    /* Input focus states */
+                    .form-control:focus {
+                        border-color: #1BA39C;
+                        box-shadow: 0 0 0 0.2rem rgba(27, 163, 156, 0.25);
+                    }
+                    
+                    /* Background color */
+                    body {
+                        background-color: #FAFAFA;
+                    }
+                    
+                    /* Spinner color */
+                    .spinner-border {
+                        border-color: rgba(255, 255, 255, 0.25);
+                        border-right-color: #FFFFFF;
+                    }
+                `}
+            </style>
         </>
     );
 };

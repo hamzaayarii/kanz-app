@@ -5,6 +5,7 @@ const {authenticate, authorizeBusinessOwner} = require("../middlewares/authMiddl
 const DailyRevenue = require("../models/DailyRevenue");
 const TaxReport = require("../models/TaxReport");
 const Business = require("../models/Business");
+const Category = require("../models/Category");
 const PDFDocument = require('pdfkit');
 const formatCurrency = (amount) => `${amount.toFixed(3)} $`;
 const formatDate = (date) => new Intl.DateTimeFormat('fr-TN', { dateStyle: 'medium' }).format(date);
@@ -127,10 +128,11 @@ router.get('/generate-expense-report', authenticate, async (req, res) => {
         doc.font('Helvetica-Bold').fontSize(14).text('Detailed Fixed Expenses', { underline: true });
         doc.moveDown(0.5);
         const grouped = {};
-        fixedExpenses.forEach(e => {
-            const cat = e.category?.name || 'Uncategorized';
-            grouped[cat] = (grouped[cat] || 0) + e.amount;
-        });
+        for (const e of fixedExpenses) {
+            const category = await Category.findById(e.category);
+            const catName = category?.name || 'Uncategorized';
+            grouped[catName] = (grouped[catName] || 0) + e.amount;
+        }
         Object.entries(grouped).forEach(([cat, amt]) => {
             doc.font('Helvetica').fontSize(12).text(`${cat}: ${formatCurrency(amt)}`);
         });

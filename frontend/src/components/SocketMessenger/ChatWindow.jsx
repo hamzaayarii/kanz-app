@@ -92,7 +92,7 @@ const ChatWindow = ({ currentUser }) => {
     setCurrentConversationId(null);
   };
 
-  const chatHeight = isExpanded ? '500px' : '40px';
+  const chatHeight = isExpanded ? '520px' : '48px';
 
   return (
     <div className="floating-chat" style={{ 
@@ -103,15 +103,22 @@ const ChatWindow = ({ currentUser }) => {
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
     }}>
       <Card className="shadow" style={{ 
-        width: isExpanded ? '360px' : '200px', 
+        width: isExpanded ? '360px' : '220px', 
         height: chatHeight, 
-        transition: 'all 0.3s ease',
-        borderRadius: '8px 8px 0 0'
+        transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+        borderRadius: '12px',
+        overflow: 'hidden',
+        border: 'none',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
       }}>
-        <ChatHeader toggleChat={toggleChat} />
+        <ChatHeader toggleChat={toggleChat} isExpanded={isExpanded} />
 
         {isExpanded && (
-          <>
+          <div style={{
+            height: 'calc(100% - 48px)',
+            position: 'relative',
+            animation: 'fadeIn 0.3s ease'
+          }}>
             <SearchBar 
               searchQuery={searchQuery}
               handleSearch={handleSearch}
@@ -141,9 +148,17 @@ const ChatWindow = ({ currentUser }) => {
                 deleteConversation={deleteConversation}
               />
             )}
-          </>
+          </div>
         )}
       </Card>
+      <style>
+        {`
+          @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+        `}
+      </style>
     </div>
   );
 };

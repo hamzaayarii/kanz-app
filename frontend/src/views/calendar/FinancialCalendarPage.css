@@ -1,133 +1,219 @@
-/* .financial-calendar-container {
-    padding: 20px;
-    max-width: 1200px;
-    margin: 0 auto;
-  } */
-  
-/* .calendar-navigation {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-  } */
-  
-/* .nav-button {
-    padding: 8px 16px;
-    background-color: #f0f0f0;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: bold;
-  }
-  
-  .nav-button:hover {
-    background-color: #e0e0e0;
-  } */
-  
-  /* Day cell styling */
-  .financial-day-profit {
-    background-color: rgba(76, 175, 80, 0.15) !important;
-  }
-  
-  .financial-day-loss {
-    background-color: rgba(244, 67, 54, 0.15) !important;
-  }
-  
-  .financial-day-neutral {
-    background-color: rgba(255, 193, 7, 0.15) !important;
-  }
-  
-  .financial-day-content {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    padding: 4px;
-  }
-  
-  .day-number {
-    font-weight: bold;
-    margin-bottom: 4px;
-  }
-  
-  .revenue-indicator {
-    color: #4caf50;
-    font-size: 0.85em;
-    margin-bottom: 2px;
-  }
-  
-  .expense-indicator {
-    color: #f44336;
-    font-size: 0.85em;
-    margin-bottom: 2px;
-  }
-  
-  .net-amount {
-    font-weight: bold;
-    font-size: 0.9em;
-    margin-top: auto;
-  }
-  
-  .net-amount.positive {
-    color: #2e7d32;
-  }
-  
-  .net-amount.negative {
-    color: #c62828;
-  }
-  
-  /* Calendar legend */
+/* Enhanced Styles for Financial Calendar */
+
+.main-calendar-card {
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1) !important;
+  border: none;
+}
+
+.current-month {
+  font-weight: 600;
+  color: #3c4858;
+}
+
+.calendar-nav-tabs {
+  border-bottom: none;
+}
+
+.calendar-nav-tabs .nav-link {
+  border: none;
+  color: #495057;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.calendar-nav-tabs .nav-link:hover {
+  color: #007bff;
+}
+
+.calendar-nav-tabs .nav-link.active {
+  color: #007bff;
+  border-bottom: 2px solid #007bff;
+  background-color: transparent;
+}
+
+/* Calendar Legend */
+.calendar-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 5px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  margin-right: 10px;
+}
+
+.legend-color {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  margin-right: 6px;
+}
+
+.legend-color.profit {
+  background-color: rgba(40, 167, 69, 0.2);
+  border: 1px solid #28a745;
+}
+
+.legend-color.loss {
+  background-color: rgba(220, 53, 69, 0.2);
+  border: 1px solid #dc3545;
+}
+
+.legend-color.neutral {
+  background-color: rgba(108, 117, 125, 0.2);
+  border: 1px solid #6c757d;
+}
+
+.legend-color.tax-critical {
+  background-color: rgba(220, 53, 69, 0.8);
+  border: 1px solid #dc3545;
+}
+
+.legend-color.tax-high {
+  background-color: rgba(253, 126, 20, 0.8);
+  border: 1px solid #fd7e14;
+}
+
+/* Financial Day Styling */
+.financial-day-profit {
+  background-color: rgba(40, 167, 69, 0.1);
+  border: 1px solid rgba(40, 167, 69, 0.3);
+}
+
+.financial-day-loss {
+  background-color: rgba(220, 53, 69, 0.1);
+  border: 1px solid rgba(220, 53, 69, 0.3);
+}
+
+.financial-day-neutral {
+  background-color: rgba(108, 117, 125, 0.1);
+  border: 1px solid rgba(108, 117, 125, 0.3);
+}
+
+/* Tax Deadline Styling */
+.tax-deadline-critical {
+  position: relative;
+  background-image: linear-gradient(135deg, rgba(220, 53, 69, 0.2) 25%, transparent 25%, transparent 50%, rgba(220, 53, 69, 0.2) 50%, rgba(220, 53, 69, 0.2) 75%, transparent 75%, transparent) !important;
+  background-size: 8px 8px !important;
+}
+
+.tax-deadline-high {
+  position: relative;
+  background-image: linear-gradient(135deg, rgba(253, 126, 20, 0.15) 25%, transparent 25%, transparent 50%, rgba(253, 126, 20, 0.15) 50%, rgba(253, 126, 20, 0.15) 75%, transparent 75%, transparent) !important;
+  background-size: 8px 8px !important;
+}
+
+.tax-deadline-normal {
+  border-top: 3px solid #007bff !important;
+}
+
+/* Day Content Styling */
+.financial-day-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 2px;
+  position: relative;
+}
+
+.day-number {
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+
+.revenue-indicator {
+  font-size: 0.75rem;
+  color: #28a745;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.expense-indicator {
+  font-size: 0.75rem;
+  color: #dc3545;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.net-amount {
+  font-size: 0.7rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+}
+
+.net-amount.positive {
+  color: #28a745;
+}
+
+.net-amount.negative {
+  color: #dc3545;
+}
+
+/* Tax indicator dots */
+.tax-indicator {
+  display: flex;
+  gap: 3px;
+  margin-bottom: 3px;
+}
+
+.tax-deadline-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.tax-deadline-dot.priority-critical {
+  background-color: #dc3545;
+}
+
+.tax-deadline-dot.priority-high {
+  background-color: #fd7e14;
+}
+
+.tax-deadline-dot.priority-medium {
+  background-color: #007bff;
+}
+
+.tax-deadline-dot.priority-low {
+  background-color: #28a745;
+}
+
+/* Tax Alert */
+.tax-alert {
+  margin-bottom: 1.5rem;
+  border-left: 5px solid #dc3545;
+}
+
+/* Responsive adjustments */
+@media (max-width: 767.98px) {
   .calendar-legend {
-    display: flex;
-    margin-bottom: 15px;
-    gap: 20px;
+    flex-direction: column;
+    align-items: flex-start;
   }
   
   .legend-item {
-    display: flex;
-    align-items: center;
+    margin-bottom: 5px;
   }
-  
-  .legend-color {
-    width: 20px;
-    height: 20px;
-    margin-right: 8px;
-    border-radius: 4px;
-  }
-  
-  .legend-color.profit {
-    background-color: rgba(76, 175, 80, 0.3);
-    border: 1px solid rgba(76, 175, 80, 0.7);
-  }
-  
-  .legend-color.loss {
-    background-color: rgba(244, 67, 54, 0.3);
-    border: 1px solid rgba(244, 67, 54, 0.7);
-  }
-  
-  .legend-color.neutral {
-    background-color: rgba(255, 193, 7, 0.3);
-    border: 1px solid rgba(255, 193, 7, 0.7);
-  }
-  
-  /* Loading and error states */
-  /* .loading-spinner {
-    text-align: center;
-    padding: 20px;
-    color: #666;
-  } */
-  
-  /* .error-message {
-    background-color: #ffebee;
-    color: #c62828;
-    padding: 10px;
-    border-radius: 4px;
-    margin-bottom: 15px;
-  } */
-  
-  /* Custom day cell styles */
-  .custom-day-cell {
-    height: 100%;
-    position: relative;
-  }
-  
-  /* Modal styles will be in the DayDetailsModal component */
+}
+
+/* Fancy animation for the calendar */
+.rbc-calendar {
+  transition: all 0.3s ease;
+}
+
+.rbc-calendar:hover {
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+}
