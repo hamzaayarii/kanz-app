@@ -110,3 +110,59 @@ Install `pnpm` globally if you haven’t yet:
 
 ```bash
 npm install -g pnpm
+
+```
+
+---
+
+### 📦 Clone the repository
+
+```bash
+git clone https://github.com/hamzaayarii/AccountingManagementApp.git
+cd accounting-management-system
+```
+
+---
+
+### 🖼️ Frontend Setup
+
+```bash
+cd frontend
+pnpm install       # Install frontend dependencies
+pnpm start          # Start the development server
+cd ..
+```
+
+---
+
+### 🧠 Backend Setup
+
+```bash
+cd backend
+pnpm install       # Install backend dependencies
+```
+
+Create a .env file inside the backend/ directory:
+
+```bash
+MONGODB_URI=your_mongodb_connection_string
+JWT_SECRET=your_jwt_secret_key
+PORT=5000
+```
+
+Then run the backend server:
+
+```bash
+pnpm start
+# Create .env file in root with the following:
+MONGODB_URI=your_mongodb_connection_string
+JWT_SECRET=your_jwt_secret_key
+PORT=5000
+```
+
+Run the application:
+
+```bash
+npm start
+```
+
