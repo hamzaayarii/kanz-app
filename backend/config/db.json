@@ -1,5 +1,6 @@
 {
     "mongodb": {
-        "url": "mongodb://localhost:27017/finance"
+        "url": "mongodb+srv://devhamza:mdpsfbbvgejrrc@paypal.zuqwrh8.mongodb.net/finance?retryWrites=true&w=majority"
+
     }
 }

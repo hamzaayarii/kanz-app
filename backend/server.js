@@ -38,19 +38,55 @@ const chatBotRoutes = require('./routes/chatBot.js');
 const chatbotRoutes = require('./routes/chatbotRoutes.js');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const calendarRoutes = require('./routes/calendarRoutes');
+const rateLimit = require('express-rate-limit');
+const helmet = require('helmet');
+
+// Trust proxy for Railway
+app.set('trust proxy', 1);
+
+// Security middleware
+app.use(helmet());
+
+// Rate limiting with proper proxy configuration
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  trustProxy: true,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use(limiter);
 
 // MongoDB connection
 mongoose.connect(dbConfig.mongodb.url, { useNewUrlParser: true, useUnifiedTopology: true })
     .then(() => console.log('Connected to MongoDB'))
     .catch((err) => console.error('Failed to connect to MongoDB:', err));
 
-// Middleware
+// CORS configuration
 app.use(cors({
-    origin: ['http://localhost:3000', 'http://localhost:5000'],
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-    credentials: true
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    
+    if (origin.startsWith('http://localhost')) {
+      return callback(null, true);
+    }
+    
+    if (origin.includes('vercel.app') && origin.includes('hamzas-projects')) {
+      return callback(null, true);
+    }
+    
+    if (process.env.CLIENT_URL && origin === process.env.CLIENT_URL.replace(/\/$/, '')) {
+      return callback(null, true);
+    }
+    
+    console.log('CORS blocked origin:', origin);
+    callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true
 }));
-app.use(express.json());
+
+// Body parser middleware
+app.use(express.json({ limit: '10mb' }));
 app.use(cookieParser());
 
 // Add io to request object for all routes

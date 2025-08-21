@@ -106,19 +106,17 @@ function initializeSocket(server) {
               onModel: 'Conversation',
               url: `/admin/messages/${conversationId}`
             });
-            
             await notification.save();
-            
             // Send notification to user if online
             io.to(`user_${participant._id}`).emit('new_notification', notification);
-            
             // Also send message notification
             io.to(`user_${participant._id}`).emit('new_message_notification', {
               conversationId,
               message: savedMessage
             });
           }
-        });
+        })
+      );
       } catch (error) {
         console.error('Error handling message:', error);
       }
